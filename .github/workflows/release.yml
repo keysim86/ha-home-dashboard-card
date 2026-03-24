@@ -42,6 +42,13 @@ jobs:
             -H "Authorization: token $FORGEJO_TOKEN" \
             -F "attachment=@home-dashboard-card.js"
 
+      - name: Push tag to GitHub
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          git remote add github https://x-access-token:$GH_TOKEN@github.com/keysim86/ha-home-dashboard-card.git
+          git push github refs/tags/${{ steps.version.outputs.VERSION }}
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
