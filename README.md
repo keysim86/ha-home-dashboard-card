@@ -1,8 +1,9 @@
 # Home Dashboard Card
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
-[![GitHub release](https://img.shields.io/github/release/keysim86/ha-home-dashboard-card.svg)](https://github.com/keysim86/ha-home-dashboard-card/releases)
-[![GitHub license](https://img.shields.io/github/license/keysim86/ha-home-dashboard-card.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/keysim86/ha-health-card?style=flat-square)](https://github.com/keysim86/ha-health-card/releases/latest)
+[![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://github.com/keysim86/ha-health-card)
+[![HA](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue?style=flat-square)](https://www.home-assistant.io/)
+[![License](https://img.shields.io/github/license/keysim86/ha-home-dashboard-card.svg)](LICENSE)
 
 Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna karta z zakładkami — wszystko w jednym miejscu.
 
