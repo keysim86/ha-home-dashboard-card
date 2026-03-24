@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   release:
+    if: ${{ !contains(github.server_url, 'github.com') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,13 +24,26 @@ jobs:
         run: |
           sed -i "s/v1\.0\.0/${{ steps.version.outputs.VERSION }}/g" home-dashboard-card.js
 
-      - name: Create GitHub Release
+      - name: Create Forgejo Release
         uses: softprops/action-gh-release@v2
         with:
           name: "Home Dashboard Card ${{ steps.version.outputs.VERSION }}"
           body_path: CHANGELOG.md
-          files: |
-            home-dashboard-card.js
+          files: home-dashboard-card.js
           generate_release_notes: false
           draft: false
           prerelease: false
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh release create "${{ steps.version.outputs.VERSION }}" \
+            --repo "keysim86/ha-home-dashboard-card" \
+            --title "Home Dashboard Card ${{ steps.version.outputs.VERSION }}" \
+            --notes-file CHANGELOG.md \
+            home-dashboard-card.js \
+          || gh release upload "${{ steps.version.outputs.VERSION }}" \
+            --repo "keysim86/ha-home-dashboard-card" \
+            --clobber \
+            home-dashboard-card.js
