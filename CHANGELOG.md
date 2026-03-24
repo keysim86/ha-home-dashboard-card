@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.2] - 2026-03-24
+
+### Zmieniono
+- Poprawiono workflow release — zastąpiono softprops/action-gh-release czystym curl + gh CLI
+
 ## [1.0.1] - 2026-03-24
 
 ### Zmieniono
