@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.7] - 2026-03-24
+
+### Zmieniono
+- Dodano screenshot dashboardu do README
+- Poprawiono odznaki w README (wskazywały na złe repo)
+- Usunięto duplikat changelogu z README
+
+## [1.0.6] - 2026-03-24
+
+### Zmieniono
+- Workflow tworzy tag na GitHub przez target_commitish zamiast git push
+
 ## [1.0.5] - 2026-03-24
 
 ### Zmieniono

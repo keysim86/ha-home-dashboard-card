@@ -1,13 +1,13 @@
 # Home Dashboard Card
 
-[![Release](https://img.shields.io/github/v/release/keysim86/ha-health-card?style=flat-square)](https://github.com/keysim86/ha-health-card/releases/latest)
-[![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://github.com/keysim86/ha-health-card)
+[![Release](https://img.shields.io/github/v/release/keysim86/ha-home-dashboard-card?style=flat-square)](https://github.com/keysim86/ha-home-dashboard-card/releases/latest)
+[![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://github.com/keysim86/ha-home-dashboard-card)
 [![HA](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue?style=flat-square)](https://www.home-assistant.io/)
 [![License](https://img.shields.io/github/license/keysim86/ha-home-dashboard-card.svg)](LICENSE)
 
 Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna karta z zakładkami — wszystko w jednym miejscu.
 
-![Dashboard Preview](https://raw.githubusercontent.com/keysim86/ha-home-dashboard-card/main/docs/preview.png)
+![Dashboard Preview](assets/dashboard.png)
 
 ## Zakładki
 
@@ -231,15 +231,6 @@ alerts:
 
 - Home Assistant 2024.1.0+
 - HACS 1.34.0+
-
-## Changelog
-
-### 1.0.0
-- Pierwsze wydanie
-- 9 zakładek: Osoby, Energia, Vaillant, Metering, TP-Link, Kamery, Auta, Proxmox, Alerty
-- Sterowanie termostatami przez WebSocket
-- Live refresh kamer co 10s
-- Alert badge z regułami YAML
 
 ## Licencja
 
