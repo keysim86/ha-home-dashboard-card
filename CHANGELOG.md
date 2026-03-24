@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.4] - 2026-03-24
+
+### Zmieniono
+- Release notes zawierają tylko sekcję aktualnej wersji (nie cały changelog)
+
+## [1.0.3] - 2026-03-24
+
+### Zmieniono
+- Zastąpiono gh CLI czystym curl do GitHub API
+
 ## [1.0.2] - 2026-03-24
 
 ### Zmieniono
