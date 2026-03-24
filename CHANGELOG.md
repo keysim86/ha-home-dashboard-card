@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1] - 2026-03-24
+
+### Zmieniono
+- Plik JS przeniesiony z `dist/` do root
+- Dodano workflow automatycznego release (Forgejo → GitHub)
+- Dodano LICENSE, .gitignore
+
 ## [1.0.0] - 2026-03-24
 
 ### Dodano
