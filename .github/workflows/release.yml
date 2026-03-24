@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Update version in JS
+        run: |
+          sed -i "s/v1\.0\.0/${{ steps.version.outputs.VERSION }}/g" dist/home-dashboard-card.js
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Home Dashboard Card ${{ steps.version.outputs.VERSION }}"
+          body_path: CHANGELOG.md
+          files: |
+            dist/home-dashboard-card.js
+          generate_release_notes: false
+          draft: false
+          prerelease: false

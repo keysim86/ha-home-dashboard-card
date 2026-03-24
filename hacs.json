@@ -1,0 +1,8 @@
+{
+  "name": "Home Dashboard Card",
+  "description": "Kompletny dashboard domowy dla Home Assistant — osoby, energia, Vaillant, metering, TP-Link, kamery, auta, Proxmox.",
+  "render_readme": true,
+  "content_in_root": false,
+  "filename": "home-dashboard-card.js",
+  "homeassistant": "2024.1.0"
+}
