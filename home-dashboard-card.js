@@ -226,6 +226,20 @@ function renderEnergia(hass, cfg) {
   const p2   = sn(hass, e.power_l2, 0);
   const p3   = sn(hass, e.power_l3, 0);
 
+  const t = e.tariffs || {};
+  const tSD  = sn(hass, t.szczytowa_daily, 2);
+  const tPD  = sn(hass, t.pozaszczytowa_daily, 2);
+  const tND  = sn(hass, t.nocna_daily, 2);
+  const tSumD = t.szczytowa_daily
+    ? (Math.round((parseFloat(tSD) + parseFloat(tPD) + parseFloat(tND)) * 100) / 100).toFixed(2)
+    : null;
+  const tSM  = sn(hass, t.szczytowa_monthly, 2);
+  const tPM  = sn(hass, t.pozaszczytowa_monthly, 2);
+  const tNM  = sn(hass, t.nocna_monthly, 2);
+  const tSumM = t.szczytowa_monthly
+    ? (Math.round((parseFloat(tSM) + parseFloat(tPM) + parseFloat(tNM)) * 100) / 100).toFixed(2)
+    : null;
+
   const consumers = (e.consumers || []).map(c => {
     const w = sn(hass, c.entity, 0);
     const max = c.max_w || 500;
@@ -264,6 +278,25 @@ function renderEnergia(hass, cfg) {
         <div class="hdc-ir"><span class="hdc-ir-lbl">Napięcie</span><span class="hdc-ir-val ${vColor(v3)}">${v3} V</span></div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Moc</span><span class="hdc-ir-val b">${p3} W</span></div>
       </div>
+    </div>` : ''}
+    ${t.szczytowa_daily ? `
+    <div class="hdc-st">Taryfa G13s</div>
+    <div style="display:grid;grid-template-columns:${t.szczytowa_monthly ? '1fr 1fr' : '1fr'};gap:8px;margin-bottom:10px">
+      <div class="hdc-box">
+        <div class="hdc-box-title">Zużycie dziś</div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">☀ Szczytowa</span><span class="hdc-ir-val o">${tSD} kWh</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">🌤 Pozaszczytowa</span><span class="hdc-ir-val y">${tPD} kWh</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">🌙 Nocna</span><span class="hdc-ir-val b">${tND} kWh</span></div>
+        <div class="hdc-ir" style="border-top:1px solid rgba(255,255,255,.07);margin-top:4px;padding-top:4px"><span class="hdc-ir-lbl">Σ Razem</span><span class="hdc-ir-val">${tSumD} kWh</span></div>
+      </div>
+      ${t.szczytowa_monthly ? `
+      <div class="hdc-box">
+        <div class="hdc-box-title">Zużycie w miesiącu</div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">☀ Szczytowa</span><span class="hdc-ir-val o">${tSM} kWh</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">🌤 Pozaszczytowa</span><span class="hdc-ir-val y">${tPM} kWh</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">🌙 Nocna</span><span class="hdc-ir-val b">${tNM} kWh</span></div>
+        <div class="hdc-ir" style="border-top:1px solid rgba(255,255,255,.07);margin-top:4px;padding-top:4px"><span class="hdc-ir-lbl">Σ Razem</span><span class="hdc-ir-val">${tSumM} kWh</span></div>
+      </div>` : ''}
     </div>` : ''}
     ${consumers ? `<div class="hdc-st">Top odbiorniki</div>${consumers}` : ''}`;
 }
