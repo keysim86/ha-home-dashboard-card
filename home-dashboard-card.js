@@ -182,13 +182,6 @@ function evalCondition(val, cond) {
 
 function renderOsoby(hass, cfg) {
   const persons = cfg.persons || [];
-  let pins = '';
-  const positions = [
-    {top:'47%',left:'49%',pu:true},
-    {top:'52%',left:'53%',pu:true},
-    {top:'20%',left:'75%',pu:false},
-    {top:'68%',left:'26%',pu:false},
-  ];
   let cards = persons.map((p, i) => {
     const loc = sv(hass, p.entity, 'unknown');
     const isHome = loc === 'home';
@@ -196,9 +189,7 @@ function renderOsoby(hass, cfg) {
     const bst = sv(hass, p.battery_state, '');
     const charging = bst.toLowerCase() === 'charging';
     const steps = sv(hass, p.steps, '—');
-    const pos = positions[i] || {top:'50%',left:'50%',pu:false};
     const initials = p.name ? p.name[0] : '?';
-    pins += `<div class="hdc-mpin${pos.pu?' pu':''}" style="background:${p.color}22;color:${p.color};top:${pos.top};left:${pos.left}">${initials}</div>`;
     return `
       <div class="hdc-pc ${isHome?'home':'away'}">
         <div style="display:flex;gap:10px;margin-bottom:9px;align-items:flex-start">
@@ -219,11 +210,8 @@ function renderOsoby(hass, cfg) {
 
   return `
     <div class="hdc-ga">${cards}</div>
-    <div class="hdc-fmap">
-      <div class="hdc-fmap-grid"></div>
-      <span class="hdc-fmap-lbl">📍 Lokalizacje</span>
-      ${pins}
-    </div>`;
+    <div style="font-size:10px;color:#475569;margin:10px 0 4px;padding-left:2px">📍 Lokalizacje</div>
+    <div id="hdc-fmap-real" style="height:240px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.07)"></div>`;
 }
 
 function renderEnergia(hass, cfg) {
@@ -842,9 +830,43 @@ class HomeDashboardCard extends HTMLElement {
     if (!tab) return;
     try {
       pane.innerHTML = tab.render(this._hass, this._config);
+      if (this._activeTab === 'osoby') setTimeout(() => this._initOsobyMap(), 0);
     } catch(err) {
       pane.innerHTML = `<div style="color:#f87171;font-size:12px;padding:12px">Błąd renderowania: ${err.message}</div>`;
       console.error('[home-dashboard-card]', err);
+    }
+  }
+
+  _initOsobyMap() {
+    const mapDiv = this.shadowRoot.getElementById('hdc-fmap-real');
+    if (!mapDiv) return;
+    const hass = this._hass;
+    const cfg = this._config;
+    const persons = (cfg.persons || []).filter(p => p.device_tracker);
+    if (!persons.length) {
+      mapDiv.innerHTML = '<div style="color:#475569;font-size:11px;padding:16px;text-align:center">Brak skonfigurowanych trackerów lokalizacji</div>';
+      return;
+    }
+    const build = () => {
+      mapDiv.innerHTML = '';
+      const mapEl = document.createElement('ha-map');
+      mapEl.hass = hass;
+      mapEl.entities = persons.map(p => ({
+        entity_id: p.device_tracker,
+        color: p.color || undefined,
+        label_mode: 'name',
+        name: p.name || p.device_tracker,
+      }));
+      mapEl.autoFit = true;
+      mapEl.fitZones = true;
+      mapEl.darkMode = true;
+      mapEl.style.cssText = 'display:block;height:240px;width:100%';
+      mapDiv.appendChild(mapEl);
+    };
+    if (customElements.get('ha-map')) {
+      build();
+    } else {
+      customElements.whenDefined('ha-map').then(build);
     }
   }
 
