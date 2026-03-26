@@ -669,7 +669,7 @@ function renderKamery(hass, cfg) {
 
 function renderAuta(hass, cfg) {
   const vehicles = cfg.vehicles || [];
-  const cards = vehicles.map(v => {
+  const cards = vehicles.map((v, idx) => {
     const fuel     = sn(hass, v.fuel_level, 0);
     const fuelLt   = v.fuel_amount ? sn(hass, v.fuel_amount, 1) : null;
     const range    = sv(hass, v.fuel_range, '—');
@@ -678,11 +678,37 @@ function renderAuta(hass, cfg) {
     const lastUpd  = sv(hass, v.last_update, '—');
     const fuelColor = fuel < 15 ? '#f87171' : fuel < 30 ? '#fbbf24' : '#4ade80';
     const locked   = v.lock ? sv(hass, v.lock, 'unlocked') === 'locked' : null;
+
+    // Connection status
+    let connChip = '';
+    if (v.connection) {
+      const connSt = hass.states[v.connection];
+      const online = connSt && (connSt.state === 'on' || connSt.state === 'online' || connSt.state === 'connected');
+      connChip = `<span class="hdc-ch ${online?'g':'r'}">${online?'🟢 Online':'🔴 Offline'}</span>`;
+    }
+
+    // Location from device_tracker
+    let locLine = '';
+    if (v.device_tracker) {
+      const dtSt = hass.states[v.device_tracker];
+      if (dtSt) {
+        const zone = dtSt.state;
+        const addr = dtSt.attributes.address || dtSt.attributes.location_name || null;
+        const locLabel = addr || (zone === 'home' ? '🏠 Dom' : zone === 'not_home' ? '🚗 W trasie' : zone);
+        locLine = `<div style="font-size:11px;color:#64748b;margin:6px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📍 ${locLabel}</div>`;
+      }
+    }
+
+    // Map placeholder (only if device_tracker configured)
+    const mapDiv = v.device_tracker
+      ? `<div id="hdc-car-map-${idx}" style="height:180px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.07);margin-top:8px"></div>`
+      : '';
+
     return `
       <div class="hdc-carcard">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
           <span style="font-size:26px">${v.icon||'🚗'}</span>
-          <div>
+          <div style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:600;color:#f1f5f9">${v.name}</div>
             <div style="font-size:11px;color:#475569;font-family:monospace">${v.plate||''}</div>
           </div>
@@ -697,7 +723,12 @@ function renderAuta(hass, cfg) {
           <div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Przebieg</div><div class="hdc-sc-val" style="font-size:15px">${parseInt(odo).toLocaleString('pl')}</div></div>
           ${bat !== null ? `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Bat. 12V</div><div class="hdc-sc-val" style="color:${battColor(bat)};font-size:15px">${bat}%</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Ostat. poz.</div><div class="hdc-sc-val" style="font-size:12px;color:#64748b">${lastUpd}</div></div>`}
         </div>
-        ${locked !== null ? `<div class="hdc-chips"><span class="hdc-ch ${locked?'g':'r'}">${locked?'🔒 Zamknięty':'🔓 Otwarty'}</span></div>` : ''}
+        <div class="hdc-chips">
+          ${locked !== null ? `<span class="hdc-ch ${locked?'g':'r'}">${locked?'🔒 Zamknięty':'🔓 Otwarty'}</span>` : ''}
+          ${connChip}
+        </div>
+        ${locLine}
+        ${mapDiv}
       </div>`;
   }).join('');
   return `<div class="hdc-ga">${cards}</div>`;
@@ -905,6 +936,7 @@ class HomeDashboardCard extends HTMLElement {
       pane.innerHTML = tab.render(this._hass, this._config);
       if (this._activeTab === 'osoby') setTimeout(() => this._initOsobyMap(), 0);
       if (this._activeTab === 'vaillant') setTimeout(() => this._initVaillantCharts(), 0);
+      if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
     } catch(err) {
       pane.innerHTML = `<div style="color:#f87171;font-size:12px;padding:12px">Błąd renderowania: ${err.message}</div>`;
       console.error('[home-dashboard-card]', err);
@@ -1142,6 +1174,28 @@ class HomeDashboardCard extends HTMLElement {
     } else {
       customElements.whenDefined('ha-map').then(build);
     }
+  }
+
+  _initCarMaps() {
+    const hass = this._hass;
+    const vehicles = this._config.vehicles || [];
+    vehicles.forEach((v, idx) => {
+      if (!v.device_tracker) return;
+      const mapDiv = this.shadowRoot.getElementById(`hdc-car-map-${idx}`);
+      if (!mapDiv) return;
+      const build = () => {
+        mapDiv.innerHTML = '';
+        const mapEl = document.createElement('ha-map');
+        mapEl.hass = hass;
+        mapEl.entities = [{ entity_id: v.device_tracker, label_mode: 'name', name: v.name || v.device_tracker }];
+        mapEl.autoFit = true;
+        mapEl.darkMode = true;
+        mapEl.style.cssText = 'display:block;height:180px;width:100%';
+        mapDiv.appendChild(mapEl);
+      };
+      if (customElements.get('ha-map')) build();
+      else customElements.whenDefined('ha-map').then(build);
+    });
   }
 
   _handleAction(btn) {

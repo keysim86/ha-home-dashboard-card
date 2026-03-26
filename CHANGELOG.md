@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.0.8] - 2026-03-26
+
+### Dodano
+- Zakładka Osoby: prawdziwa mapa `ha-map` z GPS zamiast pinezek CSS
+- Zakładka Energia: podział zużycia na taryfy G13s (szczytowa/pozaszczytowa/nocna) — dzienne i miesięczne
+- Zakładka Energia: sortowanie top odbiorników live od największego poboru
+- Zakładka Vaillant: wykresy temperatur (zasilanie, powrót, docelowa, dom, zewnętrzna) — 24h historia
+- Zakładka Vaillant: wykresy zużycia gazu (ogrzewanie + CWU) — ostatnie 30 dni i 12 miesięcy
+- Zakładka Kamery: poprawiono ładowanie obrazów przez `/api/camera_proxy/` z tokenem autoryzacji
+- Zakładka Kamery: powiększono okno focus view (aspect-ratio 16/9, max 480px)
+- Zakładka Auta: ilość paliwa w litrach obok procentów
+- Zakładka Auta: status połączenia (Online/Offline) z encji `connection`
+- Zakładka Auta: ostatnia lokalizacja z `device_tracker` (strefa lub adres)
+- Zakładka Auta: mapa `ha-map` per pojazd z pozycją GPS
+
 ## [1.0.7] - 2026-03-24
 
 ### Zmieniono
