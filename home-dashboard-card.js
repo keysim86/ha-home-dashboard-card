@@ -240,17 +240,20 @@ function renderEnergia(hass, cfg) {
     ? (Math.round((parseFloat(tSM) + parseFloat(tPM) + parseFloat(tNM)) * 100) / 100).toFixed(2)
     : null;
 
-  const consumers = (e.consumers || []).map(c => {
-    const w = sn(hass, c.entity, 0);
-    const max = c.max_w || 500;
-    const pct = Math.min(100, Math.round(w / max * 100));
-    const col = w > max * 0.8 ? '#f87171' : w > max * 0.5 ? '#fbbf24' : '#38bdf8';
-    return `<div class="hdc-br">
-      <span class="hdc-br-lbl">${c.name}</span>
-      <div class="hdc-br-bg"><div class="hdc-br-fill" style="width:${pct}%;background:${col}"></div></div>
-      <span class="hdc-br-val">${w} W</span>
-    </div>`;
-  }).join('');
+  const consumers = (e.consumers || [])
+    .map(c => ({ ...c, _w: sn(hass, c.entity, 0) }))
+    .sort((a, b) => b._w - a._w || (a.name || '').localeCompare(b.name || '', 'pl'))
+    .map(c => {
+      const w = c._w;
+      const max = c.max_w || 500;
+      const pct = Math.min(100, Math.round(w / max * 100));
+      const col = w > max * 0.8 ? '#f87171' : w > max * 0.5 ? '#fbbf24' : '#38bdf8';
+      return `<div class="hdc-br">
+        <span class="hdc-br-lbl">${c.name}</span>
+        <div class="hdc-br-bg"><div class="hdc-br-fill" style="width:${pct}%;background:${col}"></div></div>
+        <span class="hdc-br-val">${w} W</span>
+      </div>`;
+    }).join('');
 
   const vColor = v => v > 253 ? 'r' : v < 207 ? 'y' : 'g';
 
