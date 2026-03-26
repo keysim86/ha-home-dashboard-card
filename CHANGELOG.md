@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0] - 2026-03-26
+
+### Dodano
+- Zakładka Vaillant: sekcja Ustawienia — edycja encji `input_number` przyciskami +/−, konfigurowana przez `vaillant.settings[]` w YAML (step/min/max z atrybutów encji)
+
+### Poprawiono
+- Zakładka Osoby: mapa `ha-map` nie mruga — aktualizacje hass odświeżają tylko karty osób in-place, mapa pozostaje nietknieta
+- Zakładka Kamery: wyeliminowano mruganie (ciemny ekran) — pane nie jest przebudowywany przy aktualizacjach hass, obrazy są odświeżane przez interval
+- `ha-map`: element dołączany do DOM przed ustawieniem właściwości (poprawka inicjalizacji)
+
 ## [1.0.8] - 2026-03-26
 
 ### Dodano

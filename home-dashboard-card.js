@@ -209,7 +209,7 @@ function renderOsoby(hass, cfg) {
   }).join('');
 
   return `
-    <div class="hdc-ga">${cards}</div>
+    <div id="hdc-persons-list"><div class="hdc-ga">${cards}</div></div>
     <div style="font-size:10px;color:#475569;margin:10px 0 4px;padding-left:2px">📍 Lokalizacje</div>
     <div id="hdc-fmap-real" style="height:240px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.07)"></div>`;
 }
@@ -391,6 +391,27 @@ function renderVaillant(hass, cfg) {
         <div class="hdc-ir"><span class="hdc-ir-lbl">El. CWU dziś</span><span id="hdc-vl-elcwu" class="hdc-ir-val b">${elCWU} kWh</span></div>
       </div>
     </div>
+    ${(v.settings || []).length ? `
+    <div class="hdc-st">Ustawienia</div>
+    <div class="hdc-box" style="margin-bottom:10px">
+      ${(v.settings || []).map(s => {
+        const st = hass.states[s.entity];
+        const val = st ? parseFloat(st.state) : 0;
+        const step = st ? (parseFloat(st.attributes.step) || 1) : 1;
+        const min  = st ? (parseFloat(st.attributes.min)  ?? -999) : -999;
+        const max  = st ? (parseFloat(st.attributes.max)  ?? 9999) : 9999;
+        const dec  = step < 0.1 ? 3 : step < 1 ? 1 : 0;
+        const unit = s.unit !== undefined ? s.unit : (st?.attributes.unit_of_measurement || '');
+        return `<div class="hdc-ir" style="padding:6px 0">
+          <span class="hdc-ir-lbl">${s.name || s.entity}</span>
+          <span style="display:flex;align-items:center;gap:6px">
+            <button class="hdc-tbtn" data-action="input_down" data-entity="${s.entity}" data-step="${step}" data-min="${min}" data-max="${max}">−</button>
+            <span style="min-width:50px;text-align:center;font-size:13px;font-weight:600;color:#f1f5f9">${val.toFixed(dec)}${unit ? ' ' + unit : ''}</span>
+            <button class="hdc-tbtn" data-action="input_up" data-entity="${s.entity}" data-step="${step}" data-min="${min}" data-max="${max}">+</button>
+          </span>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
     ${v.gas_heating ? `
     <div class="hdc-st">Dzienne zużycie gazu (ostatnie 30 dni)</div>
     <div class="hdc-g2" style="margin-bottom:6px">
@@ -936,12 +957,17 @@ class HomeDashboardCard extends HTMLElement {
     const tabChanged = this._tabChanged;
     this._tabChanged = false;
     try {
-      // Vaillant: na aktualizacjach hass (nie zmiana zakładki) nie niszcz canvasów —
-      // tylko odśwież dane tekstowe in-place żeby wykresy nie mrugały
+      // Na aktualizacjach hass (nie zmiana zakładki) nie niszcz mapy/canvasów —
+      // odśwież tylko dane tekstowe in-place
       if (this._activeTab === 'vaillant' && !tabChanged) {
         this._updateVaillantLive();
         return;
       }
+      if (this._activeTab === 'osoby' && !tabChanged) {
+        this._updateOsobyLive();
+        return;
+      }
+      if (this._activeTab === 'kamery' && !tabChanged) return;
       pane.innerHTML = tab.render(this._hass, this._config);
       if (this._activeTab === 'osoby') setTimeout(() => this._initOsobyMap(), 0);
       if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
@@ -950,6 +976,40 @@ class HomeDashboardCard extends HTMLElement {
       pane.innerHTML = `<div style="color:#f87171;font-size:12px;padding:12px">Błąd renderowania: ${err.message}</div>`;
       console.error('[home-dashboard-card]', err);
     }
+  }
+
+  _updateOsobyLive() {
+    const listDiv = this.shadowRoot.getElementById('hdc-persons-list');
+    if (!listDiv) return;
+    const hass = this._hass;
+    const cfg = this._config;
+    const persons = cfg.persons || [];
+    const cards = persons.map((p) => {
+      const loc = sv(hass, p.entity, 'unknown');
+      const isHome = loc === 'home';
+      const bl = sn(hass, p.battery_level, 0);
+      const bst = sv(hass, p.battery_state, '');
+      const charging = bst.toLowerCase() === 'charging';
+      const steps = sv(hass, p.steps, '—');
+      const initials = p.name ? p.name[0] : '?';
+      return `
+        <div class="hdc-pc ${isHome?'home':'away'}">
+          <div style="display:flex;gap:10px;margin-bottom:9px;align-items:flex-start">
+            <div class="hdc-pav" style="color:${p.color};background:${p.color}22">${initials}</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#f1f5f9">${p.name}</div>
+              <div style="font-size:10px;color:#475569">${p.device_tracker ? sa(hass, p.device_tracker, 'friendly_name') || p.device_tracker : ''}</div>
+              <div style="font-size:10px;margin-top:2px;color:${isHome?'#4ade80':'#f87171'}">● ${isHome?'W domu':'Poza domem'}</div>
+            </div>
+          </div>
+          <div class="hdc-chips">
+            ${p.battery_state ? `<span class="hdc-ch ${charging?'g':''}">${charging?'⚡ Ładuje':'Brak ładowania'}</span>` : ''}
+            ${p.battery_level ? `<span class="hdc-ch ${battColor(bl)}">${battIcon(bl)} ${bl}%</span>` : ''}
+            ${p.steps ? `<span class="hdc-ch y">👟 ${parseInt(steps).toLocaleString('pl')}</span>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+    listDiv.innerHTML = `<div class="hdc-ga">${cards}</div>`;
   }
 
   _updateVaillantLive() {
@@ -1211,6 +1271,8 @@ class HomeDashboardCard extends HTMLElement {
     const build = () => {
       mapDiv.innerHTML = '';
       const mapEl = document.createElement('ha-map');
+      mapEl.style.cssText = 'display:block;height:240px;width:100%';
+      mapDiv.appendChild(mapEl);
       mapEl.hass = hass;
       mapEl.entities = persons.map(p => ({
         entity_id: p.device_tracker,
@@ -1221,8 +1283,6 @@ class HomeDashboardCard extends HTMLElement {
       mapEl.autoFit = true;
       mapEl.fitZones = true;
       mapEl.darkMode = true;
-      mapEl.style.cssText = 'display:block;height:240px;width:100%';
-      mapDiv.appendChild(mapEl);
     };
     if (customElements.get('ha-map')) {
       build();
@@ -1241,12 +1301,12 @@ class HomeDashboardCard extends HTMLElement {
       const build = () => {
         mapDiv.innerHTML = '';
         const mapEl = document.createElement('ha-map');
+        mapEl.style.cssText = 'display:block;height:180px;width:100%';
+        mapDiv.appendChild(mapEl);
         mapEl.hass = hass;
         mapEl.entities = [{ entity_id: v.device_tracker, label_mode: 'name', name: v.name || v.device_tracker }];
         mapEl.autoFit = true;
         mapEl.darkMode = true;
-        mapEl.style.cssText = 'display:block;height:180px;width:100%';
-        mapDiv.appendChild(mapEl);
       };
       if (customElements.get('ha-map')) build();
       else customElements.whenDefined('ha-map').then(build);
@@ -1268,6 +1328,14 @@ class HomeDashboardCard extends HTMLElement {
         entity_id: entity,
         temperature: Math.round(newTemp * 10) / 10,
       });
+    }
+    if (action === 'input_up' || action === 'input_down') {
+      const current = parseFloat(state.state);
+      const min = parseFloat(btn.dataset.min ?? '-999');
+      const max = parseFloat(btn.dataset.max ?? '9999');
+      const newVal = action === 'input_up' ? current + step : current - step;
+      const clamped = Math.min(max, Math.max(min, Math.round(newVal * 1000) / 1000));
+      this._hass.callService('input_number', 'set_value', { entity_id: entity, value: clamped });
     }
     if (action === 'toggle') {
       this._hass.callService('homeassistant', 'toggle', { entity_id: entity });
