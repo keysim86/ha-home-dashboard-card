@@ -334,36 +334,21 @@ function renderVaillant(hass, cfg) {
   const tInd = v.temp_indoor ? sn(hass, v.temp_indoor, 1) : coAct;
 
   return `
-    <div class="hdc-st">Regulacja Centralnego Ogrzewania (24h)</div>
-    <div class="hdc-g2" style="margin-bottom:6px">
-      <div><div style="font-size:20px;font-weight:700;color:#4ade80">${tInd}°C</div><div style="font-size:10px;color:#475569">Temp. w domu</div></div>
-      <div style="text-align:right"><div style="font-size:20px;font-weight:700;color:#38bdf8">${tOut}°C</div><div style="font-size:10px;color:#475569">Temp. na zewnątrz</div></div>
-    </div>
-    <div style="position:relative;height:160px;margin-bottom:14px"><canvas id="hdc-vc1"></canvas></div>
-
-    <div class="hdc-st">Temperatura Ogrzewania (24h)</div>
-    <div class="hdc-g3" style="margin-bottom:6px">
-      <div><div style="font-size:20px;font-weight:700;color:#38bdf8">${tTgtSup}°C</div><div style="font-size:10px;color:#475569">Temp. Docelowa</div></div>
-      <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:#f87171">${tSup}°C</div><div style="font-size:10px;color:#475569">Temp. Zasilania</div></div>
-      <div style="text-align:right"><div style="font-size:20px;font-weight:700;color:#fbbf24">${tRet}°C</div><div style="font-size:10px;color:#475569">Temp. Powrotu</div></div>
-    </div>
-    <div style="position:relative;height:160px;margin-bottom:14px"><canvas id="hdc-vc2"></canvas></div>
-
     <div class="hdc-st">Termostaty</div>
     <div class="hdc-ga" style="margin-bottom:10px">
       <div class="hdc-thcard">
         <div class="hdc-th-title">🏠 Ogrzewanie CO</div>
-        <div class="hdc-th-big" style="color:#fb923c">${coAct}°</div>
+        <div id="hdc-vl-coact" class="hdc-th-big" style="color:#fb923c">${coAct}°</div>
         <div class="hdc-th-target">cel: <span id="hdc-co-set">${coSet}</span>°C</div>
         <div class="hdc-th-btns">
           <button class="hdc-tbtn" data-action="climate_down" data-entity="${v.climate_co}" data-step="0.5">−</button>
           <button class="hdc-tbtn" data-action="climate_up" data-entity="${v.climate_co}" data-step="0.5">+</button>
         </div>
-        <div class="hdc-th-mode heat">● ${flame?'Ogrzewanie aktywne':'Standby'}</div>
+        <div id="hdc-vl-flame" class="hdc-th-mode heat">● ${flame?'Ogrzewanie aktywne':'Standby'}</div>
       </div>
       <div class="hdc-thcard">
         <div class="hdc-th-title">🚿 CWU</div>
-        <div class="hdc-th-big" style="color:#38bdf8">${cwuCur}°</div>
+        <div id="hdc-vl-cwucur" class="hdc-th-big" style="color:#38bdf8">${cwuCur}°</div>
         <div class="hdc-th-target">cel: <span id="hdc-cwu-set">${cwuTgt}</span>°C</div>
         <div class="hdc-th-btns">
           <button class="hdc-tbtn" data-action="climate_down" data-entity="${v.climate_cwu}" data-step="1">−</button>
@@ -373,8 +358,8 @@ function renderVaillant(hass, cfg) {
       </div>
       <div class="hdc-thcard">
         <div class="hdc-th-title">❄️ Strefa kaloryfery</div>
-        <div class="hdc-th-big" style="color:#a78bfa">${z0Act}°</div>
-        <div class="hdc-th-target">cel: ${z0Tgt}°C</div>
+        <div id="hdc-vl-z0act" class="hdc-th-big" style="color:#a78bfa">${z0Act}°</div>
+        <div id="hdc-vl-z0tgt" class="hdc-th-target">cel: ${z0Tgt}°C</div>
         <div class="hdc-th-mode off">Harmonogram</div>
       </div>
     </div>
@@ -382,28 +367,28 @@ function renderVaillant(hass, cfg) {
     <div class="hdc-g2">
       <div class="hdc-box">
         <div class="hdc-box-title">🌡 Temperatury CO</div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Zasilanie</span><span class="hdc-ir-val o">${tSup}°C</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Powrót</span><span class="hdc-ir-val y">${tRet}°C</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Cel zasilania</span><span class="hdc-ir-val b">${tTgtSup}°C</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Zewnętrzna</span><span class="hdc-ir-val b">${tOut}°C</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Zasilanie</span><span id="hdc-vl-sup2" class="hdc-ir-val o">${tSup}°C</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Powrót</span><span id="hdc-vl-ret2" class="hdc-ir-val y">${tRet}°C</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Cel zasilania</span><span id="hdc-vl-tgtSup" class="hdc-ir-val b">${tTgtSup}°C</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Zewnętrzna</span><span id="hdc-vl-tout2" class="hdc-ir-val b">${tOut}°C</span></div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Śr. zewn. 24h</span><span class="hdc-ir-val b">${tOutAvg}°C</span></div>
       </div>
       <div class="hdc-box">
         <div class="hdc-box-title">⚙️ Praca palnika</div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Płomień</span><span class="hdc-ir-val ${flame?'o':''}">🔥 ${flame?'Aktywny':'Nieaktywny'}</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Moc</span><span class="hdc-ir-val o">${pwr} kW</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Płomień</span><span id="hdc-vl-flameval" class="hdc-ir-val ${flame?'o':''}">🔥 ${flame?'Aktywny':'Nieaktywny'}</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Moc</span><span id="hdc-vl-pwr" class="hdc-ir-val o">${pwr} kW</span></div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Wentylator</span><span class="hdc-ir-val b">${parseInt(fanSpd).toLocaleString('pl')} rpm</span></div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Krzywa grzewcza</span><span class="hdc-ir-val">${curve}</span></div>
       </div>
       <div class="hdc-box">
         <div class="hdc-box-title">💧 Obieg wodny</div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Ciśnienie CO</span><span class="hdc-ir-val ${pressColor}">${press} bar</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Pompa CO</span><span class="hdc-ir-val ${pump?'g':''}">  ${pump?'Aktywna':'Nieaktywna'}</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Ciśnienie CO</span><span id="hdc-vl-press" class="hdc-ir-val ${pressColor}">${press} bar</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Pompa CO</span><span id="hdc-vl-pump" class="hdc-ir-val ${pump?'g':''}">${pump?'Aktywna':'Nieaktywna'}</span></div>
       </div>
       <div class="hdc-box">
         <div class="hdc-box-title">📊 Energia (MyVaillant)</div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">El. CO dziś</span><span class="hdc-ir-val y">${elCO} kWh</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">El. CWU dziś</span><span class="hdc-ir-val b">${elCWU} kWh</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">El. CO dziś</span><span id="hdc-vl-elco" class="hdc-ir-val y">${elCO} kWh</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">El. CWU dziś</span><span id="hdc-vl-elcwu" class="hdc-ir-val b">${elCWU} kWh</span></div>
       </div>
     </div>
     ${v.gas_heating ? `
@@ -418,7 +403,20 @@ function renderVaillant(hass, cfg) {
       <div><div id="hdc-vg-mon" style="font-size:20px;font-weight:700;color:#fb923c">— m³</div><div style="font-size:10px;color:#475569">Zużycie gazu</div></div>
       <div style="text-align:right"><div id="hdc-vg-year" style="font-size:20px;font-weight:700;color:#38bdf8">— m³</div><div style="font-size:10px;color:#475569">Roczne zużycie gazu</div></div>
     </div>
-    <div style="position:relative;height:200px;margin-bottom:14px"><canvas id="hdc-vc4"></canvas></div>` : ''}`;
+    <div style="position:relative;height:200px;margin-bottom:14px"><canvas id="hdc-vc4"></canvas></div>` : ''}
+    <div class="hdc-st">Regulacja Centralnego Ogrzewania (24h)</div>
+    <div class="hdc-g2" style="margin-bottom:6px">
+      <div><div id="hdc-vl-tind" style="font-size:20px;font-weight:700;color:#4ade80">${tInd}°C</div><div style="font-size:10px;color:#475569">Temp. w domu</div></div>
+      <div style="text-align:right"><div id="hdc-vl-tout" style="font-size:20px;font-weight:700;color:#38bdf8">${tOut}°C</div><div style="font-size:10px;color:#475569">Temp. na zewnątrz</div></div>
+    </div>
+    <div style="position:relative;height:160px;margin-bottom:14px"><canvas id="hdc-vc1"></canvas></div>
+    <div class="hdc-st">Temperatura Ogrzewania (24h)</div>
+    <div class="hdc-g3" style="margin-bottom:6px">
+      <div><div id="hdc-vl-tgtSup2" style="font-size:20px;font-weight:700;color:#38bdf8">${tTgtSup}°C</div><div style="font-size:10px;color:#475569">Temp. Docelowa</div></div>
+      <div style="text-align:center"><div id="hdc-vl-sup" style="font-size:20px;font-weight:700;color:#f87171">${tSup}°C</div><div style="font-size:10px;color:#475569">Temp. Zasilania</div></div>
+      <div style="text-align:right"><div id="hdc-vl-ret" style="font-size:20px;font-weight:700;color:#fbbf24">${tRet}°C</div><div style="font-size:10px;color:#475569">Temp. Powrotu</div></div>
+    </div>
+    <div style="position:relative;height:160px;margin-bottom:14px"><canvas id="hdc-vc2"></canvas></div>`;
 }
 
 function renderMetering(hass, cfg) {
@@ -850,6 +848,7 @@ class HomeDashboardCard extends HTMLElement {
     this._clockInterval = null;
     this._camRefreshInterval = null;
     this._built = false;
+    this._tabChanged = false;
   }
 
   setConfig(config) {
@@ -897,6 +896,7 @@ class HomeDashboardCard extends HTMLElement {
       const btn = e.target.closest('[data-tab]');
       if (!btn) return;
       this._activeTab = btn.dataset.tab;
+      this._tabChanged = true;
       this.shadowRoot.querySelectorAll('.hdc-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       this._updatePane();
@@ -916,6 +916,7 @@ class HomeDashboardCard extends HTMLElement {
       this._focusCamera(card);
     });
 
+    this._tabChanged = true;
     this._updatePane();
     this._startClock();
     this._startCamRefresh();
@@ -932,15 +933,69 @@ class HomeDashboardCard extends HTMLElement {
     if (!pane) return;
     const tab = ALL_TABS.find(t => t.id === this._activeTab);
     if (!tab) return;
+    const tabChanged = this._tabChanged;
+    this._tabChanged = false;
     try {
+      // Vaillant: na aktualizacjach hass (nie zmiana zakładki) nie niszcz canvasów —
+      // tylko odśwież dane tekstowe in-place żeby wykresy nie mrugały
+      if (this._activeTab === 'vaillant' && !tabChanged) {
+        this._updateVaillantLive();
+        return;
+      }
       pane.innerHTML = tab.render(this._hass, this._config);
       if (this._activeTab === 'osoby') setTimeout(() => this._initOsobyMap(), 0);
-      if (this._activeTab === 'vaillant') setTimeout(() => this._initVaillantCharts(), 0);
       if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
+      if (this._activeTab === 'vaillant') setTimeout(() => this._initVaillantCharts(), 0);
     } catch(err) {
       pane.innerHTML = `<div style="color:#f87171;font-size:12px;padding:12px">Błąd renderowania: ${err.message}</div>`;
       console.error('[home-dashboard-card]', err);
     }
+  }
+
+  _updateVaillantLive() {
+    const hass = this._hass;
+    const v = this._config.vaillant || {};
+    const sr = this.shadowRoot;
+    const setText = (id, val) => { const el = sr.getElementById(id); if (el) el.textContent = val; };
+    const coAct  = sa(hass, v.climate_co,   'current_temperature') || '—';
+    const coSet  = sa(hass, v.climate_co,   'temperature')         || '—';
+    const z0Act  = sa(hass, v.climate_zone0,'current_temperature') || '—';
+    const z0Tgt  = sa(hass, v.climate_zone0,'temperature')         || '—';
+    const cwuCur = sn(hass, v.cwu_current, 1);
+    const cwuTgt = sn(hass, v.cwu_target,  1);
+    const tSup   = sn(hass, v.temp_supply,  1);
+    const tRet   = sn(hass, v.temp_return,  1);
+    const tTgtSup= sn(hass, v.temp_target_supply, 1);
+    const tOut   = sn(hass, v.temp_outdoor, 1);
+    const tInd   = v.temp_indoor ? sn(hass, v.temp_indoor, 1) : coAct;
+    const press  = sn(hass, v.pressure, 1);
+    const pwr    = sn(hass, v.power,    1);
+    const flame  = isOn(hass, v.flame);
+    const pump   = isOn(hass, v.pump);
+    const elCO   = sn(hass, v.el_co,  2);
+    const elCWU  = sn(hass, v.el_cwu, 2);
+    setText('hdc-vl-tind',    `${tInd}°C`);
+    setText('hdc-vl-tout',    `${tOut}°C`);
+    setText('hdc-vl-tgtSup',  `${tTgtSup}°C`);
+    setText('hdc-vl-tgtSup2', `${tTgtSup}°C`);
+    setText('hdc-vl-sup',     `${tSup}°C`);
+    setText('hdc-vl-ret',     `${tRet}°C`);
+    setText('hdc-vl-coact',   `${coAct}°`);
+    setText('hdc-co-set',     coSet);
+    setText('hdc-vl-flame',   `● ${flame ? 'Ogrzewanie aktywne' : 'Standby'}`);
+    setText('hdc-vl-z0act',   `${z0Act}°`);
+    setText('hdc-vl-z0tgt',   `cel: ${z0Tgt}°C`);
+    setText('hdc-vl-cwucur',  `${cwuCur}°`);
+    setText('hdc-cwu-set',    cwuTgt);
+    setText('hdc-vl-sup2',    `${tSup}°C`);
+    setText('hdc-vl-ret2',    `${tRet}°C`);
+    setText('hdc-vl-tout2',   `${tOut}°C`);
+    setText('hdc-vl-press',   `${press} bar`);
+    setText('hdc-vl-pump',    pump ? 'Aktywna' : 'Nieaktywna');
+    setText('hdc-vl-pwr',     `${pwr} kW`);
+    setText('hdc-vl-flameval', `🔥 ${flame ? 'Aktywny' : 'Nieaktywny'}`);
+    setText('hdc-vl-elco',    `${elCO} kWh`);
+    setText('hdc-vl-elcwu',   `${elCWU} kWh`);
   }
 
   async _initVaillantCharts() {
