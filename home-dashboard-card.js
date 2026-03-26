@@ -599,12 +599,17 @@ function renderKamery(hass, cfg) {
   const diskFree  = diskTotal - diskUsed;
   const diskColor = diskPct > 85 ? '#f87171' : diskPct > 70 ? '#fbbf24' : '#4ade80';
 
+  const camUrl = (entity) => {
+    const token = sa(hass, entity, 'access_token');
+    return `/api/camera_proxy/${entity}?token=${token}&t=${Date.now()}`;
+  };
+
   const focusCam = channels[0] || {};
   const focusHtml = `
     <div class="hdc-cam-focus">
-      <div class="hdc-camfeed" style="max-height:260px">
+      <div class="hdc-camfeed" style="aspect-ratio:16/9;max-height:480px">
         ${focusCam.entity
-          ? `<img id="hdc-focus-img" src="/api/camera_proxy/${focusCam.entity}?${Date.now()}" alt="${focusCam.name}" style="width:100%;height:100%;object-fit:cover">`
+          ? `<img id="hdc-focus-img" src="${camUrl(focusCam.entity)}" data-entity="${focusCam.entity}" alt="${focusCam.name}" style="width:100%;height:100%;object-fit:cover">`
           : `<div class="hdc-cam-placeholder">📹<span>${focusCam.name||'Brak kamery'}</span></div>`
         }
       </div>
@@ -624,7 +629,7 @@ function renderKamery(hass, cfg) {
     <div class="hdc-camcard${i===0?' focus':''}" data-cam-idx="${i}" data-cam-entity="${ch.entity||''}">
       <div class="hdc-camfeed">
         ${ch.entity
-          ? `<img class="hdc-cam-thumb" src="/api/camera_proxy/${ch.entity}?${Date.now()}" alt="${ch.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`
+          ? `<img class="hdc-cam-thumb" src="${camUrl(ch.entity)}" data-entity="${ch.entity}" alt="${ch.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`
           : `<div class="hdc-cam-placeholder">📹<span>${ch.name}</span></div>`
         }
       </div>
@@ -1168,7 +1173,11 @@ class HomeDashboardCard extends HTMLElement {
     const focusName = this.shadowRoot.getElementById('hdc-focus-name');
     const focusLbl  = this.shadowRoot.getElementById('hdc-focus-label');
 
-    if (focusImg) focusImg.src = `/api/camera_proxy/${ch.entity}?${Date.now()}`;
+    if (focusImg) {
+      const token = this._hass.states[ch.entity]?.attributes?.access_token || '';
+      focusImg.src = `/api/camera_proxy/${ch.entity}?token=${token}&t=${Date.now()}`;
+      focusImg.dataset.entity = ch.entity;
+    }
     if (focusName) focusName.textContent = `${ch.label} · ${ch.name}`;
     if (focusLbl)  focusLbl.textContent  = `${ch.label} · ${ch.name}`;
 
@@ -1207,13 +1216,17 @@ class HomeDashboardCard extends HTMLElement {
   }
 
   _startCamRefresh() {
-    // Refresh camera thumbnails every 10 seconds when on camera tab
     this._camRefreshInterval = setInterval(() => {
       if (this._activeTab !== 'kamery') return;
-      this.shadowRoot.querySelectorAll('.hdc-cam-thumb').forEach(img => {
-        const base = img.src.split('?')[0];
-        img.src = `${base}?${Date.now()}`;
-      });
+      const refreshImg = (img) => {
+        const entity = img.dataset.entity;
+        if (!entity) return;
+        const token = this._hass?.states[entity]?.attributes?.access_token || '';
+        img.src = `/api/camera_proxy/${entity}?token=${token}&t=${Date.now()}`;
+      };
+      this.shadowRoot.querySelectorAll('.hdc-cam-thumb').forEach(refreshImg);
+      const focus = this.shadowRoot.getElementById('hdc-focus-img');
+      if (focus) refreshImg(focus);
     }, 10000);
   }
 
