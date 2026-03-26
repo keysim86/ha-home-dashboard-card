@@ -670,13 +670,14 @@ function renderKamery(hass, cfg) {
 function renderAuta(hass, cfg) {
   const vehicles = cfg.vehicles || [];
   const cards = vehicles.map(v => {
-    const fuel  = sn(hass, v.fuel_level, 0);
-    const range = sv(hass, v.fuel_range, '—');
-    const odo   = sv(hass, v.odometer, '—');
-    const bat   = v.battery ? sn(hass, v.battery, 0) : null;
-    const lastUpd = sv(hass, v.last_update, '—');
+    const fuel     = sn(hass, v.fuel_level, 0);
+    const fuelLt   = v.fuel_amount ? sn(hass, v.fuel_amount, 1) : null;
+    const range    = sv(hass, v.fuel_range, '—');
+    const odo      = sv(hass, v.odometer, '—');
+    const bat      = v.battery ? sn(hass, v.battery, 0) : null;
+    const lastUpd  = sv(hass, v.last_update, '—');
     const fuelColor = fuel < 15 ? '#f87171' : fuel < 30 ? '#fbbf24' : '#4ade80';
-    const locked = v.lock ? sv(hass, v.lock, 'unlocked') === 'locked' : null;
+    const locked   = v.lock ? sv(hass, v.lock, 'unlocked') === 'locked' : null;
     return `
       <div class="hdc-carcard">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
@@ -687,7 +688,8 @@ function renderAuta(hass, cfg) {
           </div>
         </div>
         <div style="font-size:10px;color:#64748b;display:flex;justify-content:space-between;margin-bottom:3px">
-          <span>Paliwo</span><span style="color:${fuelColor}">${fuel}%</span>
+          <span>⛽ Paliwo</span>
+          <span style="color:${fuelColor};font-weight:600">${fuel}%${fuelLt !== null ? ` · ${fuelLt} L` : ''}</span>
         </div>
         <div class="hdc-carbar"><div class="hdc-carbar-fill" style="width:${fuel}%;background:${fuelColor}"></div></div>
         <div class="hdc-g3" style="gap:6px;margin-bottom:8px">
