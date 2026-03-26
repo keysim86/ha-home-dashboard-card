@@ -331,7 +331,24 @@ function renderVaillant(hass, cfg) {
   const z0Act = sa(hass, v.climate_zone0, 'current_temperature') || '—';
   const z0Tgt = sa(hass, v.climate_zone0, 'temperature') || '—';
 
+  const tInd = v.temp_indoor ? sn(hass, v.temp_indoor, 1) : coAct;
+
   return `
+    <div class="hdc-st">Regulacja Centralnego Ogrzewania (24h)</div>
+    <div class="hdc-g2" style="margin-bottom:6px">
+      <div><div style="font-size:20px;font-weight:700;color:#4ade80">${tInd}°C</div><div style="font-size:10px;color:#475569">Temp. w domu</div></div>
+      <div style="text-align:right"><div style="font-size:20px;font-weight:700;color:#38bdf8">${tOut}°C</div><div style="font-size:10px;color:#475569">Temp. na zewnątrz</div></div>
+    </div>
+    <div style="position:relative;height:160px;margin-bottom:14px"><canvas id="hdc-vc1"></canvas></div>
+
+    <div class="hdc-st">Temperatura Ogrzewania (24h)</div>
+    <div class="hdc-g3" style="margin-bottom:6px">
+      <div><div style="font-size:20px;font-weight:700;color:#38bdf8">${tTgtSup}°C</div><div style="font-size:10px;color:#475569">Temp. Docelowa</div></div>
+      <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:#f87171">${tSup}°C</div><div style="font-size:10px;color:#475569">Temp. Zasilania</div></div>
+      <div style="text-align:right"><div style="font-size:20px;font-weight:700;color:#fbbf24">${tRet}°C</div><div style="font-size:10px;color:#475569">Temp. Powrotu</div></div>
+    </div>
+    <div style="position:relative;height:160px;margin-bottom:14px"><canvas id="hdc-vc2"></canvas></div>
+
     <div class="hdc-st">Termostaty</div>
     <div class="hdc-ga" style="margin-bottom:10px">
       <div class="hdc-thcard">
@@ -867,9 +884,103 @@ class HomeDashboardCard extends HTMLElement {
     try {
       pane.innerHTML = tab.render(this._hass, this._config);
       if (this._activeTab === 'osoby') setTimeout(() => this._initOsobyMap(), 0);
+      if (this._activeTab === 'vaillant') setTimeout(() => this._initVaillantCharts(), 0);
     } catch(err) {
       pane.innerHTML = `<div style="color:#f87171;font-size:12px;padding:12px">Błąd renderowania: ${err.message}</div>`;
       console.error('[home-dashboard-card]', err);
+    }
+  }
+
+  async _initVaillantCharts() {
+    const v = this._config.vaillant || {};
+    const hass = this._hass;
+    const entities = [v.temp_supply, v.temp_return, v.temp_target_supply,
+      v.temp_indoor || null, v.temp_outdoor].filter(Boolean);
+    if (!entities.length) return;
+
+    const draw = async () => {
+      const now = new Date();
+      const start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      let hist;
+      try {
+        hist = await hass.callWS({
+          type: 'history/history_during_period',
+          start_time: start.toISOString(),
+          end_time: now.toISOString(),
+          entity_ids: entities,
+          minimal_response: true,
+          no_attributes: true,
+          significant_changes_only: false,
+        });
+      } catch(e) { console.error('[hdc] vaillant chart', e); return; }
+
+      const pts = id => (hist[id] || [])
+        .filter(d => d.s && d.s !== 'unavailable' && d.s !== 'unknown')
+        .map(d => ({ x: new Date((d.lu || d.last_updated_ts) * 1000), y: parseFloat(d.s) }))
+        .filter(d => !isNaN(d.y));
+
+      const defOpts = () => ({
+        type: 'line',
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: false,
+          plugins: {
+            legend: { display: true, position: 'bottom',
+              labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 10, padding: 8 } },
+            tooltip: { mode: 'index', intersect: false,
+              backgroundColor: '#1e293b', titleColor: '#94a3b8', bodyColor: '#f1f5f9',
+              callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)} °C` } }
+          },
+          scales: {
+            x: { type: 'time', time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
+              ticks: { color: '#475569', maxTicksLimit: 8, font: { size: 9 } },
+              grid: { color: 'rgba(255,255,255,.05)' } },
+            y: { ticks: { color: '#475569', font: { size: 9 } },
+              grid: { color: 'rgba(255,255,255,.05)' } }
+          }
+        }
+      });
+
+      const mkChart = (id, datasets) => {
+        const el = this.shadowRoot.getElementById(id);
+        if (!el || !datasets.length) return;
+        if (el._hdcChart) el._hdcChart.destroy();
+        const cfg = defOpts();
+        cfg.data = { datasets };
+        el._hdcChart = new Chart(el, cfg);
+      };
+
+      const ds = (label, id, color) => {
+        const data = pts(id);
+        return data.length ? { label, data, borderColor: color, backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0.3 } : null;
+      };
+
+      const indId = v.temp_indoor || null;
+      mkChart('hdc-vc1', [
+        ds('Zasilanie',        v.temp_supply,        '#fb923c'),
+        ds('Powrót',           v.temp_return,         '#fbbf24'),
+        ds('Temp. w domu',     indId,                 '#4ade80'),
+        ds('Temp. na zewn.',   v.temp_outdoor,        '#38bdf8'),
+      ].filter(Boolean));
+
+      mkChart('hdc-vc2', [
+        ds('Temp. Docelowa',   v.temp_target_supply,  '#38bdf8'),
+        ds('Temp. Zasilania',  v.temp_supply,          '#f87171'),
+        ds('Temp. Powrotu',    v.temp_return,          '#fbbf24'),
+      ].filter(Boolean));
+    };
+
+    const loadScript = (id, src, cb) => {
+      if (document.getElementById(id)) { if (window.Chart) cb(); else document.getElementById(id).addEventListener('load', cb); return; }
+      const s = document.createElement('script'); s.id = id; s.src = src; s.onload = cb;
+      document.head.appendChild(s);
+    };
+    if (window.Chart && window.Chart.defaults) {
+      draw();
+    } else {
+      loadScript('hdc-chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js', () =>
+        loadScript('hdc-chartjs-adapter', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js', draw)
+      );
     }
   }
 
