@@ -405,7 +405,20 @@ function renderVaillant(hass, cfg) {
         <div class="hdc-ir"><span class="hdc-ir-lbl">El. CO dziś</span><span class="hdc-ir-val y">${elCO} kWh</span></div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">El. CWU dziś</span><span class="hdc-ir-val b">${elCWU} kWh</span></div>
       </div>
-    </div>`;
+    </div>
+    ${v.gas_heating ? `
+    <div class="hdc-st">Dzienne zużycie gazu (ostatnie 30 dni)</div>
+    <div class="hdc-g2" style="margin-bottom:6px">
+      <div><div id="hdc-vg-heat" style="font-size:20px;font-weight:700;color:#fb923c">— m³</div><div style="font-size:10px;color:#475569">Ogrzewanie</div></div>
+      <div style="text-align:right"><div id="hdc-vg-cwu" style="font-size:20px;font-weight:700;color:#38bdf8">— m³</div><div style="font-size:10px;color:#475569">CWU</div></div>
+    </div>
+    <div style="position:relative;height:180px;margin-bottom:14px"><canvas id="hdc-vc3"></canvas></div>
+    <div class="hdc-st">Miesięczne zużycie gazu</div>
+    <div class="hdc-g2" style="margin-bottom:6px">
+      <div><div id="hdc-vg-mon" style="font-size:20px;font-weight:700;color:#fb923c">— m³</div><div style="font-size:10px;color:#475569">Zużycie gazu</div></div>
+      <div style="text-align:right"><div id="hdc-vg-year" style="font-size:20px;font-weight:700;color:#38bdf8">— m³</div><div style="font-size:10px;color:#475569">Roczne zużycie gazu</div></div>
+    </div>
+    <div style="position:relative;height:200px;margin-bottom:14px"><canvas id="hdc-vc4"></canvas></div>` : ''}`;
 }
 
 function renderMetering(hass, cfg) {
@@ -975,11 +988,118 @@ class HomeDashboardCard extends HTMLElement {
       const s = document.createElement('script'); s.id = id; s.src = src; s.onload = cb;
       document.head.appendChild(s);
     };
+    const drawGas = async () => {
+      const gasHeatId = v.gas_heating;
+      const gasCwuId  = v.gas_cwu;
+      if (!gasHeatId) return;
+      const MONTH_PL = ['Sty','Lut','Mar','Kwi','Maj','Cze','Lip','Sie','Wrz','Paź','Lis','Gru'];
+      const now = new Date();
+
+      // Daily — last 30 days
+      const d30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      // Monthly — last 12 months
+      const m12 = new Date(now); m12.setFullYear(m12.getFullYear() - 1); m12.setDate(1);
+
+      const ids = [gasHeatId, gasCwuId].filter(Boolean);
+      let statDay, statMon;
+      try {
+        [statDay, statMon] = await Promise.all([
+          hass.callWS({ type: 'recorder/statistics_during_period',
+            start_time: d30.toISOString(), end_time: now.toISOString(),
+            statistic_ids: ids, period: 'day', types: ['change'], units: { volume: 'm³' } }),
+          hass.callWS({ type: 'recorder/statistics_during_period',
+            start_time: m12.toISOString(), end_time: now.toISOString(),
+            statistic_ids: ids, period: 'month', types: ['change'], units: { volume: 'm³' } }),
+        ]);
+      } catch(e) { console.error('[hdc] gas stats', e); return; }
+
+      const toVal = (d) => Math.max(0, Math.round((d.change || 0) * 10) / 10);
+      const heatDay = (statDay[gasHeatId] || []).map(d => ({ x: new Date(d.start * 1000), y: toVal(d) }));
+      const cwuDay  = gasCwuId ? (statDay[gasCwuId]  || []).map(d => ({ x: new Date(d.start * 1000), y: toVal(d) })) : [];
+
+      // Update today header values
+      const todayHeat = heatDay.length ? heatDay[heatDay.length - 1].y : 0;
+      const todayCwu  = cwuDay.length  ? cwuDay[cwuDay.length - 1].y   : 0;
+      const elH = this.shadowRoot.getElementById('hdc-vg-heat');
+      const elC = this.shadowRoot.getElementById('hdc-vg-cwu');
+      if (elH) elH.textContent = todayHeat.toFixed(1) + ' m³';
+      if (elC && gasCwuId) elC.textContent = todayCwu.toFixed(1) + ' m³';
+
+      const barOpts = {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: {
+          legend: { display: true, position: 'bottom',
+            labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 10, padding: 8 } },
+          tooltip: { mode: 'index', intersect: false,
+            backgroundColor: '#1e293b', titleColor: '#94a3b8', bodyColor: '#f1f5f9',
+            callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)} m³` } }
+        },
+        scales: {
+          x: { ticks: { color: '#475569', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,.05)' } },
+          y: { ticks: { color: '#475569', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,.05)' } }
+        }
+      };
+
+      // Chart 3 — daily bars
+      const c3 = this.shadowRoot.getElementById('hdc-vc3');
+      if (c3 && heatDay.length) {
+        if (c3._hdcChart) c3._hdcChart.destroy();
+        const labels = heatDay.map(d => d.x.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' }));
+        const ds3 = [{ label: `Ogrzewanie: ${todayHeat.toFixed(1)} m³`, data: heatDay.map(d => d.y),
+          backgroundColor: '#fb923c', borderRadius: 3 }];
+        if (cwuDay.length) ds3.push({ label: `CWU: ${todayCwu.toFixed(1)} m³`, data: cwuDay.map(d => d.y),
+          backgroundColor: '#38bdf8', borderRadius: 3 });
+        c3._hdcChart = new Chart(c3, { type: 'bar', data: { labels, datasets: ds3 },
+          options: { ...barOpts,
+            plugins: { ...barOpts.plugins,
+              datalabels: undefined
+            },
+            scales: { ...barOpts.scales,
+              x: { ...barOpts.scales.x, type: 'time',
+                time: { unit: 'day', displayFormats: { day: 'd LLL' } },
+                adapters: {} }
+            }
+          }
+        });
+      }
+
+      // Chart 4 — monthly bars
+      const c4 = this.shadowRoot.getElementById('hdc-vc4');
+      const heatMon = (statMon[gasHeatId] || []);
+      const cwuMon  = gasCwuId ? (statMon[gasCwuId] || []) : [];
+      if (c4 && heatMon.length) {
+        if (c4._hdcChart) c4._hdcChart.destroy();
+        const labels = heatMon.map(d => MONTH_PL[new Date(d.start * 1000).getMonth()]);
+        const totalByMonth = heatMon.map((d, i) => {
+          const h = toVal(d);
+          const c = cwuMon[i] ? toVal(cwuMon[i]) : 0;
+          return Math.round((h + c) * 10) / 10;
+        });
+        const thisMonth = totalByMonth[totalByMonth.length - 1] || 0;
+        const yearTotal = Math.round(totalByMonth.reduce((a, b) => a + b, 0) * 10) / 10;
+        const elM = this.shadowRoot.getElementById('hdc-vg-mon');
+        const elY = this.shadowRoot.getElementById('hdc-vg-year');
+        if (elM) elM.textContent = thisMonth.toFixed(1) + ' m³';
+        if (elY) elY.textContent = yearTotal.toFixed(1) + ' m³';
+        c4._hdcChart = new Chart(c4, { type: 'bar',
+          data: { labels, datasets: [{ label: 'Zużycie gazu', data: totalByMonth,
+            backgroundColor: '#fb923c', borderRadius: 3 }] },
+          options: { ...barOpts,
+            plugins: { ...barOpts.plugins,
+              datalabels: undefined
+            }
+          }
+        });
+      }
+    };
+
+    const allDraw = async () => { await draw(); await drawGas(); };
+
     if (window.Chart && window.Chart.defaults) {
-      draw();
+      allDraw();
     } else {
       loadScript('hdc-chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js', () =>
-        loadScript('hdc-chartjs-adapter', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js', draw)
+        loadScript('hdc-chartjs-adapter', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js', allDraw)
       );
     }
   }
