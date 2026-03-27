@@ -621,7 +621,7 @@ function renderKamery(hass, cfg) {
     <div class="hdc-cam-focus">
       <div class="hdc-camfeed" style="aspect-ratio:16/9;max-height:480px">
         ${focusCam.entity
-          ? `<img id="hdc-focus-img" src="${camUrl(focusCam.entity)}" data-entity="${focusCam.entity}" alt="${focusCam.name}" style="width:100%;height:100%;object-fit:cover">`
+          ? `<img id="hdc-focus-img" src="${camUrl(focusCam.entity)}" data-entity="${focusCam.entity}" alt="${focusCam.name}">`
           : `<div class="hdc-cam-placeholder">📹<span>${focusCam.name||'Brak kamery'}</span></div>`
         }
       </div>
