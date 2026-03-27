@@ -393,7 +393,7 @@ function renderVaillant(hass, cfg) {
         const step = st ? (parseFloat(st.attributes.step) || 1) : 1;
         const min  = st ? (parseFloat(st.attributes.min)  ?? -999) : -999;
         const max  = st ? (parseFloat(st.attributes.max)  ?? 9999) : 9999;
-        const dec  = step < 0.01 ? 3 : step < 1 ? 2 : 0;
+        const dec  = s.decimals !== undefined ? s.decimals : (step < 0.01 ? 3 : step < 0.1 ? 2 : step < 1 ? 1 : 0);
         const unit = s.unit !== undefined ? s.unit : (st?.attributes.unit_of_measurement || '');
         return `<div class="hdc-ir" style="padding:6px 0">
           <span class="hdc-ir-lbl">${s.name || s.entity}</span>
