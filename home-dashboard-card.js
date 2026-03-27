@@ -211,7 +211,7 @@ function renderOsoby(hass, cfg) {
   return `
     <div id="hdc-persons-list"><div class="hdc-ga">${cards}</div></div>
     <div style="font-size:10px;color:#475569;margin:10px 0 4px;padding-left:2px">📍 Lokalizacje</div>
-    <div id="hdc-fmap-real" style="height:380px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.07)"></div>`;
+    <div id="hdc-fmap-real" style="height:570px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.07)"></div>`;
 }
 
 function renderEnergia(hass, cfg) {
@@ -1342,7 +1342,7 @@ class HomeDashboardCard extends HTMLElement {
         default_zoom: 14,
         dark_mode: true,
       });
-      card.style.cssText = 'display:block;height:380px;width:100%';
+      card.style.cssText = 'display:block;height:570px;width:100%';
       mapDiv.appendChild(card);
       card.hass = hass;
     });
