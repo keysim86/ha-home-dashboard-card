@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.2] - 2026-03-27
+
+### Added
+- Opcja `show_header: false` — ukrywa nagłówek karty (tytuł + zegar) gdy HA wyświetla tytuł dashboardu
+
 ## [1.3.1] - 2026-03-27
 
 ### Fixed
