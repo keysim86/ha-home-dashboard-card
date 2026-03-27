@@ -330,8 +330,29 @@ function renderVaillant(hass, cfg) {
   const pressColor = press < 1.0 ? 'r' : press > 2.5 ? 'r' : press < 1.4 ? 'y' : 'g';
 
   const coAct = sa(hass, v.climate_co, 'current_temperature') || '—';
-
   const tInd = v.temp_indoor ? sn(hass, v.temp_indoor, 1) : coAct;
+
+  const PM_LABEL = { schedule:'Harmonogram', manual:'Ręczny', eco:'Eco', away:'Poza domem',
+    boost:'Turbo', sleep:'Sen', home:'Dom', comfort:'Komfort', off:'Wyłączony', none:'—' };
+  const pmLabel = p => PM_LABEL[p] || p;
+
+  const coPmCur   = sa(hass, v.climate_co,  'preset_mode')  || '';
+  const coPmList  = (sa(hass, v.climate_co,  'preset_modes') || []).filter(p => p !== 'none');
+  const coHvac    = sv(hass, v.climate_co,   'off');
+  const coHvacModes = sa(hass, v.climate_co, 'hvac_modes') || [];
+
+  const cwuPmCur   = sa(hass, v.climate_cwu, 'preset_mode')  || '';
+  const cwuPmList  = (sa(hass, v.climate_cwu,'preset_modes') || []).filter(p => p !== 'none');
+  const cwuHvac    = sv(hass, v.climate_cwu, 'off');
+  const cwuHvacModes = sa(hass, v.climate_cwu,'hvac_modes') || [];
+
+  const modeBtns = (entity, pmList, pmCur, hvac, hvacModes) => `
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;justify-content:center">
+      ${hvacModes.includes('off') ? `<button class="hdc-tbtn" style="font-size:10px;width:auto;height:22px;padding:0 8px;${hvac==='off'?'background:rgba(248,113,113,.2);border-color:#f87171;color:#f87171':''}"
+        data-action="set_hvac_mode" data-entity="${entity}" data-mode="off">⏻ Wył.</button>` : ''}
+      ${pmList.map(p => `<button class="hdc-tbtn" style="font-size:10px;width:auto;height:22px;padding:0 8px;${pmCur===p?'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8':''}"
+        data-action="set_preset" data-entity="${entity}" data-preset="${p}">${pmLabel(p)}</button>`).join('')}
+    </div>`;
 
   return `
     <div class="hdc-st">Termostaty</div>
@@ -350,7 +371,7 @@ function renderVaillant(hass, cfg) {
           `}
         </div>
         <div id="hdc-vl-flame" class="hdc-th-mode heat">● ${flame?'Ogrzewanie aktywne':'Standby'}</div>
-        ${v.climate_zone0 ? (() => { const pm = sa(hass, v.climate_zone0, 'preset_mode'); return `<div id="hdc-vl-z0mode" class="hdc-th-mode off" style="margin-top:4px">📅 ${pm && pm !== 'none' ? pm : 'Harmonogram'}</div>`; })() : ''}
+        ${modeBtns(v.climate_co, coPmList, coPmCur, coHvac, coHvacModes)}
       </div>
       <div class="hdc-thcard">
         <div class="hdc-th-title">🚿 CWU</div>
@@ -360,7 +381,8 @@ function renderVaillant(hass, cfg) {
           <button class="hdc-tbtn" data-action="climate_down" data-entity="${v.climate_cwu}" data-step="1">−</button>
           <button class="hdc-tbtn" data-action="climate_up" data-entity="${v.climate_cwu}" data-step="1">+</button>
         </div>
-        <div class="hdc-th-mode dhw">● Podgrzewanie CWU</div>
+        <div id="hdc-vl-cwumode" class="hdc-th-mode dhw">● ${cwuHvac==='off'?'Wyłączone':'Podgrzewanie CWU'}</div>
+        ${modeBtns(v.climate_cwu, cwuPmList, cwuPmCur, cwuHvac, cwuHvacModes)}
       </div>
     </div>
     <div class="hdc-st">Kocioł Vaillant ecoTEC Plus</div>
@@ -1046,7 +1068,6 @@ class HomeDashboardCard extends HTMLElement {
     setText('hdc-vl-coact',   `${coAct}°`);
     setText('hdc-co-set',     coSet);
     setText('hdc-vl-flame',   `● ${flame ? 'Ogrzewanie aktywne' : 'Standby'}`);
-    if (v.climate_zone0) { const pm = sa(hass, v.climate_zone0, 'preset_mode'); setText('hdc-vl-z0mode', '📅 ' + (pm && pm !== 'none' ? pm : 'Harmonogram')); }
     setText('hdc-vl-cwucur',  `${cwuCur}°`);
     setText('hdc-cwu-set',    cwuTgt);
     setText('hdc-vl-sup2',    `${tSup}°C`);
@@ -1368,6 +1389,12 @@ class HomeDashboardCard extends HTMLElement {
     }
     if (action === 'toggle') {
       this._hass.callService('homeassistant', 'toggle', { entity_id: entity });
+    }
+    if (action === 'set_preset') {
+      this._hass.callService('climate', 'set_preset_mode', { entity_id: entity, preset_mode: btn.dataset.preset });
+    }
+    if (action === 'set_hvac_mode') {
+      this._hass.callService('climate', 'set_hvac_mode', { entity_id: entity, hvac_mode: btn.dataset.mode });
     }
   }
 
