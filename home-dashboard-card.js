@@ -1195,41 +1195,46 @@ class HomeDashboardCard extends HTMLElement {
         }
       };
 
-      // Chart 3 — daily bars
+      // Chart 3 — daily bars (stacked: heating + CWU)
       const c3 = this.shadowRoot.getElementById('hdc-vc3');
       if (c3 && heatDay.length) {
         if (c3._hdcChart) c3._hdcChart.destroy();
         const labels = heatDay.map(d => d.x.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' }));
         const ds3 = [{ label: `Ogrzewanie: ${todayHeat.toFixed(1)} m³`, data: heatDay.map(d => d.y),
-          backgroundColor: '#fb923c', borderRadius: 3 }];
+          backgroundColor: '#fb923c', borderRadius: 3, stack: 'gas' }];
         if (cwuDay.length) ds3.push({ label: `CWU: ${todayCwu.toFixed(1)} m³`, data: cwuDay.map(d => d.y),
-          backgroundColor: '#38bdf8', borderRadius: 3 });
+          backgroundColor: '#38bdf8', borderRadius: 3, stack: 'gas' });
         c3._hdcChart = new Chart(c3, { type: 'bar', data: { labels, datasets: ds3 },
           options: { ...barOpts,
-            plugins: { ...barOpts.plugins,
-              datalabels: undefined
-            },
-            scales: { ...barOpts.scales,
-              x: { ...barOpts.scales.x, type: 'time',
-                time: { unit: 'day', displayFormats: { day: 'd LLL' } },
-                adapters: {} }
+            scales: {
+              x: { ...barOpts.scales.x, stacked: true },
+              y: { ...barOpts.scales.y, stacked: true }
             }
           }
         });
       }
 
-      // Chart 4 — monthly bars
+      // Chart 4 — monthly bars (merge heat+cwu by year-month key to avoid index mismatch)
       const c4 = this.shadowRoot.getElementById('hdc-vc4');
-      const heatMon = (statMon[gasHeatId] || []);
-      const cwuMon  = gasCwuId ? (statMon[gasCwuId] || []) : [];
+      const heatMon = (statMon[gasHeatId] || []).slice().sort((a, b) => a.start - b.start);
+      const cwuMon  = gasCwuId ? (statMon[gasCwuId] || []).slice().sort((a, b) => a.start - b.start) : [];
       if (c4 && heatMon.length) {
         if (c4._hdcChart) c4._hdcChart.destroy();
-        const labels = heatMon.map(d => MONTH_PL[new Date(d.start * 1000).getMonth()]);
-        const totalByMonth = heatMon.map((d, i) => {
-          const h = toVal(d);
-          const c = cwuMon[i] ? toVal(cwuMon[i]) : 0;
-          return Math.round((h + c) * 10) / 10;
+        const monMap = {};
+        heatMon.forEach(d => {
+          const dt = new Date(d.start * 1000);
+          const mk = dt.getFullYear() + '-' + String(dt.getMonth()).padStart(2, '0');
+          monMap[mk] = monMap[mk] || { label: MONTH_PL[dt.getMonth()], heat: 0, cwu: 0 };
+          monMap[mk].heat += toVal(d);
         });
+        cwuMon.forEach(d => {
+          const dt = new Date(d.start * 1000);
+          const mk = dt.getFullYear() + '-' + String(dt.getMonth()).padStart(2, '0');
+          if (monMap[mk]) monMap[mk].cwu += toVal(d);
+        });
+        const monKeys = Object.keys(monMap).sort();
+        const labels = monKeys.map(k => monMap[k].label);
+        const totalByMonth = monKeys.map(k => Math.round((monMap[k].heat + monMap[k].cwu) * 10) / 10);
         const thisMonth = totalByMonth[totalByMonth.length - 1] || 0;
         const yearTotal = Math.round(totalByMonth.reduce((a, b) => a + b, 0) * 10) / 10;
         const elM = this.shadowRoot.getElementById('hdc-vg-mon');
@@ -1239,11 +1244,7 @@ class HomeDashboardCard extends HTMLElement {
         c4._hdcChart = new Chart(c4, { type: 'bar',
           data: { labels, datasets: [{ label: 'Zużycie gazu', data: totalByMonth,
             backgroundColor: '#fb923c', borderRadius: 3 }] },
-          options: { ...barOpts,
-            plugins: { ...barOpts.plugins,
-              datalabels: undefined
-            }
-          }
+          options: { ...barOpts }
         });
       }
     };
