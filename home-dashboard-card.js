@@ -216,16 +216,8 @@ function renderOsoby(hass, cfg) {
       const st = hass.states[ws.entity];
       if (!st) return '';
       const daysTo = st.attributes.daysTo != null ? parseInt(st.attributes.daysTo) : null;
-      // date attribute (YYYY-MM-DD) lub oblicz z daysTo
-      let dateStr = '—';
-      const rawDate = st.attributes.date;
-      if (rawDate && rawDate !== 'unknown' && rawDate !== 'unavailable') {
-        const d = new Date(rawDate + 'T12:00:00'); // T12 unika przesunięcia UTC
-        if (!isNaN(d)) dateStr = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
-      } else if (daysTo !== null) {
-        const d = new Date(Date.now() + daysTo * 86400000);
-        dateStr = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
-      }
+      // Stan sensora to data sformatowana przez value_template w HA
+      const dateStr = (st.state && st.state !== 'unknown' && st.state !== 'unavailable') ? st.state : '—';
       let urgency = '', daysLabel = '—';
       if (daysTo === 0)                    { urgency = '#f87171'; daysLabel = '🔴 Dziś!'; }
       else if (daysTo === 1)               { urgency = '#fb923c'; daysLabel = '🟠 Jutro'; }
