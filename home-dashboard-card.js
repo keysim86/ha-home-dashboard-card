@@ -1268,27 +1268,18 @@ class HomeDashboardCard extends HTMLElement {
       mapDiv.innerHTML = '<div style="color:#475569;font-size:11px;padding:16px;text-align:center">Brak skonfigurowanych trackerów lokalizacji</div>';
       return;
     }
-    const build = () => {
-      mapDiv.innerHTML = '';
-      const mapEl = document.createElement('ha-map');
-      mapEl.style.cssText = 'display:block;height:240px;width:100%';
-      mapDiv.appendChild(mapEl);
-      mapEl.hass = hass;
-      mapEl.entities = persons.map(p => ({
-        entity_id: p.device_tracker,
-        color: p.color || undefined,
-        label_mode: 'name',
-        name: p.name || p.device_tracker,
-      }));
-      mapEl.autoFit = true;
-      mapEl.fitZones = true;
-      mapEl.darkMode = true;
-    };
-    if (customElements.get('ha-map')) {
-      build();
-    } else {
-      customElements.whenDefined('ha-map').then(build);
-    }
+    mapDiv.innerHTML = '';
+    window.loadCardHelpers?.().then(helpers => {
+      const card = helpers.createCardElement({
+        type: 'map',
+        entities: persons.map(p => ({ entity: p.device_tracker })),
+        auto_fit: true,
+        dark_mode: true,
+      });
+      card.hass = hass;
+      card.style.cssText = 'display:block;height:240px;width:100%';
+      mapDiv.appendChild(card);
+    });
   }
 
   _initCarMaps() {
@@ -1298,18 +1289,18 @@ class HomeDashboardCard extends HTMLElement {
       if (!v.device_tracker) return;
       const mapDiv = this.shadowRoot.getElementById(`hdc-car-map-${idx}`);
       if (!mapDiv) return;
-      const build = () => {
-        mapDiv.innerHTML = '';
-        const mapEl = document.createElement('ha-map');
-        mapEl.style.cssText = 'display:block;height:180px;width:100%';
-        mapDiv.appendChild(mapEl);
-        mapEl.hass = hass;
-        mapEl.entities = [{ entity_id: v.device_tracker, label_mode: 'name', name: v.name || v.device_tracker }];
-        mapEl.autoFit = true;
-        mapEl.darkMode = true;
-      };
-      if (customElements.get('ha-map')) build();
-      else customElements.whenDefined('ha-map').then(build);
+      mapDiv.innerHTML = '';
+      window.loadCardHelpers?.().then(helpers => {
+        const card = helpers.createCardElement({
+          type: 'map',
+          entities: [{ entity: v.device_tracker }],
+          auto_fit: true,
+          dark_mode: true,
+        });
+        card.hass = hass;
+        card.style.cssText = 'display:block;height:180px;width:100%';
+        mapDiv.appendChild(card);
+      });
     });
   }
 
