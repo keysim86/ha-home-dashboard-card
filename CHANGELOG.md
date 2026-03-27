@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.1] - 2026-03-27
+
+### Fixed
+- Zakładka Kamery: naprawiono przycinanie obrazu w aktywnym podglądzie — usunięto inline `object-fit:cover` nadpisujący styl CSS
+- Zakładka Osoby: mapa wyświetla encje `person.xxx` zamiast `device_tracker`, wysokość zwiększona do 400px, dodano `fit_zones`
+- Zakładka Osoby/Auta: mapy inicjalizowane poprawnie — `hass` ustawiany po `appendChild`
+- Zakładka Vaillant: wykres dzienny gazu — poprawiono kolejność dat (sortowanie po timestamp), tooltip z sumą ogrzewanie+CWU, legenda bez zdublowanych wartości
+- Zakładka Vaillant: termostat CO — obsługa `target_temp_low` jako fallback, filtrowanie wartości `none` w preset_mode
+- Zakładka Vaillant: ustawienia — 1 miejsce po przecinku dla step < 1, 2 dla step < 0.1; opcjonalne pole `decimals` w YAML
+
 ## [1.2.0] - 2026-03-27
 
 ### Poprawiono
