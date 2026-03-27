@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.2] - 2026-03-27
+
+### Fixed
+- Zakładka Auta: naprawiono brak mapy — kod obsługuje teraz klucz `location:` oraz `device_tracker:` w YAML
+- Zakładka Auta: data ostatniej aktualizacji widoczna zawsze — przy pojeździe z baterią wyświetla się jako osobna linia `🕐`, bez baterii w trzecim kafelku
+- Zakładka Vaillant: wykres dzienny gazu — dodano filtr client-side do ostatnich 30 dni (API zwracało dane historyczne)
+- Zakładka Vaillant: termostat CO — dodano opcję `co_temp_input` w YAML wskazującą na `input_number` gdy encja klimatu nie obsługuje zmiany temperatury
+- Zakładka Osoby: mapa powiększona do 550px, usunięto `fit_zones` (powodował centrowanie na strefę home zamiast lokalizacji osób)
+
 ## [1.2.1] - 2026-03-27
 
 ### Fixed
