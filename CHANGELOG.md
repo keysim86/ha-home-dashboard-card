@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.4] - 2026-03-27
+
+### Fixed
+- Zakładka Auta: mapa powiększona do 280px wysokości
+- Zakładka Auta: data ostatniej aktualizacji wyświetlana zawsze jako linia `🕐` pod chipami (niezależnie od tego czy pojazd ma baterię 12V)
+- Zakładka Osoby: mapa zmniejszona do 380px (nie wychodzi poza widok), dodano `default_zoom: 14` dla lepszego kadrowania
+
 ## [1.2.3] - 2026-03-27
 
 ### Fixed
