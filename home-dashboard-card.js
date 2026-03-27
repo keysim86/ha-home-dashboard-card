@@ -744,7 +744,7 @@ function renderAuta(hass, cfg) {
 
     // Map placeholder
     const mapDiv = tracker
-      ? `<div id="hdc-car-map-${idx}" style="height:180px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.07);margin-top:8px"></div>`
+      ? `<div id="hdc-car-map-${idx}" style="height:280px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.07);margin-top:8px"></div>`
       : '';
 
     return `
@@ -764,9 +764,9 @@ function renderAuta(hass, cfg) {
         <div class="hdc-g3" style="gap:6px;margin-bottom:8px">
           <div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Zasięg</div><div class="hdc-sc-val" style="color:${fuelColor};font-size:15px">${range}</div></div>
           <div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Przebieg</div><div class="hdc-sc-val" style="font-size:15px">${parseInt(odo).toLocaleString('pl')}</div></div>
-          ${bat !== null ? `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Bat. 12V</div><div class="hdc-sc-val" style="color:${battColor(bat)};font-size:15px">${bat}%</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Ostat. aktual.</div><div class="hdc-sc-val" style="font-size:12px;color:#64748b">${lastUpd}</div></div>`}
+          ${bat !== null ? `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Bat. 12V</div><div class="hdc-sc-val" style="color:${battColor(bat)};font-size:15px">${bat}%</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">&nbsp;</div><div class="hdc-sc-val">&nbsp;</div></div>`}
         </div>
-        ${bat !== null && lastUpd !== '—' ? `<div style="font-size:10px;color:#475569;margin-bottom:6px">🕐 ${lastUpd}</div>` : ''}
+        ${lastUpd !== '—' ? `<div style="font-size:10px;color:#475569;margin-bottom:6px">🕐 ${lastUpd}</div>` : ''}
         <div class="hdc-chips">
           ${locked !== null ? `<span class="hdc-ch ${locked?'g':'r'}">${locked?'🔒 Zamknięty':'🔓 Otwarty'}</span>` : ''}
           ${connChip}
@@ -1349,7 +1349,7 @@ class HomeDashboardCard extends HTMLElement {
           cardCfg.default_zoom = 15;
         }
         const card = helpers.createCardElement(cardCfg);
-        card.style.cssText = 'display:block;height:180px;width:100%';
+        card.style.cssText = 'display:block;height:280px;width:100%';
         mapDiv.appendChild(card);
         card.hass = hass;
       });
