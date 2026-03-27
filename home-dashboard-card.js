@@ -208,10 +208,45 @@ function renderOsoby(hass, cfg) {
       </div>`;
   }).join('');
 
+  // Waste collection section
+  const wasteSensors = (cfg.waste || {}).sensors || [];
+  let wasteRows = '';
+  if (wasteSensors.length) {
+    const rows = wasteSensors.map(ws => {
+      const st = hass.states[ws.entity];
+      if (!st) return '';
+      const daysTo = st.attributes.daysTo != null ? parseInt(st.attributes.daysTo) : null;
+      const dateAttr = st.attributes.date || st.state;
+      let dateStr = '—';
+      if (dateAttr && dateAttr !== 'unknown' && dateAttr !== 'unavailable') {
+        const d = new Date(dateAttr);
+        if (!isNaN(d)) dateStr = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+        else dateStr = dateAttr;
+      }
+      let urgency = '', daysLabel = '—';
+      if (daysTo === 0)      { urgency = '#f87171'; daysLabel = '🔴 Dziś!'; }
+      else if (daysTo === 1) { urgency = '#fb923c'; daysLabel = '🟠 Jutro'; }
+      else if (daysTo <= 3)  { urgency = '#fbbf24'; daysLabel = `za ${daysTo} dni`; }
+      else if (daysTo != null){ urgency = '#64748b'; daysLabel = `za ${daysTo} dni`; }
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.06)">
+        <span style="font-size:20px">${ws.icon || '🗑️'}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:#f1f5f9">${ws.name || ws.entity}</div>
+          <div style="font-size:10px;color:#475569">${dateStr}</div>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:${urgency || '#64748b'}">${daysLabel}</div>
+      </div>`;
+    }).filter(Boolean).join('');
+    wasteRows = `
+      <div class="hdc-st" style="margin-top:14px">Harmonogram odpadów</div>
+      <div style="display:flex;flex-direction:column;gap:6px">${rows || '<div style="color:#475569;font-size:11px;padding:8px">Brak danych</div>'}</div>`;
+  }
+
   return `
     <div style="display:flex;gap:12px;align-items:flex-start">
       <div style="flex:1;min-width:0">
         <div id="hdc-persons-list"><div class="hdc-ga">${cards}</div></div>
+        ${wasteRows}
       </div>
       <div style="flex:1;min-width:0">
         <div style="font-size:10px;color:#475569;margin:0 0 4px;padding-left:2px">📍 Lokalizacje</div>
@@ -891,7 +926,7 @@ function renderAlerty(hass, cfg) {
 // ============================================================
 
 const ALL_TABS = [
-  { id: 'osoby',     label: '👨‍👩‍👧‍👦 Osoby',    render: renderOsoby },
+  { id: 'osoby',     label: '🏠 Home',      render: renderOsoby, badge: true },
   { id: 'energia',   label: '⚡ Energia',   render: renderEnergia },
   { id: 'vaillant',  label: '🔥 Vaillant',  render: renderVaillant },
   { id: 'metering',  label: '📊 Metering',  render: renderMetering },
@@ -928,6 +963,7 @@ class HomeDashboardCard extends HTMLElement {
     } else {
       this._updatePane();
       this._updateAlertBadge();
+      this._updateWasteBadge();
     }
   }
 
@@ -985,6 +1021,7 @@ class HomeDashboardCard extends HTMLElement {
     this._startClock();
     this._startCamRefresh();
     this._updateAlertBadge();
+    this._updateWasteBadge();
   }
 
   _resolveTabs(cfg) {
@@ -1456,6 +1493,22 @@ class HomeDashboardCard extends HTMLElement {
 
     this.shadowRoot.querySelectorAll('.hdc-camcard').forEach(c => c.classList.remove('focus'));
     card.classList.add('focus');
+  }
+
+  _updateWasteBadge() {
+    const sensors = ((this._config.waste || {}).sensors) || [];
+    let count = 0;
+    sensors.forEach(ws => {
+      const st = this._hass.states[ws.entity];
+      if (!st) return;
+      const daysTo = st.attributes.daysTo != null ? parseInt(st.attributes.daysTo) : null;
+      if (daysTo !== null && daysTo <= 1) count++;
+    });
+    const badge = this.shadowRoot.getElementById('hdc-badge-osoby');
+    if (badge) {
+      badge.textContent = count;
+      badge.style.display = count > 0 ? 'inline' : 'none';
+    }
   }
 
   _updateAlertBadge() {
