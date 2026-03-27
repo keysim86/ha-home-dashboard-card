@@ -694,7 +694,8 @@ function renderAuta(hass, cfg) {
     const range    = sv(hass, v.fuel_range, '—');
     const odo      = sv(hass, v.odometer, '—');
     const bat      = v.battery ? sn(hass, v.battery, 0) : null;
-    const lastUpd  = sv(hass, v.last_update, '—');
+    const lastUpdRaw = sv(hass, v.last_update, '');
+    const lastUpd = lastUpdRaw ? (() => { const d = new Date(lastUpdRaw); return isNaN(d) ? lastUpdRaw : `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`; })() : '—';
     const fuelColor = fuel < 15 ? '#f87171' : fuel < 30 ? '#fbbf24' : '#4ade80';
     const locked   = v.lock ? sv(hass, v.lock, 'unlocked') === 'locked' : null;
 
