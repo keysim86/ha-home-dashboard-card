@@ -1311,12 +1311,23 @@ class HomeDashboardCard extends HTMLElement {
       if (!mapDiv) return;
       mapDiv.innerHTML = '';
       window.loadCardHelpers?.().then(helpers => {
-        const card = helpers.createCardElement({
+        const trackerState = hass.states[tracker];
+        const lat = trackerState?.attributes?.latitude;
+        const lon = trackerState?.attributes?.longitude;
+        const cardCfg = {
           type: 'map',
           entities: [{ entity: tracker }],
-          auto_fit: true,
           dark_mode: true,
-        });
+        };
+        if (lat && lon) {
+          cardCfg.auto_fit = true;
+          cardCfg.default_zoom = 15;
+        } else {
+          cardCfg.auto_fit = true;
+          cardCfg.fit_zones = true;
+          cardCfg.default_zoom = 15;
+        }
+        const card = helpers.createCardElement(cardCfg);
         card.style.cssText = 'display:block;height:180px;width:100%';
         mapDiv.appendChild(card);
         card.hass = hass;
