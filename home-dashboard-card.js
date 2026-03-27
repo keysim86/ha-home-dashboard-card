@@ -456,9 +456,9 @@ function renderMetering(hass, cfg) {
   const salt      = sn(hass, m.ecowater_salt, 0);
   const saltDays  = sn(hass, m.ecowater_days_salt, 0);
   const flow      = sn(hass, m.ecowater_flow, 1);
-  const waterToday= sv(hass, m.ecowater_today, '—');
+  const waterToday= sn(hass, m.ecowater_today, 2);
   const daysRegen = sn(hass, m.ecowater_days_regen, 0);
-  const rock      = sv(hass, m.ecowater_rock, '—');
+  const rock      = sn(hass, m.ecowater_rock, 2);
   const saltColor = salt < 20 ? 'r' : salt < 40 ? 'y' : 'g';
   const saltDaysColor = saltDays < 7 ? 'r' : saltDays < 14 ? 'y' : 'g';
 
@@ -512,9 +512,9 @@ function renderMetering(hass, cfg) {
       <div class="hdc-box-title">🍽 Zmywarka Haier hOn</div>
       <div class="hdc-g2">
         <div>
-          <div class="hdc-ir"><span class="hdc-ir-lbl">Drzwi</span><span class="hdc-ir-val ${dwDoor==='off'?'g':'y'}">${dwDoor==='off'?'Zamknięte':'Otwarte'}</span></div>
-          <div class="hdc-ir"><span class="hdc-ir-lbl">Sól</span><span class="hdc-ir-val ${dwSalt?'g':'r'}">${dwSalt?'OK':'Uzupełnij'}</span></div>
-          <div class="hdc-ir"><span class="hdc-ir-lbl">Nabłyszczacz</span><span class="hdc-ir-val ${dwRinse?'g':'y'}">${dwRinse?'OK':'Uzupełnij'}</span></div>
+          <div class="hdc-ir"><span class="hdc-ir-lbl">Drzwi</span><span class="hdc-ir-val ${dwDoor==='on'?'g':'y'}">${dwDoor==='on'?'Zamknięte':'Otwarte'}</span></div>
+          <div class="hdc-ir"><span class="hdc-ir-lbl">Sól</span><span class="hdc-ir-val ${!dwSalt?'g':'r'}">${!dwSalt?'OK':'Uzupełnij'}</span></div>
+          <div class="hdc-ir"><span class="hdc-ir-lbl">Nabłyszczacz</span><span class="hdc-ir-val ${!dwRinse?'g':'y'}">${!dwRinse?'OK':'Uzupełnij'}</span></div>
         </div>
         <div>
           <div class="hdc-ir"><span class="hdc-ir-lbl">Zużycie wody</span><span class="hdc-ir-val b">${dwWater} l</span></div>
