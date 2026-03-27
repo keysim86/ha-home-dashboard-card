@@ -1254,13 +1254,16 @@ class HomeDashboardCard extends HTMLElement {
       } catch(e) { console.error('[hdc] gas stats', e); return; }
 
       const toVal = (d) => Math.max(0, Math.round((d.change || 0) * 10) / 10);
+      // start może być sekundami (number) lub ISO stringiem (string)
+      const toMs = d => typeof d.start === 'string' ? new Date(d.start).getTime()
+        : (d.start > 1e12 ? d.start : d.start * 1000);
       const cutoff = d30.getTime();
-      const heatDay = (statDay[gasHeatId] || []).slice().sort((a,b) => a.start - b.start)
-        .filter(d => d.start * 1000 >= cutoff)
-        .map(d => ({ x: new Date(d.start * 1000), y: toVal(d) }));
-      const cwuDay  = gasCwuId ? (statDay[gasCwuId] || []).slice().sort((a,b) => a.start - b.start)
-        .filter(d => d.start * 1000 >= cutoff)
-        .map(d => ({ x: new Date(d.start * 1000), y: toVal(d) })) : [];
+      const heatDay = (statDay[gasHeatId] || []).slice().sort((a,b) => toMs(a) - toMs(b))
+        .filter(d => toMs(d) >= cutoff)
+        .map(d => ({ x: new Date(toMs(d)), y: toVal(d) }));
+      const cwuDay  = gasCwuId ? (statDay[gasCwuId] || []).slice().sort((a,b) => toMs(a) - toMs(b))
+        .filter(d => toMs(d) >= cutoff)
+        .map(d => ({ x: new Date(toMs(d)), y: toVal(d) })) : [];
 
       // Update today header values (last element after sort = most recent)
       const todayHeat = heatDay.length ? heatDay[heatDay.length - 1].y : 0;
@@ -1317,20 +1320,20 @@ class HomeDashboardCard extends HTMLElement {
 
       // Chart 4 — monthly bars (merge heat+cwu by year-month key to avoid index mismatch)
       const c4 = this.shadowRoot.getElementById('hdc-vc4');
-      const heatMon = (statMon[gasHeatId] || []).slice().sort((a, b) => a.start - b.start);
-      const cwuMon  = gasCwuId ? (statMon[gasCwuId] || []).slice().sort((a, b) => a.start - b.start) : [];
+      const heatMon = (statMon[gasHeatId] || []).slice().sort((a, b) => toMs(a) - toMs(b));
+      const cwuMon  = gasCwuId ? (statMon[gasCwuId] || []).slice().sort((a, b) => toMs(a) - toMs(b)) : [];
       if (c4 && heatMon.length) {
         if (c4._hdcChart) c4._hdcChart.destroy();
         const monMap = {};
         heatMon.forEach(d => {
-          const dt = new Date(d.start * 1000);
-          const mk = dt.getFullYear() + '-' + String(dt.getMonth()).padStart(2, '0');
-          monMap[mk] = monMap[mk] || { label: MONTH_PL[dt.getMonth()], heat: 0, cwu: 0 };
+          const dt = new Date(toMs(d));
+          const mk = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
+          monMap[mk] = monMap[mk] || { label: MONTH_PL[dt.getMonth()] + ' ' + dt.getFullYear(), heat: 0, cwu: 0 };
           monMap[mk].heat += toVal(d);
         });
         cwuMon.forEach(d => {
-          const dt = new Date(d.start * 1000);
-          const mk = dt.getFullYear() + '-' + String(dt.getMonth()).padStart(2, '0');
+          const dt = new Date(toMs(d));
+          const mk = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
           if (monMap[mk]) monMap[mk].cwu += toVal(d);
         });
         const monKeys = Object.keys(monMap).sort();
