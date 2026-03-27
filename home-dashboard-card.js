@@ -211,7 +211,7 @@ function renderOsoby(hass, cfg) {
   return `
     <div id="hdc-persons-list"><div class="hdc-ga">${cards}</div></div>
     <div style="font-size:10px;color:#475569;margin:10px 0 4px;padding-left:2px">📍 Lokalizacje</div>
-    <div id="hdc-fmap-real" style="height:400px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.07)"></div>`;
+    <div id="hdc-fmap-real" style="height:550px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.07)"></div>`;
 }
 
 function renderEnergia(hass, cfg) {
@@ -707,10 +707,11 @@ function renderAuta(hass, cfg) {
       connChip = `<span class="hdc-ch ${online?'g':'r'}">${online?'🟢 Online':'🔴 Offline'}</span>`;
     }
 
-    // Location from device_tracker
+    // Location from device_tracker (supports both 'location' and 'device_tracker' YAML keys)
+    const tracker = v.location || v.device_tracker;
     let locLine = '';
-    if (v.device_tracker) {
-      const dtSt = hass.states[v.device_tracker];
+    if (tracker) {
+      const dtSt = hass.states[tracker];
       if (dtSt) {
         const zone = dtSt.state;
         const addr = dtSt.attributes.address || dtSt.attributes.location_name || null;
@@ -719,8 +720,8 @@ function renderAuta(hass, cfg) {
       }
     }
 
-    // Map placeholder (only if device_tracker configured)
-    const mapDiv = v.device_tracker
+    // Map placeholder
+    const mapDiv = tracker
       ? `<div id="hdc-car-map-${idx}" style="height:180px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.07);margin-top:8px"></div>`
       : '';
 
@@ -741,8 +742,9 @@ function renderAuta(hass, cfg) {
         <div class="hdc-g3" style="gap:6px;margin-bottom:8px">
           <div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Zasięg</div><div class="hdc-sc-val" style="color:${fuelColor};font-size:15px">${range}</div></div>
           <div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Przebieg</div><div class="hdc-sc-val" style="font-size:15px">${parseInt(odo).toLocaleString('pl')}</div></div>
-          ${bat !== null ? `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Bat. 12V</div><div class="hdc-sc-val" style="color:${battColor(bat)};font-size:15px">${bat}%</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Ostat. poz.</div><div class="hdc-sc-val" style="font-size:12px;color:#64748b">${lastUpd}</div></div>`}
+          ${bat !== null ? `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Bat. 12V</div><div class="hdc-sc-val" style="color:${battColor(bat)};font-size:15px">${bat}%</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Ostat. aktual.</div><div class="hdc-sc-val" style="font-size:12px;color:#64748b">${lastUpd}</div></div>`}
         </div>
+        ${bat !== null && lastUpd !== '—' ? `<div style="font-size:10px;color:#475569;margin-bottom:6px">🕐 ${lastUpd}</div>` : ''}
         <div class="hdc-chips">
           ${locked !== null ? `<span class="hdc-ch ${locked?'g':'r'}">${locked?'🔒 Zamknięty':'🔓 Otwarty'}</span>` : ''}
           ${connChip}
@@ -1290,10 +1292,9 @@ class HomeDashboardCard extends HTMLElement {
         type: 'map',
         entities: persons.map(p => ({ entity: p.entity })),
         auto_fit: true,
-        fit_zones: true,
         dark_mode: true,
       });
-      card.style.cssText = 'display:block;height:400px;width:100%';
+      card.style.cssText = 'display:block;height:550px;width:100%';
       mapDiv.appendChild(card);
       card.hass = hass;
     });
@@ -1303,14 +1304,15 @@ class HomeDashboardCard extends HTMLElement {
     const hass = this._hass;
     const vehicles = this._config.vehicles || [];
     vehicles.forEach((v, idx) => {
-      if (!v.device_tracker) return;
+      const tracker = v.location || v.device_tracker;
+      if (!tracker) return;
       const mapDiv = this.shadowRoot.getElementById(`hdc-car-map-${idx}`);
       if (!mapDiv) return;
       mapDiv.innerHTML = '';
       window.loadCardHelpers?.().then(helpers => {
         const card = helpers.createCardElement({
           type: 'map',
-          entities: [{ entity: v.device_tracker }],
+          entities: [{ entity: tracker }],
           auto_fit: true,
           dark_mode: true,
         });
