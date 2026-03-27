@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0] - 2026-03-27
+
+### Poprawiono
+- Zakładka Vaillant: usunięto kafelek "Strefa kaloryfery", status Harmonogram przeniesiony do kafelka Ogrzewanie CO
+- Zakładka Vaillant: naprawiono zmianę temperatury CO — obsługa encji używających `target_temp_high` zamiast `temperature`
+- Zakładka Vaillant: ustawienia `input_number` — wartości wyświetlane z 2 miejscami po przecinku
+- Zakładka Vaillant: wykres zużycia gazu 30-dniowy — naprawiono puste słupki (usunięto time-axis), skumulowane słupki ogrzewanie+CWU
+- Zakładka Vaillant: wykres miesięczny gazu — naprawiono kolejność miesięcy (merge po kluczu rok-miesiąc)
+- Zakładka Metering: EcoWater "Dziś zużyto" i "Usunięto kamień" wyświetlane z 2 miejscami po przecinku
+- Zakładka Metering: zmywarka Haier hOn — odwrócono logikę statusów drzwi, soli i nabłyszczacza
+- Zakładka Kamery: powiększono okno aktywnego podglądu (max-height 600px, object-fit contain)
+- Zakładka Auta: format daty ostatniej pozycji zmieniony na dd-mm-yyyy hh:mm:ss
+- Zakładka Auta/Osoby: mapy inicjalizowane przez `loadCardHelpers` + `createCardElement` — poprawna renderyzacja kafelków map
+
 ## [1.1.0] - 2026-03-26
 
 ### Dodano
