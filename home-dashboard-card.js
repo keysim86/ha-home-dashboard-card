@@ -970,14 +970,14 @@ class HomeDashboardCard extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>${STYLES}</style>
       <div class="hdc">
-        <div class="hdc-hdr">
+        ${cfg.show_header === false ? '' : `<div class="hdc-hdr">
           <div class="hdc-title">
             <span>🏠</span>
             <span>${cfg.title || 'MirHome'}</span>
             <span class="hdc-live">live</span>
           </div>
           <span class="hdc-clk" id="hdc-clk">00:00:00</span>
-        </div>
+        </div>`}
         <div class="hdc-tabs" id="hdc-tabs">
           ${tabs.map(t => `
             <button class="hdc-tab${t.id === this._activeTab ? ' active' : ''}" data-tab="${t.id}">
