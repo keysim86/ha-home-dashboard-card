@@ -20,7 +20,7 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 | 📶 **TP-Link** | Omada AP/SW porty PoE, odkurzacz Zosia, aktualizacje firmware, drukarka HP |
 | 📹 **Kamery** | Grid HIKVISION NVR, focus view (max-height 600px), status dysku, live refresh co 10s |
 | 🚗 **Auta** | Paliwo + litry, zasięg, przebieg, bateria 12V, blokada (klikalna lock/unlock), status połączenia, lokalizacja GPS, mapa `ha-map` |
-| 🖧 **Proxmox** | Node stats, LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
+| 🖧 **Proxmox** | Node stats (CPU, RAM%, wolna RAM w GB, Disk), LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
 | 🔔 **Alerty** | Reguły definiowane w YAML, badge z licznikiem na zakładce |
 
 ## Instalacja przez HACS

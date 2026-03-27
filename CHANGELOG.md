@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.1] - 2026-03-27
+
+### Fixed
+- Zakładka Auta: status blokady (Zamknięty/Otwarty) odświeżany live bez przebudowy zakładki
+- Zakładka Vaillant: wykresy gazu — poprawiono sortowanie i filtrowanie dat (obsługa `start` jako ISO string lub Unix timestamp)
+- Zakładka Vaillant: wykres miesięczny — etykiety zawierają rok (np. "Lip 2025") eliminując niejednoznaczność przy wielu latach
+- Zakładka Proxmox: wolna RAM wyświetlana z 2 miejscami po przecinku i jednostką GB
+- Zakładka Home/Odpady: poprawiono błąd "za null dni" (null <= 3 w JS), data odbioru z `value_template` sensora HA
+
 ## [1.3.0] - 2026-03-27
 
 ### Added
