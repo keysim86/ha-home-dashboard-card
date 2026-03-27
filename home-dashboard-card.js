@@ -209,9 +209,15 @@ function renderOsoby(hass, cfg) {
   }).join('');
 
   return `
-    <div id="hdc-persons-list"><div class="hdc-ga">${cards}</div></div>
-    <div style="font-size:10px;color:#475569;margin:10px 0 4px;padding-left:2px">📍 Lokalizacje</div>
-    <div id="hdc-fmap-real" style="height:570px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.07)"></div>`;
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      <div style="flex:1;min-width:0">
+        <div id="hdc-persons-list"><div class="hdc-ga">${cards}</div></div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:10px;color:#475569;margin:0 0 4px;padding-left:2px">📍 Lokalizacje</div>
+        <div id="hdc-fmap-real" style="height:570px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.07)"></div>
+      </div>
+    </div>`;
 }
 
 function renderEnergia(hass, cfg) {
