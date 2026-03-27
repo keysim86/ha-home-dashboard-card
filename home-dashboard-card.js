@@ -216,18 +216,21 @@ function renderOsoby(hass, cfg) {
       const st = hass.states[ws.entity];
       if (!st) return '';
       const daysTo = st.attributes.daysTo != null ? parseInt(st.attributes.daysTo) : null;
-      const dateAttr = st.attributes.date || st.state;
+      // date attribute (YYYY-MM-DD) lub oblicz z daysTo
       let dateStr = '—';
-      if (dateAttr && dateAttr !== 'unknown' && dateAttr !== 'unavailable') {
-        const d = new Date(dateAttr);
+      const rawDate = st.attributes.date;
+      if (rawDate && rawDate !== 'unknown' && rawDate !== 'unavailable') {
+        const d = new Date(rawDate + 'T12:00:00'); // T12 unika przesunięcia UTC
         if (!isNaN(d)) dateStr = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
-        else dateStr = dateAttr;
+      } else if (daysTo !== null) {
+        const d = new Date(Date.now() + daysTo * 86400000);
+        dateStr = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
       }
       let urgency = '', daysLabel = '—';
-      if (daysTo === 0)      { urgency = '#f87171'; daysLabel = '🔴 Dziś!'; }
-      else if (daysTo === 1) { urgency = '#fb923c'; daysLabel = '🟠 Jutro'; }
-      else if (daysTo <= 3)  { urgency = '#fbbf24'; daysLabel = `za ${daysTo} dni`; }
-      else if (daysTo != null){ urgency = '#64748b'; daysLabel = `za ${daysTo} dni`; }
+      if (daysTo === 0)                    { urgency = '#f87171'; daysLabel = '🔴 Dziś!'; }
+      else if (daysTo === 1)               { urgency = '#fb923c'; daysLabel = '🟠 Jutro'; }
+      else if (daysTo !== null && daysTo <= 3) { urgency = '#fbbf24'; daysLabel = `za ${daysTo} dni`; }
+      else if (daysTo !== null)            { urgency = '#64748b'; daysLabel = `za ${daysTo} dni`; }
       return `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.06)">
         <span style="font-size:20px">${ws.icon || '🗑️'}</span>
         <div style="flex:1;min-width:0">
