@@ -307,7 +307,7 @@ function renderEnergia(hass, cfg) {
 function renderVaillant(hass, cfg) {
   const v = cfg.vaillant || {};
   const coTemp   = sn(hass, v.temp_current || sa(hass, v.climate_co, 'current_temperature') ? v.climate_co : null, 1);
-  const coSet    = sa(hass, v.climate_co, 'temperature') || '—';
+  const coSet    = sa(hass, v.climate_co, 'temperature') || sa(hass, v.climate_co, 'target_temp_high') || sa(hass, v.climate_co, 'target_temp_low') || '—';
   const coMode   = sv(hass, v.climate_co, 'off');
   const cwuCur   = sn(hass, v.cwu_current, 1);
   const cwuTgt   = sn(hass, v.cwu_target, 1);
@@ -343,7 +343,7 @@ function renderVaillant(hass, cfg) {
           <button class="hdc-tbtn" data-action="climate_up" data-entity="${v.climate_co}" data-step="0.5">+</button>
         </div>
         <div id="hdc-vl-flame" class="hdc-th-mode heat">● ${flame?'Ogrzewanie aktywne':'Standby'}</div>
-        ${v.climate_zone0 ? `<div id="hdc-vl-z0mode" class="hdc-th-mode off" style="margin-top:4px">📅 ${sa(hass, v.climate_zone0, 'preset_mode') || 'Harmonogram'}</div>` : ''}
+        ${v.climate_zone0 ? (() => { const pm = sa(hass, v.climate_zone0, 'preset_mode'); return `<div id="hdc-vl-z0mode" class="hdc-th-mode off" style="margin-top:4px">📅 ${pm && pm !== 'none' ? pm : 'Harmonogram'}</div>`; })() : ''}
       </div>
       <div class="hdc-thcard">
         <div class="hdc-th-title">🚿 CWU</div>
@@ -1035,7 +1035,7 @@ class HomeDashboardCard extends HTMLElement {
     setText('hdc-vl-coact',   `${coAct}°`);
     setText('hdc-co-set',     coSet);
     setText('hdc-vl-flame',   `● ${flame ? 'Ogrzewanie aktywne' : 'Standby'}`);
-    if (v.climate_zone0) setText('hdc-vl-z0mode', sa(hass, v.climate_zone0, 'preset_mode') || 'Harmonogram');
+    if (v.climate_zone0) { const pm = sa(hass, v.climate_zone0, 'preset_mode'); setText('hdc-vl-z0mode', '📅 ' + (pm && pm !== 'none' ? pm : 'Harmonogram')); }
     setText('hdc-vl-cwucur',  `${cwuCur}°`);
     setText('hdc-cwu-set',    cwuTgt);
     setText('hdc-vl-sup2',    `${tSup}°C`);
@@ -1159,10 +1159,12 @@ class HomeDashboardCard extends HTMLElement {
       } catch(e) { console.error('[hdc] gas stats', e); return; }
 
       const toVal = (d) => Math.max(0, Math.round((d.change || 0) * 10) / 10);
-      const heatDay = (statDay[gasHeatId] || []).map(d => ({ x: new Date(d.start * 1000), y: toVal(d) }));
-      const cwuDay  = gasCwuId ? (statDay[gasCwuId]  || []).map(d => ({ x: new Date(d.start * 1000), y: toVal(d) })) : [];
+      const heatDay = (statDay[gasHeatId] || []).slice().sort((a,b) => a.start - b.start)
+        .map(d => ({ x: new Date(d.start * 1000), y: toVal(d) }));
+      const cwuDay  = gasCwuId ? (statDay[gasCwuId] || []).slice().sort((a,b) => a.start - b.start)
+        .map(d => ({ x: new Date(d.start * 1000), y: toVal(d) })) : [];
 
-      // Update today header values
+      // Update today header values (last element after sort = most recent)
       const todayHeat = heatDay.length ? heatDay[heatDay.length - 1].y : 0;
       const todayCwu  = cwuDay.length  ? cwuDay[cwuDay.length - 1].y   : 0;
       const elH = this.shadowRoot.getElementById('hdc-vg-heat');
@@ -1190,12 +1192,23 @@ class HomeDashboardCard extends HTMLElement {
       if (c3 && heatDay.length) {
         if (c3._hdcChart) c3._hdcChart.destroy();
         const labels = heatDay.map(d => d.x.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' }));
-        const ds3 = [{ label: `Ogrzewanie: ${todayHeat.toFixed(1)} m³`, data: heatDay.map(d => d.y),
+        const ds3 = [{ label: 'Ogrzewanie', data: heatDay.map(d => d.y),
           backgroundColor: '#fb923c', borderRadius: 3, stack: 'gas' }];
-        if (cwuDay.length) ds3.push({ label: `CWU: ${todayCwu.toFixed(1)} m³`, data: cwuDay.map(d => d.y),
+        if (cwuDay.length) ds3.push({ label: 'CWU', data: cwuDay.map(d => d.y),
           backgroundColor: '#38bdf8', borderRadius: 3, stack: 'gas' });
         c3._hdcChart = new Chart(c3, { type: 'bar', data: { labels, datasets: ds3 },
           options: { ...barOpts,
+            plugins: { ...barOpts.plugins,
+              tooltip: { ...barOpts.plugins.tooltip,
+                callbacks: {
+                  label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)} m³`,
+                  footer: items => {
+                    const sum = items.reduce((a, b) => a + b.parsed.y, 0);
+                    return items.length > 1 ? `Suma: ${sum.toFixed(1)} m³` : '';
+                  }
+                }
+              }
+            },
             scales: {
               x: { ...barOpts.scales.x, stacked: true },
               y: { ...barOpts.scales.y, stacked: true }
@@ -1307,10 +1320,12 @@ class HomeDashboardCard extends HTMLElement {
     if (action === 'climate_up' || action === 'climate_down') {
       const hasTemp = state.attributes.temperature != null;
       const hasHigh = state.attributes.target_temp_high != null;
-      if (!hasTemp && !hasHigh) return;
+      const hasLow  = state.attributes.target_temp_low != null;
+      if (!hasTemp && !hasHigh && !hasLow) return;
       const current = hasTemp
         ? parseFloat(state.attributes.temperature)
-        : parseFloat(state.attributes.target_temp_high);
+        : hasHigh ? parseFloat(state.attributes.target_temp_high)
+        : parseFloat(state.attributes.target_temp_low);
       const newTemp = Math.round((action === 'climate_up' ? current + step : current - step) * 10) / 10;
       const params = { entity_id: entity };
       if (hasTemp) { params.temperature = newTemp; }
