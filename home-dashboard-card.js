@@ -1281,9 +1281,9 @@ class HomeDashboardCard extends HTMLElement {
         auto_fit: true,
         dark_mode: true,
       });
-      card.hass = hass;
       card.style.cssText = 'display:block;height:240px;width:100%';
       mapDiv.appendChild(card);
+      card.hass = hass;
     });
   }
 
@@ -1302,9 +1302,9 @@ class HomeDashboardCard extends HTMLElement {
           auto_fit: true,
           dark_mode: true,
         });
-        card.hass = hass;
         card.style.cssText = 'display:block;height:180px;width:100%';
         mapDiv.appendChild(card);
+        card.hass = hass;
       });
     });
   }
