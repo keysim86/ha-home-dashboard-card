@@ -332,9 +332,14 @@ function renderVaillant(hass, cfg) {
   const coAct = sa(hass, v.climate_co, 'current_temperature') || '—';
   const tInd = v.temp_indoor ? sn(hass, v.temp_indoor, 1) : coAct;
 
-  const PM_LABEL = { schedule:'Harmonogram', manual:'Ręczny', eco:'Eco', away:'Poza domem',
+  const PM_LABEL   = { schedule:'Harmonogram', manual:'Ręczny', eco:'Eco', away:'Poza domem',
     boost:'Turbo', sleep:'Sen', home:'Dom', comfort:'Komfort', off:'Wyłączony', none:'—' };
-  const pmLabel = p => PM_LABEL[p] || p;
+  const HVAC_LABEL = { heat:'Grzanie', auto:'Auto', heat_cool:'Auto', cool:'Chłodzenie',
+    fan_only:'Wentylator', dry:'Osuszanie', off:'Wył.' };
+  const pmLabel   = p => PM_LABEL[p]   || p;
+  const hvacLabel = m => HVAC_LABEL[m] || m;
+  const modeStatus = (hvac, pmCur) => hvac === 'off' ? 'Wyłączone'
+    : `${hvacLabel(hvac)}${pmCur && pmCur !== 'none' ? ' · ' + pmLabel(pmCur) : ''}`;
 
   const coPmCur   = sa(hass, v.climate_co,  'preset_mode')  || '';
   const coPmList  = (sa(hass, v.climate_co,  'preset_modes') || []).filter(p => p !== 'none');
@@ -348,10 +353,17 @@ function renderVaillant(hass, cfg) {
 
   const modeBtns = (entity, pmList, pmCur, hvac, hvacModes) => `
     <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;justify-content:center">
-      ${hvacModes.includes('off') ? `<button class="hdc-tbtn" style="font-size:10px;width:auto;height:22px;padding:0 8px;${hvac==='off'?'background:rgba(248,113,113,.2);border-color:#f87171;color:#f87171':''}"
-        data-action="set_hvac_mode" data-entity="${entity}" data-mode="off">⏻ Wył.</button>` : ''}
-      ${pmList.map(p => `<button class="hdc-tbtn" style="font-size:10px;width:auto;height:22px;padding:0 8px;${pmCur===p?'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8':''}"
-        data-action="set_preset" data-entity="${entity}" data-preset="${p}">${pmLabel(p)}</button>`).join('')}
+      ${hvacModes.filter(m => m !== 'none').map(m => {
+        const isOff = m === 'off';
+        const active = hvac === m;
+        const style = active ? (isOff
+          ? 'background:rgba(248,113,113,.2);border-color:#f87171;color:#f87171'
+          : 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8') : '';
+        return `<button class="hdc-tbtn" style="font-size:10px;width:auto;height:22px;padding:0 8px;${style}"
+          data-action="set_hvac_mode" data-entity="${entity}" data-mode="${m}">${isOff?'⏻ ':''}${hvacLabel(m)}</button>`;
+      }).join('')}
+      ${hvac !== 'off' ? pmList.map(p => `<button class="hdc-tbtn" style="font-size:10px;width:auto;height:22px;padding:0 8px;${pmCur===p?'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8':''}"
+        data-action="set_preset" data-entity="${entity}" data-preset="${p}">${pmLabel(p)}</button>`).join('') : ''}
     </div>`;
 
   return `
@@ -370,7 +382,7 @@ function renderVaillant(hass, cfg) {
           <button class="hdc-tbtn" data-action="climate_up"   data-entity="${v.climate_co}" data-step="0.5">+</button>
           `}
         </div>
-        <div id="hdc-vl-flame" class="hdc-th-mode heat">● ${flame?'Ogrzewanie aktywne':'Standby'}</div>
+        <div id="hdc-vl-flame" class="hdc-th-mode heat">● ${modeStatus(coHvac, coPmCur)}</div>
         ${modeBtns(v.climate_co, coPmList, coPmCur, coHvac, coHvacModes)}
       </div>
       <div class="hdc-thcard">
@@ -381,7 +393,7 @@ function renderVaillant(hass, cfg) {
           <button class="hdc-tbtn" data-action="climate_down" data-entity="${v.climate_cwu}" data-step="1">−</button>
           <button class="hdc-tbtn" data-action="climate_up" data-entity="${v.climate_cwu}" data-step="1">+</button>
         </div>
-        <div id="hdc-vl-cwumode" class="hdc-th-mode dhw">● ${cwuHvac==='off'?'Wyłączone':'Podgrzewanie CWU'}</div>
+        <div id="hdc-vl-cwumode" class="hdc-th-mode dhw">● ${modeStatus(cwuHvac, cwuPmCur)}</div>
         ${modeBtns(v.climate_cwu, cwuPmList, cwuPmCur, cwuHvac, cwuHvacModes)}
       </div>
     </div>
@@ -1059,6 +1071,18 @@ class HomeDashboardCard extends HTMLElement {
     const pump   = isOn(hass, v.pump);
     const elCO   = sn(hass, v.el_co,  2);
     const elCWU  = sn(hass, v.el_cwu, 2);
+    const PM_LABEL   = { schedule:'Harmonogram', manual:'Ręczny', eco:'Eco', away:'Poza domem',
+      boost:'Turbo', sleep:'Sen', home:'Dom', comfort:'Komfort', off:'Wyłączony', none:'—' };
+    const HVAC_LABEL = { heat:'Grzanie', auto:'Auto', heat_cool:'Auto', cool:'Chłodzenie',
+      fan_only:'Wentylator', dry:'Osuszanie', off:'Wył.' };
+    const hvacLabel = m => HVAC_LABEL[m] || m;
+    const pmLabel   = p => PM_LABEL[p]   || p;
+    const modeStatus = (hvac, pmCur) => hvac === 'off' ? 'Wyłączone'
+      : `${hvacLabel(hvac)}${pmCur && pmCur !== 'none' ? ' · ' + pmLabel(pmCur) : ''}`;
+    const coHvac  = sv(hass, v.climate_co,  'off');
+    const coPmCur = sa(hass, v.climate_co,  'preset_mode') || '';
+    const cwuHvac  = sv(hass, v.climate_cwu, 'off');
+    const cwuPmCur = sa(hass, v.climate_cwu, 'preset_mode') || '';
     setText('hdc-vl-tind',    `${tInd}°C`);
     setText('hdc-vl-tout',    `${tOut}°C`);
     setText('hdc-vl-tgtSup',  `${tTgtSup}°C`);
@@ -1067,7 +1091,8 @@ class HomeDashboardCard extends HTMLElement {
     setText('hdc-vl-ret',     `${tRet}°C`);
     setText('hdc-vl-coact',   `${coAct}°`);
     setText('hdc-co-set',     coSet);
-    setText('hdc-vl-flame',   `● ${flame ? 'Ogrzewanie aktywne' : 'Standby'}`);
+    setText('hdc-vl-flame',   `● ${modeStatus(coHvac, coPmCur)}`);
+    setText('hdc-vl-cwumode', `● ${modeStatus(cwuHvac, cwuPmCur)}`);
     setText('hdc-vl-cwucur',  `${cwuCur}°`);
     setText('hdc-cwu-set',    cwuTgt);
     setText('hdc-vl-sup2',    `${tSup}°C`);
