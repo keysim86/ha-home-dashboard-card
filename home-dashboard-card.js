@@ -99,7 +99,7 @@ const STYLES = `
 .hdc-cam-ts{font-size:9px;color:rgba(255,255,255,.6);font-family:monospace}
 .hdc-cam-ch{font-size:9px;color:rgba(255,255,255,.35)}
 .hdc-cam-focus{background:#000;border:1px solid rgba(56,189,248,.2);border-radius:14px;overflow:hidden;margin-bottom:12px;position:relative}
-.hdc-cam-focus img{width:100%;display:block;max-height:300px;object-fit:cover}
+.hdc-cam-focus img{width:100%;display:block;max-height:600px;object-fit:contain}
 .hdc-cam-focus .hdc-cam-placeholder{height:220px}
 .hdc-pxcard{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px}
 .hdc-pxbdg{font-size:9px;padding:2px 6px;border-radius:5px;font-weight:700}
