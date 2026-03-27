@@ -756,7 +756,7 @@ function renderAuta(hass, cfg) {
 
     // Map placeholder
     const mapDiv = tracker
-      ? `<div id="hdc-car-map-${idx}" style="height:280px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.07);margin-top:8px"></div>`
+      ? `<div id="hdc-car-map-${idx}" style="height:380px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.07);margin-top:8px"></div>`
       : '';
 
     return `
@@ -780,7 +780,7 @@ function renderAuta(hass, cfg) {
         </div>
         ${lastUpd !== '—' ? `<div style="font-size:10px;color:#475569;margin-bottom:6px">🕐 ${lastUpd}</div>` : ''}
         <div class="hdc-chips">
-          ${locked !== null ? `<span class="hdc-ch ${locked?'g':'r'}">${locked?'🔒 Zamknięty':'🔓 Otwarty'}</span>` : ''}
+          ${locked !== null ? `<button class="hdc-tbtn" style="font-size:11px;width:auto;height:24px;padding:0 10px;${locked?'background:rgba(74,222,128,.15);border-color:#4ade80;color:#4ade80':'background:rgba(248,113,113,.15);border-color:#f87171;color:#f87171'}" data-action="lock_toggle" data-entity="${v.lock}">${locked?'🔒 Zamknięty':'🔓 Otwarty'}</button>` : ''}
           ${connChip}
         </div>
         ${locLine}
@@ -1375,7 +1375,7 @@ class HomeDashboardCard extends HTMLElement {
           cardCfg.default_zoom = 15;
         }
         const card = helpers.createCardElement(cardCfg);
-        card.style.cssText = 'display:block;height:280px;width:100%';
+        card.style.cssText = 'display:block;height:380px;width:100%';
         mapDiv.appendChild(card);
         card.hass = hass;
       });
@@ -1421,6 +1421,12 @@ class HomeDashboardCard extends HTMLElement {
     }
     if (action === 'set_hvac_mode') {
       this._hass.callService('climate', 'set_hvac_mode', { entity_id: entity, hvac_mode: btn.dataset.mode });
+    }
+    if (action === 'lock_toggle') {
+      const lockState = this._hass.states[entity];
+      if (!lockState) return;
+      const isLocked = lockState.state === 'locked';
+      this._hass.callService('lock', isLocked ? 'unlock' : 'lock', { entity_id: entity });
     }
   }
 
