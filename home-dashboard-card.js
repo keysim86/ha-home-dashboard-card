@@ -816,7 +816,7 @@ function renderAuta(hass, cfg) {
         </div>
         ${lastUpd !== '—' ? `<div style="font-size:10px;color:#475569;margin-bottom:6px">🕐 ${lastUpd}</div>` : ''}
         <div class="hdc-chips">
-          ${locked !== null ? `<button class="hdc-tbtn" style="font-size:11px;width:auto;height:24px;padding:0 10px;${locked?'background:rgba(74,222,128,.15);border-color:#4ade80;color:#4ade80':'background:rgba(248,113,113,.15);border-color:#f87171;color:#f87171'}" data-action="lock_toggle" data-entity="${v.lock}">${locked?'🔒 Zamknięty':'🔓 Otwarty'}</button>` : ''}
+          ${locked !== null ? `<button id="hdc-car-lock-${idx}" class="hdc-tbtn" style="font-size:11px;width:auto;height:24px;padding:0 10px;${locked?'background:rgba(74,222,128,.15);border-color:#4ade80;color:#4ade80':'background:rgba(248,113,113,.15);border-color:#f87171;color:#f87171'}" data-action="lock_toggle" data-entity="${v.lock}">${locked?'🔒 Zamknięty':'🔓 Otwarty'}</button>` : ''}
           ${connChip}
         </div>
         ${locLine}
@@ -1044,7 +1044,7 @@ class HomeDashboardCard extends HTMLElement {
         return;
       }
       if (this._activeTab === 'kamery' && !tabChanged) return;
-      if (this._activeTab === 'auta'   && !tabChanged) return;
+      if (this._activeTab === 'auta'   && !tabChanged) { this._updateAutaLive(); return; }
       pane.innerHTML = tab.render(this._hass, this._config);
       if (this._activeTab === 'osoby') setTimeout(() => this._initOsobyMap(), 0);
       if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
@@ -1492,6 +1492,23 @@ class HomeDashboardCard extends HTMLElement {
 
     this.shadowRoot.querySelectorAll('.hdc-camcard').forEach(c => c.classList.remove('focus'));
     card.classList.add('focus');
+  }
+
+  _updateAutaLive() {
+    const hass = this._hass;
+    const vehicles = this._config.vehicles || [];
+    vehicles.forEach((v, idx) => {
+      if (!v.lock) return;
+      const btn = this.shadowRoot.getElementById(`hdc-car-lock-${idx}`);
+      if (!btn) return;
+      const lockState = hass.states[v.lock];
+      if (!lockState) return;
+      const locked = lockState.state === 'locked';
+      btn.textContent = locked ? '🔒 Zamknięty' : '🔓 Otwarty';
+      btn.style.cssText = `font-size:11px;width:auto;height:24px;padding:0 10px;${locked
+        ? 'background:rgba(74,222,128,.15);border-color:#4ade80;color:#4ade80'
+        : 'background:rgba(248,113,113,.15);border-color:#f87171;color:#f87171'}`;
+    });
   }
 
   _updateWasteBadge() {
