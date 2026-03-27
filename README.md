@@ -13,15 +13,15 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 
 | Zakładka | Zawartość |
 |----------|-----------|
-| 👨‍👩‍👧‍👦 **Osoby** | Lokalizacja, bateria, kroki, mini-mapa |
-| ⚡ **Energia** | Moc całkowita, L1/L2/L3, top odbiorniki |
-| 🔥 **Vaillant** | Termostaty CO + CWU, dane kotła, MyVaillant API |
-| 📊 **Metering** | Tauron AMIplus, myORLEN gaz, EcoWater, zmywarka |
-| 📶 **TP-Link** | Omada AP/SW porty PoE, Zosia, drukarka HP |
-| 📹 **Kamery** | Grid HIKVISION NVR, focus view, status dysku |
-| 🚗 **Auta** | KIA/Renault — paliwo, zasięg, lokalizacja |
-| 🖧 **Proxmox** | Node stats, LXC kontenery, QEMU VMs |
-| 🔔 **Alerty** | Reguły z YAML, badge licznika |
+| 👨‍👩‍👧‍👦 **Osoby** | Lokalizacja, bateria, kroki, mapa `ha-map` z GPS |
+| ⚡ **Energia** | Moc całkowita live, napięcia L1/L2/L3, taryfy G13s (dziennie/miesięcznie), top odbiorniki |
+| 🔥 **Vaillant** | Termostaty CO + CWU ze sterowaniem (tryby, presety), wykresy temperatur 24h, wykresy zużycia gazu 30-dniowe i 12-miesięczne, ustawienia `input_number` |
+| 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), myORLEN gaz, licznik wody, EcoWater, zmywarka Haier hOn |
+| 📶 **TP-Link** | Omada AP/SW porty PoE, odkurzacz Zosia, aktualizacje firmware, drukarka HP |
+| 📹 **Kamery** | Grid HIKVISION NVR, focus view (max-height 600px), status dysku, live refresh co 10s |
+| 🚗 **Auta** | Paliwo + litry, zasięg, przebieg, bateria 12V, blokada, status połączenia, lokalizacja GPS, mapa `ha-map` |
+| 🖧 **Proxmox** | Node stats, LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
+| 🔔 **Alerty** | Reguły definiowane w YAML, badge z licznikiem na zakładce |
 
 ## Instalacja przez HACS
 
@@ -83,6 +83,14 @@ energy:
   power_l3: sensor.miresphome05_moc_czynna_fazowa_l3
   daily_kwh: sensor.suma_zuzycia_dziennego_g13s
   monthly_kwh: sensor.miesieczne_zuzycie_energii_kalendarzowe_zaokr
+  # Podział na taryfy G13s (opcjonalne)
+  tariffs:
+    szczytowa_daily: sensor.zuzycie_dzienne_g13s_dzienna_szczytowa_zaokr
+    pozaszczytowa_daily: sensor.zuzycie_dzienne_g13s_dzienna_pozaszczytowa_zaokr
+    nocna_daily: sensor.zuzycie_dzienne_g13s_nocna_zaokr
+    szczytowa_monthly: sensor.zuzycie_miesieczne_g13s_szczytowa
+    pozaszczytowa_monthly: sensor.zuzycie_miesieczne_g13s_pozaszczytowa
+    nocna_monthly: sensor.zuzycie_miesieczne_g13s_nocna
   consumers:
     - name: Osuszacz Sypialnia
       entity: sensor.osuszacz_sypialnia_power
@@ -94,7 +102,8 @@ energy:
 vaillant:
   climate_co: climate.ogrzewanie
   climate_cwu: climate.ciepla_woda
-  climate_zone0: climate.my_home_zone_kaloryfery_circuit_0_climate
+  # Opcjonalne: input_number jako alternatywa gdy encja climate nie obsługuje set_temperature
+  co_temp_input: input_number.temperatura_co
   temp_supply: sensor.ogrzewanie_temperatura_zasilania
   temp_return: sensor.ogrzewanie_temperatura_powrotu
   temp_target_supply: sensor.ogrzewanie_docelowa_temperatura_zasilania
@@ -108,8 +117,18 @@ vaillant:
   heat_curve: sensor.ogrzewanie_krzywa_grzewcza
   cwu_current: sensor.ciepla_woda_aktualnie
   cwu_target: sensor.ciepla_woda_docelowo
+  # Wykresy zużycia gazu (30 dni + 12 miesięcy)
+  gas_heating: sensor.my_home_device_gas_heating
+  gas_cwu: sensor.my_home_device_gas_cwu
   el_co: sensor.my_home_device_0_vc_20cs_1_5_n_pl_ecotec_plus_consumed_electrical_energy_heating_2
   el_cwu: sensor.my_home_device_0_vc_20cs_1_5_n_pl_ecotec_plus_consumed_electrical_energy_domestic_hot_water_2
+  # Ustawienia input_number (edycja przyciskami +/−)
+  settings:
+    - entity: input_number.krzywa_grzewcza
+      name: Krzywa grzewcza
+    - entity: input_number.temperatura_co_min
+      name: Min. temp. CO
+      decimals: 1
 
 metering:
   tauron_daily: sensor.suma_zuzycia_dziennego_g13s
@@ -181,10 +200,19 @@ vehicles:
     fuel_level: sensor.sportage_fuel_level
     fuel_range: sensor.sportage_fuel_driving_range
     odometer: sensor.sportage_odometer
-    battery: sensor.sportage_car_battery_level
+    battery: sensor.sportage_car_battery_level      # bateria 12V (opcjonalne)
     lock: lock.sportage_door_lock
-    location: device_tracker.sportage_location
+    connection: binary_sensor.sportage_connection   # Online/Offline (opcjonalne)
+    location: device_tracker.sportage_location      # GPS — mapa + lokalizacja
     last_update: sensor.sportage_last_updated_at
+  - name: Renault Captur
+    icon: "🚗"
+    plate: KKR XXXXX
+    fuel_level: sensor.captur_fuel_level
+    fuel_range: sensor.captur_fuel_range
+    odometer: sensor.captur_odometer
+    location: device_tracker.captur_location
+    last_update: sensor.captur_last_update
 
 proxmox:
   node_cpu: sensor.node_pve2_cpu_used
