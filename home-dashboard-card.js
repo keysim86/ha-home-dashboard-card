@@ -971,6 +971,7 @@ class HomeDashboardCard extends HTMLElement {
         return;
       }
       if (this._activeTab === 'kamery' && !tabChanged) return;
+      if (this._activeTab === 'auta'   && !tabChanged) return;
       pane.innerHTML = tab.render(this._hass, this._config);
       if (this._activeTab === 'osoby') setTimeout(() => this._initOsobyMap(), 0);
       if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
