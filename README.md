@@ -13,13 +13,13 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 
 | Zakładka | Zawartość |
 |----------|-----------|
-| 👨‍👩‍👧‍👦 **Osoby** | Lokalizacja, bateria, kroki, mapa `ha-map` z GPS |
+| 🏠 **Home** | Lokalizacja, bateria, kroki, mapa `ha-map` z GPS, harmonogram odpadów komunalnych z badge |
 | ⚡ **Energia** | Moc całkowita live, napięcia L1/L2/L3, taryfy G13s (dziennie/miesięcznie), top odbiorniki |
 | 🔥 **Vaillant** | Termostaty CO + CWU ze sterowaniem (tryby, presety), wykresy temperatur 24h, wykresy zużycia gazu 30-dniowe i 12-miesięczne, ustawienia `input_number` |
 | 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), myORLEN gaz, licznik wody, EcoWater, zmywarka Haier hOn |
 | 📶 **TP-Link** | Omada AP/SW porty PoE, odkurzacz Zosia, aktualizacje firmware, drukarka HP |
 | 📹 **Kamery** | Grid HIKVISION NVR, focus view (max-height 600px), status dysku, live refresh co 10s |
-| 🚗 **Auta** | Paliwo + litry, zasięg, przebieg, bateria 12V, blokada, status połączenia, lokalizacja GPS, mapa `ha-map` |
+| 🚗 **Auta** | Paliwo + litry, zasięg, przebieg, bateria 12V, blokada (klikalna lock/unlock), status połączenia, lokalizacja GPS, mapa `ha-map` |
 | 🖧 **Proxmox** | Node stats, LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
 | 🔔 **Alerty** | Reguły definiowane w YAML, badge z licznikiem na zakładce |
 
@@ -235,6 +235,33 @@ proxmox:
       cpu: sensor.qemu_mirhome_200_cpu_used
       ram: sensor.qemu_mirhome_200_memory_used_percentage
       status: binary_sensor.qemu_mirhome_200_status
+
+waste:
+  sensors:
+    - entity: sensor.odpady_zmieszane
+      name: Zmieszane
+      icon: "🗑️"
+    - entity: sensor.odpady_plastik
+      name: Plastik/Metal
+      icon: "♻️"
+    - entity: sensor.odpady_papier
+      name: Papier
+      icon: "📰"
+    - entity: sensor.odpady_szklo
+      name: Szkło
+      icon: "🫙"
+    - entity: sensor.odpady_gabaryty
+      name: Gabaryty
+      icon: "📦"
+    - entity: sensor.odpady_tekstylia
+      name: Tekstylia
+      icon: "👕"
+    - entity: sensor.odpady_elektronika
+      name: Elektronika
+      icon: "📺"
+    # - entity: sensor.odpady_bio   # opcjonalne
+    #   name: Bio
+    #   icon: "🌿"
 
 alerts:
   - entity: sensor.pixel_8_battery_level

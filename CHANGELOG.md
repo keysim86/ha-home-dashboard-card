@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.0] - 2026-03-27
+
+### Added
+- Zakładka Home (dawniej Osoby): sekcja harmonogramu odpadów komunalnych — lista frakcji z datą odbioru i kolorowaniem pilności (dziś/jutro/za X dni)
+- Zakładka Home: badge z licznikiem frakcji z odbiorem dziś lub jutro
+- Zakładka Auta: klikalny przycisk blokady — klik zamyka/otwiera zamek (`lock.lock` / `lock.unlock`)
+
+### Changed
+- Zakładka Osoby przemianowana na 🏠 Home
+- Zakładka Home: layout side-by-side — lista osób po lewej, mapa po prawej (50% szerokości)
+- Zakładka Vaillant: przyciski trybów generowane dynamicznie z `hvac_modes` encji (heat, auto, off i inne)
+- Zakładka Vaillant: status CO i CWU odczytywany z rzeczywistego stanu HA zamiast hardcoded tekstu, aktualizowany live
+
 ## [1.2.4] - 2026-03-27
 
 ### Fixed
