@@ -328,8 +328,6 @@ function renderVaillant(hass, cfg) {
   const pressColor = press < 1.0 ? 'r' : press > 2.5 ? 'r' : press < 1.4 ? 'y' : 'g';
 
   const coAct = sa(hass, v.climate_co, 'current_temperature') || '—';
-  const z0Act = sa(hass, v.climate_zone0, 'current_temperature') || '—';
-  const z0Tgt = sa(hass, v.climate_zone0, 'temperature') || '—';
 
   const tInd = v.temp_indoor ? sn(hass, v.temp_indoor, 1) : coAct;
 
@@ -345,6 +343,7 @@ function renderVaillant(hass, cfg) {
           <button class="hdc-tbtn" data-action="climate_up" data-entity="${v.climate_co}" data-step="0.5">+</button>
         </div>
         <div id="hdc-vl-flame" class="hdc-th-mode heat">● ${flame?'Ogrzewanie aktywne':'Standby'}</div>
+        ${v.climate_zone0 ? `<div id="hdc-vl-z0mode" class="hdc-th-mode off" style="margin-top:4px">📅 ${sa(hass, v.climate_zone0, 'preset_mode') || 'Harmonogram'}</div>` : ''}
       </div>
       <div class="hdc-thcard">
         <div class="hdc-th-title">🚿 CWU</div>
@@ -355,12 +354,6 @@ function renderVaillant(hass, cfg) {
           <button class="hdc-tbtn" data-action="climate_up" data-entity="${v.climate_cwu}" data-step="1">+</button>
         </div>
         <div class="hdc-th-mode dhw">● Podgrzewanie CWU</div>
-      </div>
-      <div class="hdc-thcard">
-        <div class="hdc-th-title">❄️ Strefa kaloryfery</div>
-        <div id="hdc-vl-z0act" class="hdc-th-big" style="color:#a78bfa">${z0Act}°</div>
-        <div id="hdc-vl-z0tgt" class="hdc-th-target">cel: ${z0Tgt}°C</div>
-        <div class="hdc-th-mode off">Harmonogram</div>
       </div>
     </div>
     <div class="hdc-st">Kocioł Vaillant ecoTEC Plus</div>
@@ -400,7 +393,7 @@ function renderVaillant(hass, cfg) {
         const step = st ? (parseFloat(st.attributes.step) || 1) : 1;
         const min  = st ? (parseFloat(st.attributes.min)  ?? -999) : -999;
         const max  = st ? (parseFloat(st.attributes.max)  ?? 9999) : 9999;
-        const dec  = step < 0.1 ? 3 : step < 1 ? 1 : 0;
+        const dec  = step < 0.01 ? 3 : step < 1 ? 2 : 0;
         const unit = s.unit !== undefined ? s.unit : (st?.attributes.unit_of_measurement || '');
         return `<div class="hdc-ir" style="padding:6px 0">
           <span class="hdc-ir-lbl">${s.name || s.entity}</span>
@@ -1020,8 +1013,6 @@ class HomeDashboardCard extends HTMLElement {
     const setText = (id, val) => { const el = sr.getElementById(id); if (el) el.textContent = val; };
     const coAct  = sa(hass, v.climate_co,   'current_temperature') || '—';
     const coSet  = sa(hass, v.climate_co,   'temperature')         || '—';
-    const z0Act  = sa(hass, v.climate_zone0,'current_temperature') || '—';
-    const z0Tgt  = sa(hass, v.climate_zone0,'temperature')         || '—';
     const cwuCur = sn(hass, v.cwu_current, 1);
     const cwuTgt = sn(hass, v.cwu_target,  1);
     const tSup   = sn(hass, v.temp_supply,  1);
@@ -1044,8 +1035,7 @@ class HomeDashboardCard extends HTMLElement {
     setText('hdc-vl-coact',   `${coAct}°`);
     setText('hdc-co-set',     coSet);
     setText('hdc-vl-flame',   `● ${flame ? 'Ogrzewanie aktywne' : 'Standby'}`);
-    setText('hdc-vl-z0act',   `${z0Act}°`);
-    setText('hdc-vl-z0tgt',   `cel: ${z0Tgt}°C`);
+    if (v.climate_zone0) setText('hdc-vl-z0mode', sa(hass, v.climate_zone0, 'preset_mode') || 'Harmonogram');
     setText('hdc-vl-cwucur',  `${cwuCur}°`);
     setText('hdc-cwu-set',    cwuTgt);
     setText('hdc-vl-sup2',    `${tSup}°C`);
@@ -1315,12 +1305,17 @@ class HomeDashboardCard extends HTMLElement {
     if (!state) return;
 
     if (action === 'climate_up' || action === 'climate_down') {
-      const current = parseFloat(state.attributes.temperature || 20);
-      const newTemp = action === 'climate_up' ? current + step : current - step;
-      this._hass.callService('climate', 'set_temperature', {
-        entity_id: entity,
-        temperature: Math.round(newTemp * 10) / 10,
-      });
+      const hasTemp = state.attributes.temperature != null;
+      const hasHigh = state.attributes.target_temp_high != null;
+      if (!hasTemp && !hasHigh) return;
+      const current = hasTemp
+        ? parseFloat(state.attributes.temperature)
+        : parseFloat(state.attributes.target_temp_high);
+      const newTemp = Math.round((action === 'climate_up' ? current + step : current - step) * 10) / 10;
+      const params = { entity_id: entity };
+      if (hasTemp) { params.temperature = newTemp; }
+      else { params.target_temp_high = newTemp; params.target_temp_low = newTemp; }
+      this._hass.callService('climate', 'set_temperature', params);
     }
     if (action === 'input_up' || action === 'input_down') {
       const current = parseFloat(state.state);
