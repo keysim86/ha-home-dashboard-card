@@ -211,7 +211,7 @@ function renderOsoby(hass, cfg) {
   return `
     <div id="hdc-persons-list"><div class="hdc-ga">${cards}</div></div>
     <div style="font-size:10px;color:#475569;margin:10px 0 4px;padding-left:2px">📍 Lokalizacje</div>
-    <div id="hdc-fmap-real" style="height:240px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.07)"></div>`;
+    <div id="hdc-fmap-real" style="height:400px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.07)"></div>`;
 }
 
 function renderEnergia(hass, cfg) {
@@ -1268,20 +1268,21 @@ class HomeDashboardCard extends HTMLElement {
     if (!mapDiv) return;
     const hass = this._hass;
     const cfg = this._config;
-    const persons = (cfg.persons || []).filter(p => p.device_tracker);
+    const persons = (cfg.persons || []).filter(p => p.entity);
     if (!persons.length) {
-      mapDiv.innerHTML = '<div style="color:#475569;font-size:11px;padding:16px;text-align:center">Brak skonfigurowanych trackerów lokalizacji</div>';
+      mapDiv.innerHTML = '<div style="color:#475569;font-size:11px;padding:16px;text-align:center">Brak skonfigurowanych encji osób</div>';
       return;
     }
     mapDiv.innerHTML = '';
     window.loadCardHelpers?.().then(helpers => {
       const card = helpers.createCardElement({
         type: 'map',
-        entities: persons.map(p => ({ entity: p.device_tracker })),
+        entities: persons.map(p => ({ entity: p.entity })),
         auto_fit: true,
+        fit_zones: true,
         dark_mode: true,
       });
-      card.style.cssText = 'display:block;height:240px;width:100%';
+      card.style.cssText = 'display:block;height:400px;width:100%';
       mapDiv.appendChild(card);
       card.hass = hass;
     });
