@@ -830,7 +830,8 @@ function renderProxmox(hass, cfg) {
   const p = cfg.proxmox || {};
   const cpu     = sn(hass, p.node_cpu, 0);
   const ramPct  = sn(hass, p.node_ram_pct, 0);
-  const ramFree = sv(hass, p.node_ram_free, '—');
+  const ramFreeRaw = sv(hass, p.node_ram_free, '');
+  const ramFree = ramFreeRaw !== '' ? (parseFloat(ramFreeRaw).toFixed(2) + ' GB') : '—';
   const diskPct = sn(hass, p.node_disk_pct, 0);
   const lxcRun  = sv(hass, p.node_lxc_running, '—');
   const vmRun   = sv(hass, p.node_vm_running, '—');
