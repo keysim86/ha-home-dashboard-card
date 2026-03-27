@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.3] - 2026-03-27
+
+### Fixed
+- Zakładka Auta: wyeliminowano mruganie map — pane nie jest przebudowywany przy aktualizacjach hass
+- Zakładka Auta: centrowanie mapy — gdy tracker ma koordynaty GPS używa `auto_fit` + zoom 15, w przeciwnym razie `fit_zones` (strefa home)
+
 ## [1.2.2] - 2026-03-27
 
 ### Fixed
