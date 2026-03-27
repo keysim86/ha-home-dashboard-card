@@ -307,7 +307,9 @@ function renderEnergia(hass, cfg) {
 function renderVaillant(hass, cfg) {
   const v = cfg.vaillant || {};
   const coTemp   = sn(hass, v.temp_current || sa(hass, v.climate_co, 'current_temperature') ? v.climate_co : null, 1);
-  const coSet    = sa(hass, v.climate_co, 'temperature') || sa(hass, v.climate_co, 'target_temp_high') || sa(hass, v.climate_co, 'target_temp_low') || '—';
+  const coTmpInp = v.co_temp_input;
+  const coSet    = coTmpInp ? sn(hass, coTmpInp, 1)
+    : sa(hass, v.climate_co, 'temperature') || sa(hass, v.climate_co, 'target_temp_high') || sa(hass, v.climate_co, 'target_temp_low') || '—';
   const coMode   = sv(hass, v.climate_co, 'off');
   const cwuCur   = sn(hass, v.cwu_current, 1);
   const cwuTgt   = sn(hass, v.cwu_target, 1);
@@ -339,8 +341,13 @@ function renderVaillant(hass, cfg) {
         <div id="hdc-vl-coact" class="hdc-th-big" style="color:#fb923c">${coAct}°</div>
         <div class="hdc-th-target">cel: <span id="hdc-co-set">${coSet}</span>°C</div>
         <div class="hdc-th-btns">
+          ${coTmpInp ? `
+          <button class="hdc-tbtn" data-action="input_down" data-entity="${coTmpInp}" data-step="0.5" data-min="-50" data-max="100">−</button>
+          <button class="hdc-tbtn" data-action="input_up"   data-entity="${coTmpInp}" data-step="0.5" data-min="-50" data-max="100">+</button>
+          ` : `
           <button class="hdc-tbtn" data-action="climate_down" data-entity="${v.climate_co}" data-step="0.5">−</button>
-          <button class="hdc-tbtn" data-action="climate_up" data-entity="${v.climate_co}" data-step="0.5">+</button>
+          <button class="hdc-tbtn" data-action="climate_up"   data-entity="${v.climate_co}" data-step="0.5">+</button>
+          `}
         </div>
         <div id="hdc-vl-flame" class="hdc-th-mode heat">● ${flame?'Ogrzewanie aktywne':'Standby'}</div>
         ${v.climate_zone0 ? (() => { const pm = sa(hass, v.climate_zone0, 'preset_mode'); return `<div id="hdc-vl-z0mode" class="hdc-th-mode off" style="margin-top:4px">📅 ${pm && pm !== 'none' ? pm : 'Harmonogram'}</div>`; })() : ''}
@@ -1012,7 +1019,8 @@ class HomeDashboardCard extends HTMLElement {
     const sr = this.shadowRoot;
     const setText = (id, val) => { const el = sr.getElementById(id); if (el) el.textContent = val; };
     const coAct  = sa(hass, v.climate_co,   'current_temperature') || '—';
-    const coSet  = sa(hass, v.climate_co,   'temperature')         || '—';
+    const coSet  = v.co_temp_input ? sn(hass, v.co_temp_input, 1)
+      : sa(hass, v.climate_co, 'temperature') || sa(hass, v.climate_co, 'target_temp_high') || sa(hass, v.climate_co, 'target_temp_low') || '—';
     const cwuCur = sn(hass, v.cwu_current, 1);
     const cwuTgt = sn(hass, v.cwu_target,  1);
     const tSup   = sn(hass, v.temp_supply,  1);
@@ -1159,9 +1167,12 @@ class HomeDashboardCard extends HTMLElement {
       } catch(e) { console.error('[hdc] gas stats', e); return; }
 
       const toVal = (d) => Math.max(0, Math.round((d.change || 0) * 10) / 10);
+      const cutoff = d30.getTime();
       const heatDay = (statDay[gasHeatId] || []).slice().sort((a,b) => a.start - b.start)
+        .filter(d => d.start * 1000 >= cutoff)
         .map(d => ({ x: new Date(d.start * 1000), y: toVal(d) }));
       const cwuDay  = gasCwuId ? (statDay[gasCwuId] || []).slice().sort((a,b) => a.start - b.start)
+        .filter(d => d.start * 1000 >= cutoff)
         .map(d => ({ x: new Date(d.start * 1000), y: toVal(d) })) : [];
 
       // Update today header values (last element after sort = most recent)
