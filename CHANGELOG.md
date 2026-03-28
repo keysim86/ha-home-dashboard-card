@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.5] - 2026-03-28
+
+### Changed
+- Zakładka Home/Odpady: kafelek frakcji podświetla się na czerwono (tło + ramka + tekst) gdy wywóz jest dziś lub jutro
+
 ## [1.3.4] - 2026-03-28
 
 ### Changed
