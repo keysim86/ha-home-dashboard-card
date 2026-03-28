@@ -213,6 +213,7 @@ function renderOsoby(hass, cfg) {
   let wasteRows = '';
   if (wasteSensors.length) {
     const rows = wasteSensors.map(ws => {
+      if (ws.toggle && hass.states[ws.toggle] && hass.states[ws.toggle].state !== 'on') return '';
       const st = hass.states[ws.entity];
       if (!st) return '';
       const daysTo = st.attributes.daysTo != null ? parseInt(st.attributes.daysTo) : null;
@@ -1515,6 +1516,7 @@ class HomeDashboardCard extends HTMLElement {
     const sensors = ((this._config.waste || {}).sensors) || [];
     let count = 0;
     sensors.forEach(ws => {
+      if (ws.toggle && this._hass.states[ws.toggle] && this._hass.states[ws.toggle].state !== 'on') return;
       const st = this._hass.states[ws.entity];
       if (!st) return;
       const daysTo = st.attributes.daysTo != null ? parseInt(st.attributes.daysTo) : null;
