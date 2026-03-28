@@ -229,11 +229,12 @@ function renderOsoby(hass, cfg) {
       else if (daysTo === 1)               { urgency = '#fb923c'; daysLabel = '🟠 Jutro'; }
       else if (daysTo !== null && daysTo <= 3) { urgency = '#fbbf24'; daysLabel = `za ${daysTo} dni`; }
       else if (daysTo !== null)            { urgency = '#64748b'; daysLabel = `za ${daysTo} dni`; }
-      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.06)">
+      const urgent = daysTo !== null && daysTo <= 1;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:${urgent?'rgba(248,113,113,.12)':'rgba(255,255,255,.03)'};border-radius:8px;border:1px solid ${urgent?'rgba(248,113,113,.4)':'rgba(255,255,255,.06)'}">
         <span style="font-size:20px">${ws.icon || '🗑️'}</span>
         <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:600;color:#f1f5f9">${ws.name || ws.entity}</div>
-          <div style="font-size:10px;color:#475569">${dateStr}</div>
+          <div style="font-size:12px;font-weight:600;color:${urgent?'#fca5a5':'#f1f5f9'}">${ws.name || ws.entity}</div>
+          <div style="font-size:10px;color:${urgent?'#f87171':'#475569'}">${dateStr}</div>
         </div>
         <div style="font-size:11px;font-weight:600;color:${urgency || '#64748b'}">${daysLabel}</div>
       </div>`;
