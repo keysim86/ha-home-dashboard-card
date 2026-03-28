@@ -259,9 +259,10 @@ waste:
     - entity: sensor.odpady_elektronika
       name: Elektronika
       icon: "📺"
-    # - entity: sensor.odpady_bio   # opcjonalne
-    #   name: Bio
-    #   icon: "🌿"
+    - entity: sensor.odpady_bio
+      name: Biodegradowalne
+      icon: "🌿"
+      toggle: input_boolean.odpady_bio_aktywne  # opcjonalne — ukrywa frakcję gdy off
 
 alerts:
   - entity: sensor.pixel_8_battery_level

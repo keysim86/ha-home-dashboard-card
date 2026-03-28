@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.3] - 2026-03-28
+
+### Added
+- Zakładka Home/Odpady: opcjonalne pole `toggle` na sensor — wskazuje na `input_boolean` w HA; gdy off, frakcja jest ukryta w karcie i nie liczy się do badge
+
 ## [1.3.2] - 2026-03-27
 
 ### Added
