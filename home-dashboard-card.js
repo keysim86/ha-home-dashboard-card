@@ -212,9 +212,14 @@ function renderOsoby(hass, cfg) {
   const wasteSensors = (cfg.waste || {}).sensors || [];
   let wasteRows = '';
   if (wasteSensors.length) {
-    const rows = wasteSensors.map(ws => {
-      if (ws.toggle && hass.states[ws.toggle] && hass.states[ws.toggle].state !== 'on') return '';
-      const st = hass.states[ws.entity];
+    const rows = wasteSensors
+      .filter(ws => !(ws.toggle && hass.states[ws.toggle] && hass.states[ws.toggle].state !== 'on'))
+      .map(ws => {
+        const st = hass.states[ws.entity];
+        return { ws, st, daysTo: st?.attributes?.daysTo != null ? parseInt(st.attributes.daysTo) : Infinity };
+      })
+      .sort((a, b) => a.daysTo - b.daysTo || (a.ws.name || '').localeCompare(b.ws.name || '', 'pl'))
+      .map(({ ws, st }) => {
       if (!st) return '';
       const daysTo = st.attributes.daysTo != null ? parseInt(st.attributes.daysTo) : null;
       // Stan sensora to data sformatowana przez value_template w HA
@@ -232,7 +237,7 @@ function renderOsoby(hass, cfg) {
         </div>
         <div style="font-size:11px;font-weight:600;color:${urgency || '#64748b'}">${daysLabel}</div>
       </div>`;
-    }).filter(Boolean).join('');
+      }).filter(Boolean).join('');
     wasteRows = `
       <div class="hdc-st" style="margin-top:14px">Harmonogram odpadów</div>
       <div style="display:flex;flex-direction:column;gap:6px">${rows || '<div style="color:#475569;font-size:11px;padding:8px">Brak danych</div>'}</div>`;
