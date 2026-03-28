@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.4] - 2026-03-28
+
+### Changed
+- Zakładka Home/Odpady: sortowanie rosnące po liczbie dni do wywozu, następnie alfabetycznie po nazwie frakcji
+
 ## [1.3.3] - 2026-03-28
 
 ### Added
