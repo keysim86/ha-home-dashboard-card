@@ -323,6 +323,7 @@ comfort:
       pm10: sensor.salon_pm10                 # opcjonalne
       voc: sensor.salon_voc                   # opcjonalne
       humidifier: humidifier.salon            # opcjonalne — sterowanie nawilżaczem
+      battery: sensor.salon_bateria           # opcjonalne — poziom baterii czujnika
     - name: Sypialnia
       icon: "🛏️"
       temperature: sensor.sypialnia_temperatura
