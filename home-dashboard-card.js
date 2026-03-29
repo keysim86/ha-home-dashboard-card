@@ -134,6 +134,8 @@ const STYLES = `
 .hdc-gate-tile.opening .hdc-gate-state,.hdc-gate-tile.closing .hdc-gate-state{color:#38bdf8}
 .hdc-gate-light{font-size:9px;margin-top:4px;color:#334155;display:flex;align-items:center;justify-content:center;gap:3px}
 .hdc-gate-light.on{color:#fbbf24}
+.hdc-gate-timer{font-size:9px;margin-top:3px;color:#fb923c;font-variant-numeric:tabular-nums}
+.hdc-gate-tile.closed .hdc-gate-timer,.hdc-gate-tile.locked .hdc-gate-timer{display:none}
 .hdc-sw-tile{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px;user-select:none}
 .hdc-sw-tile:hover{background:rgba(255,255,255,.07)}
 .hdc-sw-tile.on{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.3)}
@@ -211,6 +213,17 @@ function evalCondition(val, cond) {
 //  TAB RENDERERS
 // ============================================================
 
+function formatGateElapsed(lastChanged) {
+  const secs = Math.floor((Date.now() - new Date(lastChanged).getTime()) / 1000);
+  if (secs < 0) return '';
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  if (h > 0) return `⏱ ${h}h ${String(m).padStart(2,'0')}m`;
+  if (m > 0) return `⏱ ${m}m ${String(s).padStart(2,'0')}s`;
+  return `⏱ ${s}s`;
+}
+
 function renderOsoby(hass, cfg) {
   const persons = cfg.persons || [];
   let cards = persons.map((p, i) => {
@@ -252,10 +265,13 @@ function renderOsoby(hass, cfg) {
       const lightHtml = lightOn !== null
         ? `<div class="hdc-gate-light${lightOn ? ' on' : ''}">💡 ${lightOn ? 'Włączone' : 'Wyłączone'}</div>`
         : '';
+      const isOpen = ['open', 'unlocked', 'opening', 'closing'].includes(state);
+      const timerText = isOpen && st?.last_changed ? formatGateElapsed(st.last_changed) : '';
       return `<div id="hdc-gate-${g.entity.replace('.', '-')}" class="hdc-gate-tile ${state}" data-action="${g.entity.startsWith('lock.') ? 'lock_toggle' : 'cover_toggle'}" data-entity="${g.entity}">
         <div class="hdc-gate-ico">${ico}</div>
         <div class="hdc-gate-name">${g.name || st?.attributes?.friendly_name || g.entity}</div>
         <div class="hdc-gate-state">${stateLabel(state)}</div>
+        <div class="hdc-gate-timer">${timerText}</div>
         ${lightHtml}
       </div>`;
     }).join('');
@@ -1117,6 +1133,7 @@ class HomeDashboardCard extends HTMLElement {
     this._updatePane();
     this._startClock();
     this._startCamRefresh();
+    this._startGateTimers();
     this._updateAlertBadge();
     this._updateWasteBadge();
   }
@@ -1205,6 +1222,11 @@ class HomeDashboardCard extends HTMLElement {
         const lightOn = hass.states[g.light]?.state === 'on';
         ltEl.className = `hdc-gate-light${lightOn ? ' on' : ''}`;
         ltEl.textContent = `💡 ${lightOn ? 'Włączone' : 'Wyłączone'}`;
+      }
+      const tmEl = tile.querySelector('.hdc-gate-timer');
+      if (tmEl) {
+        const isOpen = ['open', 'unlocked', 'opening', 'closing'].includes(state);
+        tmEl.textContent = isOpen && st?.last_changed ? formatGateElapsed(st.last_changed) : '';
       }
     });
   }
@@ -1719,9 +1741,29 @@ class HomeDashboardCard extends HTMLElement {
     }, 10000);
   }
 
+  _startGateTimers() {
+    this._gateTimerInterval = setInterval(() => {
+      if (this._activeTab !== 'osoby') return;
+      const cfg = this._config || {};
+      const hass = this._hass;
+      if (!hass) return;
+      (cfg.gates || []).forEach(g => {
+        const tile = this.shadowRoot.getElementById(`hdc-gate-${g.entity.replace('.', '-')}`);
+        if (!tile) return;
+        const st = hass.states[g.entity];
+        const state = st?.state || 'unknown';
+        const tmEl = tile.querySelector('.hdc-gate-timer');
+        if (!tmEl) return;
+        const isOpen = ['open', 'unlocked', 'opening', 'closing'].includes(state);
+        tmEl.textContent = isOpen && st?.last_changed ? formatGateElapsed(st.last_changed) : '';
+      });
+    }, 1000);
+  }
+
   disconnectedCallback() {
     clearInterval(this._clockInterval);
     clearInterval(this._camRefreshInterval);
+    clearInterval(this._gateTimerInterval);
   }
 
   getCardSize() { return 8; }
