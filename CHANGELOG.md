@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.1] - 2026-03-29
+
+### Fixed
+- Zakładka Home/Bramy: encje `lock.*` (np. Bramka) — poprawiono kolor stanu (`locked`=zielony, `unlocked`=czerwony) oraz działanie kliknięcia (wywołuje `lock.lock`/`lock.unlock` zamiast `cover.*`)
+
 ## [1.4.0] - 2026-03-29
 
 ### Added
