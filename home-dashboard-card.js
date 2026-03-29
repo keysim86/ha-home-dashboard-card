@@ -136,6 +136,13 @@ const STYLES = `
 .hdc-gate-light.on{color:#fbbf24}
 .hdc-gate-timer{font-size:9px;margin-top:3px;color:#fb923c;font-variant-numeric:tabular-nums}
 .hdc-gate-tile.closed .hdc-gate-timer,.hdc-gate-tile.locked .hdc-gate-timer{display:none}
+.hdc-mailbox{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:11px;padding:8px 12px;margin-top:7px}
+.hdc-mailbox.mail{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.35)}
+.hdc-mailbox-ico{font-size:22px;flex-shrink:0}
+.hdc-mailbox-info{flex:1;min-width:0}
+.hdc-mailbox-status{font-size:11px;font-weight:600;color:#94a3b8}
+.hdc-mailbox.mail .hdc-mailbox-status{color:#fbbf24}
+.hdc-mailbox-batt{font-size:10px;color:#475569;margin-top:2px}
 .hdc-sw-tile{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px;user-select:none}
 .hdc-sw-tile:hover{background:rgba(255,255,255,.07)}
 .hdc-sw-tile.on{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.3)}
@@ -275,8 +282,24 @@ function renderOsoby(hass, cfg) {
         ${lightHtml}
       </div>`;
     }).join('');
+    const mbCfg = cfg.mailbox;
+    let mailboxHtml = '';
+    if (mbCfg) {
+      const mbSt = hass.states[mbCfg.entity];
+      const hasMail = mbSt?.state === 'on';
+      const battSt = mbCfg.battery ? hass.states[mbCfg.battery] : null;
+      const battVal = battSt ? Math.round(parseFloat(battSt.state)) : null;
+      const battColor = battVal !== null ? (battVal > 50 ? '#4ade80' : battVal > 20 ? '#fbbf24' : '#f87171') : '#475569';
+      mailboxHtml = `<div id="hdc-mailbox" class="hdc-mailbox${hasMail ? ' mail' : ''}">
+        <div class="hdc-mailbox-ico">${hasMail ? '📬' : '📭'}</div>
+        <div class="hdc-mailbox-info">
+          <div class="hdc-mailbox-status">${mbCfg.name || 'Skrzynka pocztowa'} — ${hasMail ? 'Jest poczta!' : 'Pusta'}</div>
+          ${battVal !== null ? `<div class="hdc-mailbox-batt" style="color:${battColor}">🔋 ${battVal}%</div>` : ''}
+        </div>
+      </div>`;
+    }
     gatesHtml = `<div class="hdc-st" style="margin-top:14px">Bramy i garaże</div>
-      <div class="hdc-gate-grid">${tiles}</div>`;
+      <div class="hdc-gate-grid">${tiles}</div>${mailboxHtml}`;
   }
 
   // Waste collection section
@@ -1229,6 +1252,30 @@ class HomeDashboardCard extends HTMLElement {
         tmEl.textContent = isOpen && st?.last_changed ? formatGateElapsed(st.last_changed) : '';
       }
     });
+
+    // Aktualizacja skrzynki pocztowej in-place
+    const mbCfg = cfg.mailbox;
+    if (mbCfg) {
+      const mbEl = this.shadowRoot.getElementById('hdc-mailbox');
+      if (mbEl) {
+        const mbSt = hass.states[mbCfg.entity];
+        const hasMail = mbSt?.state === 'on';
+        mbEl.className = `hdc-mailbox${hasMail ? ' mail' : ''}`;
+        const icoEl = mbEl.querySelector('.hdc-mailbox-ico');
+        if (icoEl) icoEl.textContent = hasMail ? '📬' : '📭';
+        const stEl = mbEl.querySelector('.hdc-mailbox-status');
+        if (stEl) stEl.textContent = `${mbCfg.name || 'Skrzynka pocztowa'} — ${hasMail ? 'Jest poczta!' : 'Pusta'}`;
+        const battEl = mbEl.querySelector('.hdc-mailbox-batt');
+        if (battEl && mbCfg.battery) {
+          const battSt = hass.states[mbCfg.battery];
+          const battVal = battSt ? Math.round(parseFloat(battSt.state)) : null;
+          if (battVal !== null) {
+            battEl.style.color = battVal > 50 ? '#4ade80' : battVal > 20 ? '#fbbf24' : '#f87171';
+            battEl.textContent = `🔋 ${battVal}%`;
+          }
+        }
+      }
+    }
   }
 
   _updateVaillantLive() {
