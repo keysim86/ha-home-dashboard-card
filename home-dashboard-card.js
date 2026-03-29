@@ -1162,7 +1162,11 @@ class HomeDashboardCard extends HTMLElement {
   }
 
   _resolveTabs(cfg) {
-    const allowed = cfg.tabs || ALL_TABS.map(t => t.id);
+    let allowed = cfg.tabs ? [...cfg.tabs] : ALL_TABS.map(t => t.id);
+    // Auto-dodaj przelaczniki jeśli switches.groups jest skonfigurowane, a zakładki są podane jawnie
+    if (cfg.tabs && (cfg.switches || {}).groups?.length && !allowed.includes('przelaczniki')) {
+      allowed.push('przelaczniki');
+    }
     return ALL_TABS.filter(t => allowed.includes(t.id));
   }
 
