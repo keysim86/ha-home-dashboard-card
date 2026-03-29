@@ -117,6 +117,21 @@ const STYLES = `
 .hdc-alert.ok{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:#4ade80}
 .hdc-alert-msg{flex:1}
 .hdc-alert-t{font-size:10px;color:#334155;flex-shrink:0}
+.hdc-gate-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:7px;margin-bottom:4px}
+.hdc-gate-tile{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:11px;padding:10px 8px;cursor:pointer;transition:all .15s;text-align:center;user-select:none}
+.hdc-gate-tile:hover{background:rgba(255,255,255,.08)}
+.hdc-gate-tile.closed{background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.25)}
+.hdc-gate-tile.open{background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.35)}
+.hdc-gate-tile.opening,.hdc-gate-tile.closing{background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.25)}
+.hdc-gate-ico{font-size:22px;margin-bottom:4px}
+.hdc-gate-name{font-size:10px;font-weight:600;color:#94a3b8;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdc-gate-tile.closed .hdc-gate-name{color:#4ade80}
+.hdc-gate-tile.open .hdc-gate-name{color:#fb923c}
+.hdc-gate-tile.opening .hdc-gate-name,.hdc-gate-tile.closing .hdc-gate-name{color:#38bdf8}
+.hdc-gate-state{font-size:9px;color:#334155}
+.hdc-gate-tile.closed .hdc-gate-state{color:#16a34a}
+.hdc-gate-tile.open .hdc-gate-state{color:#c2410c}
+.hdc-gate-tile.opening .hdc-gate-state,.hdc-gate-tile.closing .hdc-gate-state{color:#38bdf8}
 .hdc-sw-tile{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px;user-select:none}
 .hdc-sw-tile:hover{background:rgba(255,255,255,.07)}
 .hdc-sw-tile.on{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.3)}
@@ -222,6 +237,25 @@ function renderOsoby(hass, cfg) {
       </div>`;
   }).join('');
 
+  // Gates / Garage section
+  const gates = cfg.gates || [];
+  let gatesHtml = '';
+  if (gates.length) {
+    const stateLabel = st => ({ open: 'Otwarta', closed: 'Zamknięta', opening: 'Otwieranie…', closing: 'Zamykanie…' }[st] || st || '—');
+    const tiles = gates.map(g => {
+      const st = hass.states[g.entity];
+      const state = st?.state || 'unknown';
+      const ico = g.icon || (g.entity.includes('garaz') || g.entity.includes('garage') ? '🏠' : g.entity.includes('bramka') || g.entity.includes('wicket') ? '🚶' : '🚗');
+      return `<div id="hdc-gate-${g.entity.replace('.', '-')}" class="hdc-gate-tile ${state}" data-action="cover_toggle" data-entity="${g.entity}">
+        <div class="hdc-gate-ico">${ico}</div>
+        <div class="hdc-gate-name">${g.name || st?.attributes?.friendly_name || g.entity}</div>
+        <div class="hdc-gate-state">${stateLabel(state)}</div>
+      </div>`;
+    }).join('');
+    gatesHtml = `<div class="hdc-st" style="margin-top:14px">Bramy i garaże</div>
+      <div class="hdc-gate-grid">${tiles}</div>`;
+  }
+
   // Waste collection section
   const wasteSensors = (cfg.waste || {}).sensors || [];
   let wasteRows = '';
@@ -262,6 +296,7 @@ function renderOsoby(hass, cfg) {
     <div style="display:flex;gap:12px;align-items:flex-start">
       <div style="flex:1;min-width:0">
         <div id="hdc-persons-list"><div class="hdc-ga">${cards}</div></div>
+        ${gatesHtml}
         ${wasteRows}
       </div>
       <div style="flex:1;min-width:0">
@@ -1147,6 +1182,18 @@ class HomeDashboardCard extends HTMLElement {
         </div>`;
     }).join('');
     listDiv.innerHTML = `<div class="hdc-ga">${cards}</div>`;
+
+    // Aktualizacja bram in-place
+    const stateLabel = st => ({ open: 'Otwarta', closed: 'Zamknięta', opening: 'Otwieranie…', closing: 'Zamykanie…' }[st] || st || '—');
+    (cfg.gates || []).forEach(g => {
+      const tile = this.shadowRoot.getElementById(`hdc-gate-${g.entity.replace('.', '-')}`);
+      if (!tile) return;
+      const st = hass.states[g.entity];
+      const state = st?.state || 'unknown';
+      tile.className = `hdc-gate-tile ${state}`;
+      const stEl = tile.querySelector('.hdc-gate-state');
+      if (stEl) stEl.textContent = stateLabel(state);
+    });
   }
 
   _updateVaillantLive() {
@@ -1529,6 +1576,14 @@ class HomeDashboardCard extends HTMLElement {
       if (!lockState) return;
       const isLocked = lockState.state === 'locked';
       this._hass.callService('lock', isLocked ? 'unlock' : 'lock', { entity_id: entity });
+    }
+    if (action === 'cover_toggle') {
+      const coverState = this._hass.states[entity];
+      if (!coverState) return;
+      const st = coverState.state;
+      if (st === 'open')    this._hass.callService('cover', 'close_cover', { entity_id: entity });
+      else if (st === 'closed') this._hass.callService('cover', 'open_cover',  { entity_id: entity });
+      else                      this._hass.callService('cover', 'stop_cover',  { entity_id: entity });
     }
   }
 
