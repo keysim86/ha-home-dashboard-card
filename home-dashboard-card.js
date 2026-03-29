@@ -120,17 +120,17 @@ const STYLES = `
 .hdc-gate-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:7px;margin-bottom:4px}
 .hdc-gate-tile{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:11px;padding:10px 8px;cursor:pointer;transition:all .15s;text-align:center;user-select:none}
 .hdc-gate-tile:hover{background:rgba(255,255,255,.08)}
-.hdc-gate-tile.closed{background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.25)}
-.hdc-gate-tile.open{background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.35)}
+.hdc-gate-tile.closed,.hdc-gate-tile.locked{background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.25)}
+.hdc-gate-tile.open,.hdc-gate-tile.unlocked{background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.35)}
 .hdc-gate-tile.opening,.hdc-gate-tile.closing{background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.25)}
 .hdc-gate-ico{font-size:22px;margin-bottom:4px}
 .hdc-gate-name{font-size:10px;font-weight:600;color:#94a3b8;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hdc-gate-tile.closed .hdc-gate-name{color:#4ade80}
-.hdc-gate-tile.open .hdc-gate-name{color:#fb923c}
+.hdc-gate-tile.closed .hdc-gate-name,.hdc-gate-tile.locked .hdc-gate-name{color:#4ade80}
+.hdc-gate-tile.open .hdc-gate-name,.hdc-gate-tile.unlocked .hdc-gate-name{color:#fb923c}
 .hdc-gate-tile.opening .hdc-gate-name,.hdc-gate-tile.closing .hdc-gate-name{color:#38bdf8}
 .hdc-gate-state{font-size:9px;color:#334155}
-.hdc-gate-tile.closed .hdc-gate-state{color:#16a34a}
-.hdc-gate-tile.open .hdc-gate-state{color:#c2410c}
+.hdc-gate-tile.closed .hdc-gate-state,.hdc-gate-tile.locked .hdc-gate-state{color:#16a34a}
+.hdc-gate-tile.open .hdc-gate-state,.hdc-gate-tile.unlocked .hdc-gate-state{color:#c2410c}
 .hdc-gate-tile.opening .hdc-gate-state,.hdc-gate-tile.closing .hdc-gate-state{color:#38bdf8}
 .hdc-gate-light{font-size:9px;margin-top:4px;color:#334155;display:flex;align-items:center;justify-content:center;gap:3px}
 .hdc-gate-light.on{color:#fbbf24}
@@ -243,7 +243,7 @@ function renderOsoby(hass, cfg) {
   const gates = cfg.gates || [];
   let gatesHtml = '';
   if (gates.length) {
-    const stateLabel = st => ({ open: 'Otwarta', closed: 'Zamknięta', opening: 'Otwieranie…', closing: 'Zamykanie…' }[st] || st || '—');
+    const stateLabel = st => ({ open: 'Otwarta', closed: 'Zamknięta', opening: 'Otwieranie…', closing: 'Zamykanie…', locked: 'Zamknięta', unlocked: 'Otwarta' }[st] || st || '—');
     const tiles = gates.map(g => {
       const st = hass.states[g.entity];
       const state = st?.state || 'unknown';
@@ -252,7 +252,7 @@ function renderOsoby(hass, cfg) {
       const lightHtml = lightOn !== null
         ? `<div class="hdc-gate-light${lightOn ? ' on' : ''}">💡 ${lightOn ? 'Włączone' : 'Wyłączone'}</div>`
         : '';
-      return `<div id="hdc-gate-${g.entity.replace('.', '-')}" class="hdc-gate-tile ${state}" data-action="cover_toggle" data-entity="${g.entity}">
+      return `<div id="hdc-gate-${g.entity.replace('.', '-')}" class="hdc-gate-tile ${state}" data-action="${g.entity.startsWith('lock.') ? 'lock_toggle' : 'cover_toggle'}" data-entity="${g.entity}">
         <div class="hdc-gate-ico">${ico}</div>
         <div class="hdc-gate-name">${g.name || st?.attributes?.friendly_name || g.entity}</div>
         <div class="hdc-gate-state">${stateLabel(state)}</div>
@@ -1191,7 +1191,7 @@ class HomeDashboardCard extends HTMLElement {
     listDiv.innerHTML = `<div class="hdc-ga">${cards}</div>`;
 
     // Aktualizacja bram in-place
-    const stateLabel = st => ({ open: 'Otwarta', closed: 'Zamknięta', opening: 'Otwieranie…', closing: 'Zamykanie…' }[st] || st || '—');
+    const stateLabel = st => ({ open: 'Otwarta', closed: 'Zamknięta', opening: 'Otwieranie…', closing: 'Zamykanie…', locked: 'Zamknięta', unlocked: 'Otwarta' }[st] || st || '—');
     (cfg.gates || []).forEach(g => {
       const tile = this.shadowRoot.getElementById(`hdc-gate-${g.entity.replace('.', '-')}`);
       if (!tile) return;
