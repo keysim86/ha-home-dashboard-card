@@ -117,6 +117,20 @@ const STYLES = `
 .hdc-alert.ok{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:#4ade80}
 .hdc-alert-msg{flex:1}
 .hdc-alert-t{font-size:10px;color:#334155;flex-shrink:0}
+.hdc-sw-tile{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px;user-select:none}
+.hdc-sw-tile:hover{background:rgba(255,255,255,.07)}
+.hdc-sw-tile.on{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.3)}
+.hdc-sw-tile.on.light{background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.3)}
+.hdc-sw-tile-ico{font-size:20px;width:32px;text-align:center;flex-shrink:0}
+.hdc-sw-tile-info{flex:1;min-width:0}
+.hdc-sw-tile-name{font-size:11px;font-weight:500;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdc-sw-tile.on .hdc-sw-tile-name{color:#e2e8f0}
+.hdc-sw-tile-state{font-size:10px;margin-top:2px;color:#334155}
+.hdc-sw-tile.on .hdc-sw-tile-state{color:#38bdf8}
+.hdc-sw-tile.on.light .hdc-sw-tile-state{color:#fbbf24}
+.hdc-sw-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.1);flex-shrink:0}
+.hdc-sw-tile.on .hdc-sw-dot{background:#38bdf8}
+.hdc-sw-tile.on.light .hdc-sw-dot{background:#fbbf24}
 `;
 
 // ============================================================
@@ -925,6 +939,43 @@ function renderAlerty(hass, cfg) {
 
 
 // ============================================================
+//  PRZEŁĄCZNIKI
+// ============================================================
+
+function renderPrzelaczniki(hass, cfg) {
+  const groups = (cfg.switches || {}).groups || [];
+  if (!groups.length) return `<div style="color:#475569;font-size:12px;padding:12px">Brak konfiguracji przełączników.<br>Dodaj sekcję <code>switches.groups</code> w konfiguracji karty.</div>`;
+
+  return groups.map(group => {
+    const entities = group.entities || [];
+    const tiles = entities.map(item => {
+      const st = hass.states[item.entity];
+      const isOn = st ? st.state === 'on' : false;
+      const isLight = item.entity.startsWith('light.');
+      const domain = item.entity.split('.')[0];
+      const defaultIco = isLight ? (isOn ? '💡' : '🔆') : domain === 'switch' ? '🔌' : domain === 'fan' ? '💨' : '⚙️';
+      const ico = item.icon || defaultIco;
+      const name = item.name || st?.attributes?.friendly_name || item.entity;
+      const stateLabel = isOn ? 'Włączone' : 'Wyłączone';
+      const typeClass = isLight ? 'light' : '';
+      const swId = `hdc-sw-${item.entity.replace('.', '-')}`;
+      return `<div id="${swId}" class="hdc-sw-tile${isOn ? ' on' : ''}${typeClass ? ' ' + typeClass : ''}" data-action="toggle" data-entity="${item.entity}">
+        <div class="hdc-sw-tile-ico">${ico}</div>
+        <div class="hdc-sw-tile-info">
+          <div class="hdc-sw-tile-name">${name}</div>
+          <div class="hdc-sw-tile-state">${stateLabel}</div>
+        </div>
+        <div class="hdc-sw-dot"></div>
+      </div>`;
+    }).join('');
+
+    return `<div class="hdc-st">${group.icon ? group.icon + ' ' : ''}${group.name || 'Grupa'}</div>
+      <div class="hdc-gaa" style="margin-bottom:14px">${tiles}</div>`;
+  }).join('');
+}
+
+
+// ============================================================
 //  MAIN ELEMENT CLASS
 // ============================================================
 
@@ -938,6 +989,7 @@ const ALL_TABS = [
   { id: 'auta',      label: '🚗 Auta',      render: renderAuta },
   { id: 'proxmox',   label: '🖧 Proxmox',   render: renderProxmox },
   { id: 'alerty',    label: '🔔 Alerty',    render: renderAlerty, badge: true },
+  { id: 'przelaczniki', label: '💡 Przełączniki', render: renderPrzelaczniki },
 ];
 
 class HomeDashboardCard extends HTMLElement {
@@ -1050,8 +1102,9 @@ class HomeDashboardCard extends HTMLElement {
         this._updateOsobyLive();
         return;
       }
-      if (this._activeTab === 'kamery' && !tabChanged) return;
-      if (this._activeTab === 'auta'   && !tabChanged) { this._updateAutaLive(); return; }
+      if (this._activeTab === 'kamery'       && !tabChanged) return;
+      if (this._activeTab === 'auta'         && !tabChanged) { this._updateAutaLive(); return; }
+      if (this._activeTab === 'przelaczniki' && !tabChanged) { this._updateSwitchesLive(); return; }
       pane.innerHTML = tab.render(this._hass, this._config);
       if (this._activeTab === 'osoby') setTimeout(() => this._initOsobyMap(), 0);
       if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
@@ -1548,6 +1601,24 @@ class HomeDashboardCard extends HTMLElement {
       badge.textContent = count;
       badge.style.display = count > 0 ? 'inline' : 'none';
     }
+  }
+
+  _updateSwitchesLive() {
+    const hass = this._hass;
+    const groups = (this._config.switches || {}).groups || [];
+    groups.forEach(group => {
+      (group.entities || []).forEach(item => {
+        const tile = this.shadowRoot.getElementById(`hdc-sw-${item.entity.replace('.', '-')}`);
+        if (!tile) return;
+        const st = hass.states[item.entity];
+        const isOn = st ? st.state === 'on' : false;
+        const isLight = item.entity.startsWith('light.');
+        tile.classList.toggle('on', isOn);
+        tile.classList.toggle('light', isLight && isOn);
+        const stateEl = tile.querySelector('.hdc-sw-tile-state');
+        if (stateEl) stateEl.textContent = isOn ? 'Włączone' : 'Wyłączone';
+      });
+    });
   }
 
   _startClock() {
