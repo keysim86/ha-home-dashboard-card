@@ -171,6 +171,9 @@ const STYLES = `
 .hdc-chum-val{font-size:12px;font-weight:600;color:#e2e8f0;min-width:36px;text-align:center;font-variant-numeric:tabular-nums}
 .hdc-chum-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:#94a3b8;cursor:pointer;width:26px;height:26px;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;transition:background .12s}
 .hdc-chum-btn:hover{background:rgba(255,255,255,.12)}
+.hdc-cbatt{display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.06);font-size:10px;color:#475569}
+.hdc-cbatt-bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+.hdc-cbatt-fill{height:100%;border-radius:3px;transition:width .3s}
 `;
 
 // ============================================================
@@ -1124,6 +1127,20 @@ function _comfortHumHtml(hass, room) {
   </div>`;
 }
 
+function _comfortBattHtml(hass, room) {
+  if (!room.battery) return '';
+  const st = hass.states[room.battery];
+  const val = st ? Math.round(parseFloat(st.state)) : NaN;
+  const display = isNaN(val) ? '—' : val + '%';
+  const color = isNaN(val) ? '#475569' : val > 50 ? '#4ade80' : val > 20 ? '#fbbf24' : '#f87171';
+  const width = isNaN(val) ? 0 : val;
+  const eid = room.battery.replace('.', '-');
+  return `<div class="hdc-cbatt" id="hdc-cbatt-${eid}">
+    🔋 <span style="color:${color};font-weight:600;min-width:28px">${display}</span>
+    <div class="hdc-cbatt-bar"><div class="hdc-cbatt-fill" style="width:${width}%;background:${color}"></div></div>
+  </div>`;
+}
+
 function renderKomfort(hass, cfg) {
   const rooms = (cfg.comfort || {}).rooms || [];
   if (!rooms.length) return `<div style="color:#475569;font-size:12px;padding:12px">Brak konfiguracji.<br>Dodaj sekcję <code>comfort.rooms</code> w konfiguracji karty.</div>`;
@@ -1132,6 +1149,7 @@ function renderKomfort(hass, cfg) {
       <div class="hdc-comfort-room">${room.icon || '🏠'} ${room.name || 'Pomieszczenie'}</div>
       <div class="hdc-comfort-sensors">${_comfortSensorHtml(hass, room)}</div>
       ${_comfortHumHtml(hass, room)}
+      ${_comfortBattHtml(hass, room)}
     </div>`).join('')}</div>`;
 }
 
@@ -1878,20 +1896,36 @@ class HomeDashboardCard extends HTMLElement {
         if (valEl) { valEl.textContent = display; valEl.style.color = color; }
       });
       // Humidifier
-      if (!room.humidifier) return;
-      const eid = room.humidifier.replace('.', '-');
-      const humEl = this.shadowRoot.getElementById(`hdc-chum-${eid}`);
-      if (!humEl) return;
-      const st = hass.states[room.humidifier];
-      const isOn = st?.state === 'on';
-      const target = st?.attributes?.humidity ?? null;
-      const toggleBtn = humEl.querySelector('.hdc-chum-toggle');
-      if (toggleBtn) {
-        toggleBtn.textContent = `💧 ${isOn ? 'Włączony' : 'Wyłączony'}`;
-        toggleBtn.style.cssText = `font-size:10px;height:26px;padding:0 10px;width:auto;${isOn ? 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8' : ''}`;
+      // Humidifier
+      if (room.humidifier) {
+        const eid = room.humidifier.replace('.', '-');
+        const humEl = this.shadowRoot.getElementById(`hdc-chum-${eid}`);
+        if (humEl) {
+          const st = hass.states[room.humidifier];
+          const isOn = st?.state === 'on';
+          const target = st?.attributes?.humidity ?? null;
+          const toggleBtn = humEl.querySelector('.hdc-chum-toggle');
+          if (toggleBtn) {
+            toggleBtn.textContent = `💧 ${isOn ? 'Włączony' : 'Wyłączony'}`;
+            toggleBtn.style.cssText = `font-size:10px;height:26px;padding:0 10px;width:auto;${isOn ? 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8' : ''}`;
+          }
+          const valEl = this.shadowRoot.getElementById(`hdc-chumv-${eid}`);
+          if (valEl && target !== null) valEl.textContent = `${target}%`;
+        }
       }
-      const valEl = this.shadowRoot.getElementById(`hdc-chumv-${eid}`);
-      if (valEl && target !== null) valEl.textContent = `${target}%`;
+      // Battery
+      if (room.battery) {
+        const battEl = this.shadowRoot.getElementById(`hdc-cbatt-${room.battery.replace('.', '-')}`);
+        if (battEl) {
+          const bst = hass.states[room.battery];
+          const val = bst ? Math.round(parseFloat(bst.state)) : NaN;
+          const color = isNaN(val) ? '#475569' : val > 50 ? '#4ade80' : val > 20 ? '#fbbf24' : '#f87171';
+          const span = battEl.querySelector('span');
+          if (span) { span.textContent = isNaN(val) ? '—' : val + '%'; span.style.color = color; }
+          const fill = battEl.querySelector('.hdc-cbatt-fill');
+          if (fill) { fill.style.width = (isNaN(val) ? 0 : val) + '%'; fill.style.background = color; }
+        }
+      }
     });
   }
 
