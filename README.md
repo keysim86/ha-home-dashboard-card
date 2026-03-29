@@ -23,6 +23,7 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 | 🖧 **Proxmox** | Node stats (CPU, RAM%, wolna RAM w GB, Disk), LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
 | 🔔 **Alerty** | Reguły definiowane w YAML, badge z licznikiem na zakładce |
 | 💡 **Przełączniki** | Grupy kafelków `switch`/`light`/`fan` z live statusem; klik przełącza stan |
+| 🌡️ **Komfort** | Karty pomieszczeń z sensorami (temp, wilgotność, ciśnienie, nasłonecznienie, CO₂, AQI, PM2.5, PM10, VOC); kolory wartości wg norm; sterowanie humidifier (toggle + docelowa wilgotność) |
 
 ## Instalacja przez HACS
 
@@ -308,6 +309,31 @@ switches:
       entities:
         - entity: fan.wentylator
           name: Wentylator
+
+comfort:
+  rooms:
+    - name: Salon
+      icon: "🛋️"
+      temperature: sensor.salon_temperatura
+      humidity: sensor.salon_wilgotnosc
+      pressure: sensor.salon_cisnienie        # opcjonalne
+      co2: sensor.salon_co2                   # opcjonalne
+      aqi: sensor.salon_aqi                   # opcjonalne
+      pm25: sensor.salon_pm25                 # opcjonalne
+      pm10: sensor.salon_pm10                 # opcjonalne
+      voc: sensor.salon_voc                   # opcjonalne
+      humidifier: humidifier.salon            # opcjonalne — sterowanie nawilżaczem
+    - name: Sypialnia
+      icon: "🛏️"
+      temperature: sensor.sypialnia_temperatura
+      humidity: sensor.sypialnia_wilgotnosc
+      humidifier: humidifier.osuszacz_sypialnia
+    - name: Na zewnątrz
+      icon: "🌤️"
+      temperature: sensor.temperatura_zewnetrzna
+      humidity: sensor.wilgotnosc_zewnetrzna
+      pressure: sensor.cisnienie_zewnetrzne
+      illuminance: sensor.nasłonecznienie
 
 alerts:
   - entity: sensor.pixel_8_battery_level

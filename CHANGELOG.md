@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- Nowa zakładka **🌡️ Komfort** — karty pomieszczeń z sensorami (temperatura, wilgotność, ciśnienie, nasłonecznienie, CO₂, AQI, PM2.5, PM10, VOC); kolory wartości zależne od norm; sterowanie humidifier (toggle + docelowa wilgotność +/−); auto-dodawana gdy `comfort.rooms` jest skonfigurowane
 - Zakładka Home/Bramy: widget skrzynki pocztowej — status 📬 Jest poczta! / 📭 Pusta z kolorowym podświetleniem; opcjonalny poziom baterii z kolorowaniem (zielony/żółty/czerwony); konfiguracja przez `mailbox:` w YAML
 
 ## [1.4.2] - 2026-03-29
