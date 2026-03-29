@@ -132,6 +132,8 @@ const STYLES = `
 .hdc-gate-tile.closed .hdc-gate-state{color:#16a34a}
 .hdc-gate-tile.open .hdc-gate-state{color:#c2410c}
 .hdc-gate-tile.opening .hdc-gate-state,.hdc-gate-tile.closing .hdc-gate-state{color:#38bdf8}
+.hdc-gate-light{font-size:9px;margin-top:4px;color:#334155;display:flex;align-items:center;justify-content:center;gap:3px}
+.hdc-gate-light.on{color:#fbbf24}
 .hdc-sw-tile{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px;user-select:none}
 .hdc-sw-tile:hover{background:rgba(255,255,255,.07)}
 .hdc-sw-tile.on{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.3)}
@@ -246,10 +248,15 @@ function renderOsoby(hass, cfg) {
       const st = hass.states[g.entity];
       const state = st?.state || 'unknown';
       const ico = g.icon || (g.entity.includes('garaz') || g.entity.includes('garage') ? '🏠' : g.entity.includes('bramka') || g.entity.includes('wicket') ? '🚶' : '🚗');
+      const lightOn = g.light ? hass.states[g.light]?.state === 'on' : null;
+      const lightHtml = lightOn !== null
+        ? `<div class="hdc-gate-light${lightOn ? ' on' : ''}">💡 ${lightOn ? 'Włączone' : 'Wyłączone'}</div>`
+        : '';
       return `<div id="hdc-gate-${g.entity.replace('.', '-')}" class="hdc-gate-tile ${state}" data-action="cover_toggle" data-entity="${g.entity}">
         <div class="hdc-gate-ico">${ico}</div>
         <div class="hdc-gate-name">${g.name || st?.attributes?.friendly_name || g.entity}</div>
         <div class="hdc-gate-state">${stateLabel(state)}</div>
+        ${lightHtml}
       </div>`;
     }).join('');
     gatesHtml = `<div class="hdc-st" style="margin-top:14px">Bramy i garaże</div>
@@ -1193,6 +1200,12 @@ class HomeDashboardCard extends HTMLElement {
       tile.className = `hdc-gate-tile ${state}`;
       const stEl = tile.querySelector('.hdc-gate-state');
       if (stEl) stEl.textContent = stateLabel(state);
+      const ltEl = tile.querySelector('.hdc-gate-light');
+      if (ltEl && g.light) {
+        const lightOn = hass.states[g.light]?.state === 'on';
+        ltEl.className = `hdc-gate-light${lightOn ? ' on' : ''}`;
+        ltEl.textContent = `💡 ${lightOn ? 'Włączone' : 'Wyłączone'}`;
+      }
     });
   }
 
