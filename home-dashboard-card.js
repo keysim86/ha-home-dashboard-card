@@ -157,6 +157,20 @@ const STYLES = `
 .hdc-sw-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.1);flex-shrink:0}
 .hdc-sw-tile.on .hdc-sw-dot{background:#38bdf8}
 .hdc-sw-tile.on.light .hdc-sw-dot{background:#fbbf24}
+.hdc-comfort-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.hdc-comfort-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:12px 14px}
+.hdc-comfort-room{font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.hdc-comfort-sensors{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px}
+.hdc-cs{display:flex;flex-direction:column;gap:1px}
+.hdc-cs-label{font-size:9px;color:#475569;text-transform:uppercase;letter-spacing:.04em}
+.hdc-cs-val{font-size:14px;font-weight:600;color:#e2e8f0;font-variant-numeric:tabular-nums}
+.hdc-cs-wide{grid-column:1/-1}
+.hdc-chum{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.06);flex-wrap:wrap}
+.hdc-chum-toggle{font-size:10px!important;height:26px!important;padding:0 10px!important;width:auto!important}
+.hdc-chum-hum{display:flex;align-items:center;gap:6px;margin-left:auto}
+.hdc-chum-val{font-size:12px;font-weight:600;color:#e2e8f0;min-width:36px;text-align:center;font-variant-numeric:tabular-nums}
+.hdc-chum-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:#94a3b8;cursor:pointer;width:26px;height:26px;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.hdc-chum-btn:hover{background:rgba(255,255,255,.12)}
 `;
 
 // ============================================================
@@ -1056,6 +1070,71 @@ function renderPrzelaczniki(hass, cfg) {
 }
 
 
+function _tempColor(v)  { return v < 16 ? '#38bdf8' : v < 20 ? '#7dd3fc' : v < 25 ? '#4ade80' : v < 28 ? '#fbbf24' : '#f87171'; }
+function _humColor(v)   { return v < 30 ? '#fb923c' : v < 60 ? '#4ade80' : '#38bdf8'; }
+function _co2Color(v)   { return v < 800 ? '#4ade80' : v < 1200 ? '#fbbf24' : '#f87171'; }
+function _aqiColor(v)   { return v < 50 ? '#4ade80' : v < 100 ? '#fbbf24' : v < 150 ? '#fb923c' : '#f87171'; }
+function _vocColor(v)   { return v < 220 ? '#4ade80' : v < 660 ? '#fbbf24' : '#f87171'; }
+function _luxColor(v)   { return v < 50 ? '#64748b' : v < 1000 ? '#fbbf24' : '#fde68a'; }
+
+const COMFORT_SENSORS = [
+  { key: 'temperature',  label: '🌡️ Temperatura',   unit: '°C',     dec: 1, colorFn: _tempColor },
+  { key: 'humidity',     label: '💧 Wilgotność',     unit: '%',      dec: 0, colorFn: _humColor },
+  { key: 'pressure',     label: '🔵 Ciśnienie',      unit: ' hPa',   dec: 0 },
+  { key: 'illuminance',  label: '☀️ Nasłonecz.',     unit: ' lx',    dec: 0, colorFn: _luxColor },
+  { key: 'co2',          label: 'CO₂',               unit: ' ppm',   dec: 0, colorFn: _co2Color },
+  { key: 'aqi',          label: 'AQI',               unit: '',       dec: 0, colorFn: _aqiColor },
+  { key: 'pm25',         label: 'PM2.5',             unit: ' µg/m³', dec: 1 },
+  { key: 'pm10',         label: 'PM10',              unit: ' µg/m³', dec: 1 },
+  { key: 'voc',          label: 'VOC',               unit: ' ppb',   dec: 0, colorFn: _vocColor },
+];
+
+function _comfortSensorHtml(hass, room) {
+  return COMFORT_SENSORS.filter(s => room[s.key]).map(s => {
+    const st = hass.states[room[s.key]];
+    const raw = st ? parseFloat(st.state) : NaN;
+    const display = isNaN(raw) ? '—' : raw.toFixed(s.dec) + s.unit;
+    const color = !isNaN(raw) && s.colorFn ? s.colorFn(raw) : '#e2e8f0';
+    return `<div class="hdc-cs" id="hdc-cs-${room[s.key].replace('.', '-')}">
+      <div class="hdc-cs-label">${s.label}</div>
+      <div class="hdc-cs-val" style="color:${color}">${display}</div>
+    </div>`;
+  }).join('');
+}
+
+function _comfortHumHtml(hass, room) {
+  if (!room.humidifier) return '';
+  const st = hass.states[room.humidifier];
+  const isOn = st?.state === 'on';
+  const target = st?.attributes?.humidity ?? null;
+  const minH = st?.attributes?.min_humidity ?? 20;
+  const maxH = st?.attributes?.max_humidity ?? 80;
+  const step = Math.max(1, Math.round((maxH - minH) / 15));
+  const eid = room.humidifier.replace('.', '-');
+  return `<div class="hdc-chum" id="hdc-chum-${eid}">
+    <button class="hdc-tbtn hdc-chum-toggle" data-action="humidifier_toggle" data-entity="${room.humidifier}"
+      style="font-size:10px;height:26px;padding:0 10px;width:auto;${isOn ? 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8' : ''}">
+      💧 ${isOn ? 'Włączony' : 'Wyłączony'}
+    </button>
+    ${target !== null ? `<div class="hdc-chum-hum">
+      <button class="hdc-chum-btn" data-action="humidifier_hum" data-entity="${room.humidifier}" data-delta="${-step}">−</button>
+      <span class="hdc-chum-val" id="hdc-chumv-${eid}">${target}%</span>
+      <button class="hdc-chum-btn" data-action="humidifier_hum" data-entity="${room.humidifier}" data-delta="${step}">+</button>
+    </div>` : ''}
+  </div>`;
+}
+
+function renderKomfort(hass, cfg) {
+  const rooms = (cfg.comfort || {}).rooms || [];
+  if (!rooms.length) return `<div style="color:#475569;font-size:12px;padding:12px">Brak konfiguracji.<br>Dodaj sekcję <code>comfort.rooms</code> w konfiguracji karty.</div>`;
+  return `<div class="hdc-comfort-grid">${rooms.map(room => `
+    <div class="hdc-comfort-card">
+      <div class="hdc-comfort-room">${room.icon || '🏠'} ${room.name || 'Pomieszczenie'}</div>
+      <div class="hdc-comfort-sensors">${_comfortSensorHtml(hass, room)}</div>
+      ${_comfortHumHtml(hass, room)}
+    </div>`).join('')}</div>`;
+}
+
 // ============================================================
 //  MAIN ELEMENT CLASS
 // ============================================================
@@ -1071,6 +1150,7 @@ const ALL_TABS = [
   { id: 'proxmox',   label: '🖧 Proxmox',   render: renderProxmox },
   { id: 'alerty',    label: '🔔 Alerty',    render: renderAlerty, badge: true },
   { id: 'przelaczniki', label: '💡 Przełączniki', render: renderPrzelaczniki },
+  { id: 'komfort',      label: '🌡️ Komfort',     render: renderKomfort },
 ];
 
 class HomeDashboardCard extends HTMLElement {
@@ -1167,6 +1247,10 @@ class HomeDashboardCard extends HTMLElement {
     if (cfg.tabs && (cfg.switches || {}).groups?.length && !allowed.includes('przelaczniki')) {
       allowed.push('przelaczniki');
     }
+    // Auto-dodaj komfort jeśli comfort.rooms jest skonfigurowane
+    if (cfg.tabs && (cfg.comfort || {}).rooms?.length && !allowed.includes('komfort')) {
+      allowed.push('komfort');
+    }
     return ALL_TABS.filter(t => allowed.includes(t.id));
   }
 
@@ -1191,6 +1275,7 @@ class HomeDashboardCard extends HTMLElement {
       if (this._activeTab === 'kamery'       && !tabChanged) return;
       if (this._activeTab === 'auta'         && !tabChanged) { this._updateAutaLive(); return; }
       if (this._activeTab === 'przelaczniki' && !tabChanged) { this._updateSwitchesLive(); return; }
+      if (this._activeTab === 'komfort'      && !tabChanged) { this._updateKomfortLive(); return; }
       pane.innerHTML = tab.render(this._hass, this._config);
       if (this._activeTab === 'osoby') setTimeout(() => this._initOsobyMap(), 0);
       if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
@@ -1671,6 +1756,21 @@ class HomeDashboardCard extends HTMLElement {
       else if (st === 'closed') this._hass.callService('cover', 'open_cover',  { entity_id: entity });
       else                      this._hass.callService('cover', 'stop_cover',  { entity_id: entity });
     }
+    if (action === 'humidifier_toggle') {
+      const humState = this._hass.states[entity];
+      if (!humState) return;
+      this._hass.callService('humidifier', humState.state === 'on' ? 'turn_off' : 'turn_on', { entity_id: entity });
+    }
+    if (action === 'humidifier_hum') {
+      const humState = this._hass.states[entity];
+      if (!humState) return;
+      const current = humState.attributes?.humidity ?? 50;
+      const delta = parseInt(btn.dataset.delta || '0');
+      const minH = humState.attributes?.min_humidity ?? 20;
+      const maxH = humState.attributes?.max_humidity ?? 80;
+      const newVal = Math.min(maxH, Math.max(minH, current + delta));
+      this._hass.callService('humidifier', 'set_humidity', { entity_id: entity, humidity: newVal });
+    }
   }
 
   _focusCamera(card) {
@@ -1759,6 +1859,39 @@ class HomeDashboardCard extends HTMLElement {
         const stateEl = tile.querySelector('.hdc-sw-tile-state');
         if (stateEl) stateEl.textContent = isOn ? 'Włączone' : 'Wyłączone';
       });
+    });
+  }
+
+  _updateKomfortLive() {
+    const hass = this._hass;
+    const rooms = (this._config.comfort || {}).rooms || [];
+    rooms.forEach(room => {
+      // Sensory
+      COMFORT_SENSORS.filter(s => room[s.key]).forEach(s => {
+        const el = this.shadowRoot.getElementById(`hdc-cs-${room[s.key].replace('.', '-')}`);
+        if (!el) return;
+        const st = hass.states[room[s.key]];
+        const raw = st ? parseFloat(st.state) : NaN;
+        const display = isNaN(raw) ? '—' : raw.toFixed(s.dec) + s.unit;
+        const color = !isNaN(raw) && s.colorFn ? s.colorFn(raw) : '#e2e8f0';
+        const valEl = el.querySelector('.hdc-cs-val');
+        if (valEl) { valEl.textContent = display; valEl.style.color = color; }
+      });
+      // Humidifier
+      if (!room.humidifier) return;
+      const eid = room.humidifier.replace('.', '-');
+      const humEl = this.shadowRoot.getElementById(`hdc-chum-${eid}`);
+      if (!humEl) return;
+      const st = hass.states[room.humidifier];
+      const isOn = st?.state === 'on';
+      const target = st?.attributes?.humidity ?? null;
+      const toggleBtn = humEl.querySelector('.hdc-chum-toggle');
+      if (toggleBtn) {
+        toggleBtn.textContent = `💧 ${isOn ? 'Włączony' : 'Wyłączony'}`;
+        toggleBtn.style.cssText = `font-size:10px;height:26px;padding:0 10px;width:auto;${isOn ? 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8' : ''}`;
+      }
+      const valEl = this.shadowRoot.getElementById(`hdc-chumv-${eid}`);
+      if (valEl && target !== null) valEl.textContent = `${target}%`;
     });
   }
 
