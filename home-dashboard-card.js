@@ -77,7 +77,9 @@ const STYLES = `
 .hdc-vrow{display:flex;gap:8px;margin-bottom:10px}
 .hdc-vc{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px;text-align:center}
 .hdc-ports{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:5px}
-.hdc-port{border-radius:7px;padding:6px 4px;text-align:center;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.04);cursor:pointer;transition:all .15s}
+.hdc-port{border-radius:7px;padding:6px 4px;text-align:center;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.04);cursor:default;transition:all .15s}
+.hdc-port.clickable{cursor:pointer}
+.hdc-port.clickable:hover{filter:brightness(1.25)}
 .hdc-port.up{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.25);color:#4ade80}
 .hdc-port.poe{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.25);color:#38bdf8}
 .hdc-port.down{background:rgba(100,116,139,.06);border-color:rgba(100,116,139,.1);color:#334155}
@@ -734,7 +736,10 @@ function renderTPLink(hass, cfg) {
 
   const renderPorts = (ports, poe = false) => (ports || []).map(p => {
     const on = isOn(hass, p.entity);
-    return `<div class="hdc-port ${on?(poe?'poe':'up'):'down'}" title="${p.label}">
+    const isSwitch = p.entity && p.entity.startsWith('switch.');
+    const clickAttr = isSwitch ? ` data-action="toggle" data-entity="${p.entity}"` : '';
+    const eid = `hdc-port-${p.entity.replace('.', '-')}`;
+    return `<div id="${eid}" class="hdc-port${isSwitch?' clickable':''} ${on?(poe?'poe':'up'):'down'}" title="${p.label}${isSwitch?(on?' — kliknij aby wyłączyć':' — kliknij aby włączyć'):''}"${clickAttr}>
       <span class="hdc-port-ico">${poe?'⚡':'🔗'}</span>
       <span class="hdc-port-num">${p.label}</span>
     </div>`;
@@ -1293,6 +1298,7 @@ class HomeDashboardCard extends HTMLElement {
       if (this._activeTab === 'kamery'       && !tabChanged) return;
       if (this._activeTab === 'auta'         && !tabChanged) { this._updateAutaLive(); return; }
       if (this._activeTab === 'przelaczniki' && !tabChanged) { this._updateSwitchesLive(); return; }
+      if (this._activeTab === 'tplink'       && !tabChanged) { this._updateTPLinkLive(); return; }
       if (this._activeTab === 'komfort'      && !tabChanged) { this._updateKomfortLive(); return; }
       pane.innerHTML = tab.render(this._hass, this._config);
       if (this._activeTab === 'osoby') setTimeout(() => this._initOsobyMap(), 0);
@@ -1926,6 +1932,25 @@ class HomeDashboardCard extends HTMLElement {
           if (fill) { fill.style.width = (isNaN(val) ? 0 : val) + '%'; fill.style.background = color; }
         }
       }
+    });
+  }
+
+  _updateTPLinkLive() {
+    const hass = this._hass;
+    const t = this._config.tplink || {};
+    const allPorts = [
+      ...(t.router_ports || []),
+      ...(t.sw01_ports || []),
+      ...(t.sw02_ports || []),
+      ...(t.sw03_ports || []),
+    ];
+    allPorts.forEach(p => {
+      const el = this.shadowRoot.getElementById(`hdc-port-${p.entity.replace('.', '-')}`);
+      if (!el) return;
+      const on = isOn(hass, p.entity);
+      const isPoe = p.entity.startsWith('switch.');
+      el.className = `hdc-port${isPoe ? ' clickable' : ''} ${on ? (isPoe ? 'poe' : 'up') : 'down'}`;
+      el.title = `${p.label}${isPoe ? (on ? ' — kliknij aby wyłączyć' : ' — kliknij aby włączyć') : ''}`;
     });
   }
 
