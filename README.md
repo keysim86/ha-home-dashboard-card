@@ -13,7 +13,7 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 
 | Zakładka | Zawartość |
 |----------|-----------|
-| 🏠 **Home** | Lokalizacja, bateria, kroki, mapa `ha-map` z GPS, bramy/garaże z kontrolą, wskaźnikiem światła i live timerem czasu otwarcia, harmonogram odpadów komunalnych z badge |
+| 🏠 **Home** | Lokalizacja, bateria, kroki, mapa `ha-map` z GPS, bramy/garaże z kontrolą, wskaźnikiem światła i live timerem czasu otwarcia, widget skrzynki pocztowej z poziomem baterii, harmonogram odpadów komunalnych z badge |
 | ⚡ **Energia** | Moc całkowita live, napięcia L1/L2/L3, taryfy G13s (dziennie/miesięcznie), top odbiorniki |
 | 🔥 **Vaillant** | Termostaty CO + CWU ze sterowaniem (tryby, presety), wykresy temperatur 24h, wykresy zużycia gazu 30-dniowe i 12-miesięczne, ustawienia `input_number` |
 | 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), myORLEN gaz, licznik wody, EcoWater, zmywarka Haier hOn |
@@ -280,6 +280,11 @@ gates:
   - entity: cover.bramka
     name: Bramka
     icon: "🚶"
+
+mailbox:
+  entity: sensor.skrzynka_pocztowa           # on = jest poczta, off = pusta
+  battery: sensor.supla_skrzynka_poziom_baterii_w_skrzynce_pocztowej  # opcjonalne, w %
+  name: Skrzynka pocztowa                    # opcjonalne
 
 switches:
   groups:

@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Zakładka Home/Bramy: widget skrzynki pocztowej — status 📬 Jest poczta! / 📭 Pusta z kolorowym podświetleniem; opcjonalny poziom baterii z kolorowaniem (zielony/żółty/czerwony); konfiguracja przez `mailbox:` w YAML
+
 ## [1.4.2] - 2026-03-29
 
 ### Added
