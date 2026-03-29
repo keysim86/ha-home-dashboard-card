@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.2] - 2026-03-29
+
+### Added
+- Zakładka Home/Bramy: live timer na kafelku gdy brama/bramka jest otwarta — wyświetla czas od otwarcia (⏱ Xm Ys), aktualizowany co sekundę; ukryty gdy brama zamknięta
+
 ## [1.4.1] - 2026-03-29
 
 ### Fixed
