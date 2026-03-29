@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.5.0] - 2026-03-30
 
 ### Added
 - Nowa zakładka **🌡️ Komfort** — karty pomieszczeń z sensorami (temperatura, wilgotność, ciśnienie, nasłonecznienie, CO₂, AQI, PM2.5, PM10, VOC); kolory wartości zależne od norm; sterowanie humidifier (toggle + docelowa wilgotność +/−); opcjonalny poziom baterii czujnika z paskiem i kolorowaniem; auto-dodawana gdy `comfort.rooms` jest skonfigurowane
