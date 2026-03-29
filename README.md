@@ -13,7 +13,7 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 
 | Zakładka | Zawartość |
 |----------|-----------|
-| 🏠 **Home** | Lokalizacja, bateria, kroki, mapa `ha-map` z GPS, harmonogram odpadów komunalnych z badge |
+| 🏠 **Home** | Lokalizacja, bateria, kroki, mapa `ha-map` z GPS, bramy/garaże z kontrolą i wskaźnikiem światła, harmonogram odpadów komunalnych z badge |
 | ⚡ **Energia** | Moc całkowita live, napięcia L1/L2/L3, taryfy G13s (dziennie/miesięcznie), top odbiorniki |
 | 🔥 **Vaillant** | Termostaty CO + CWU ze sterowaniem (tryby, presety), wykresy temperatur 24h, wykresy zużycia gazu 30-dniowe i 12-miesięczne, ustawienia `input_number` |
 | 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), myORLEN gaz, licznik wody, EcoWater, zmywarka Haier hOn |
@@ -22,6 +22,7 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 | 🚗 **Auta** | Paliwo + litry, zasięg, przebieg, bateria 12V, blokada (klikalna lock/unlock), status połączenia, lokalizacja GPS, mapa `ha-map` |
 | 🖧 **Proxmox** | Node stats (CPU, RAM%, wolna RAM w GB, Disk), LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
 | 🔔 **Alerty** | Reguły definiowane w YAML, badge z licznikiem na zakładce |
+| 💡 **Przełączniki** | Grupy kafelków `switch`/`light`/`fan` z live statusem; klik przełącza stan |
 
 ## Instalacja przez HACS
 
@@ -263,6 +264,45 @@ waste:
       name: Biodegradowalne
       icon: "🌿"
       toggle: input_boolean.odpady_bio_aktywne  # opcjonalne — ukrywa frakcję gdy off
+
+gates:
+  - entity: cover.brama_wjazdowa
+    name: Brama
+    icon: "🚗"
+  - entity: cover.garaz_1
+    name: Garaż 1
+    icon: "🏠"
+    light: light.garaz_1       # opcjonalne — wskaźnik światła na kafelku
+  - entity: cover.garaz_2
+    name: Garaż 2
+    icon: "🏠"
+    light: light.garaz_2
+  - entity: cover.bramka
+    name: Bramka
+    icon: "🚶"
+
+switches:
+  groups:
+    - name: Gniazdka
+      icon: "🔌"
+      entities:
+        - entity: switch.gniazdko_salon
+          name: Salon
+        - entity: switch.gniazdko_kuchnia
+          name: Kuchnia
+    - name: Światło
+      icon: "💡"
+      entities:
+        - entity: light.salon
+          name: Salon
+        - entity: light.sypialnia
+          name: Sypialnia
+          icon: "🛏️"    # opcjonalne — nadpisuje domyślną ikonę
+    - name: Inne
+      icon: "⚙️"
+      entities:
+        - entity: fan.wentylator
+          name: Wentylator
 
 alerts:
   - entity: sensor.pixel_8_battery_level

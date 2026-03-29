@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0] - 2026-03-29
+
+### Added
+- Zakładka Home: sekcja **Bramy i garaże** — kafelki `cover` z kolorem stanu (zielony=zamknięta, pomarańczowy=otwarta, niebieski=w ruchu); klik otwiera/zamyka/zatrzymuje
+- Zakładka Home/Bramy: opcjonalne pole `light` przy bramie — wyświetla wskaźnik 💡 Włączone/Wyłączone na kafelku garażu
+- Nowa zakładka **💡 Przełączniki** — grupy `switch`/`light`/`fan` z kafelkami; klik przełącza stan; live update bez przebudowy DOM
+
+## [1.3.6] - 2026-03-29
+
+### Changed
+- Workflow: automatyczne oznaczanie wydania jako wersja wstępna gdy tag zawiera `-`
+
 ## [1.3.5] - 2026-03-28
 
 ### Changed
