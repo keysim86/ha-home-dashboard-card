@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Zakładka **🌡️ Klimat**: kliknięcie w dowolny sensor (temp, wilgotność, ciśnienie, nasłonecznienie, CO₂, AQI, PM2.5, PM10, VOC, bateria) otwiera modal z liniowym wykresem historii; wybór zakresu 7/14/30/60/90 dni; dane z HA History API
+- Kafelki osób: wyświetla nazwę strefy z HA zamiast "W domu"/"Poza domem" (żółty kolor dla nazwanych stref)
+
+### Changed
+- Zmieniono ID i nazwę zakładki `komfort` → `klimat` — zaktualizuj `tabs:` w konfiguracji YAML
+- Porty routera (`switch.*`) klikalne i kolory poprawione (zielony router vs cyjanowy PoE)
+
+### Fixed
+- Przyciski TP-Link PoE — toggle wywoływany przed sprawdzeniem stanu encji (naprawia "nie działają")
+
 ## [1.6.0] - 2026-03-30
 
 ### Added
