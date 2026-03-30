@@ -55,10 +55,10 @@ type: custom:home-dashboard-card
 title: MirHome
 
 # Kolejność i widoczność zakładek (opcjonalne — domyślnie wszystkie w kolejności poniżej)
-# Dostępne ID: osoby, energia, vaillant, metering, tplink, kamery, auta, proxmox, alerty, przelaczniki, komfort
+# Dostępne ID: home, energia, vaillant, metering, tplink, kamery, auta, proxmox, alerty, przelaczniki, komfort
 # przelaczniki i komfort pojawiają się automatycznie gdy skonfigurowane sekcje switches/comfort są obecne
 tabs:
-  - osoby
+  - home
   - komfort
   - przelaczniki
   - energia

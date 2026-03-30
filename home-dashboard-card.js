@@ -1163,7 +1163,7 @@ function renderKomfort(hass, cfg) {
 // ============================================================
 
 const ALL_TABS = [
-  { id: 'osoby',     label: '🏠 Home',      render: renderOsoby, badge: true },
+  { id: 'home',     label: '🏠 Home',      render: renderOsoby, badge: true },
   { id: 'energia',   label: '⚡ Energia',   render: renderEnergia },
   { id: 'vaillant',  label: '🔥 Vaillant',  render: renderVaillant },
   { id: 'metering',  label: '📊 Metering',  render: renderMetering },
@@ -1191,7 +1191,7 @@ class HomeDashboardCard extends HTMLElement {
 
   setConfig(config) {
     this._config = config;
-    this._activeTab = (config.tabs && config.tabs[0]) || 'osoby';
+    this._activeTab = (config.tabs && config.tabs[0]) || 'home';
   }
 
   set hass(hass) {
@@ -1293,7 +1293,7 @@ class HomeDashboardCard extends HTMLElement {
         this._updateVaillantLive();
         return;
       }
-      if (this._activeTab === 'osoby' && !tabChanged) {
+      if (this._activeTab === 'home' && !tabChanged) {
         this._updateOsobyLive();
         return;
       }
@@ -1303,7 +1303,7 @@ class HomeDashboardCard extends HTMLElement {
       if (this._activeTab === 'tplink'       && !tabChanged) { this._updateTPLinkLive(); return; }
       if (this._activeTab === 'komfort'      && !tabChanged) { this._updateKomfortLive(); return; }
       pane.innerHTML = tab.render(this._hass, this._config);
-      if (this._activeTab === 'osoby') setTimeout(() => this._initOsobyMap(), 0);
+      if (this._activeTab === 'home') setTimeout(() => this._initOsobyMap(), 0);
       if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
       if (this._activeTab === 'vaillant') setTimeout(() => this._initVaillantCharts(), 0);
     } catch(err) {
@@ -1848,7 +1848,7 @@ class HomeDashboardCard extends HTMLElement {
       const daysTo = st.attributes.daysTo != null ? parseInt(st.attributes.daysTo) : null;
       if (daysTo !== null && daysTo <= 1) count++;
     });
-    const badge = this.shadowRoot.getElementById('hdc-badge-osoby');
+    const badge = this.shadowRoot.getElementById('hdc-badge-home');
     if (badge) {
       badge.textContent = count;
       badge.style.display = count > 0 ? 'inline' : 'none';
@@ -1988,7 +1988,7 @@ class HomeDashboardCard extends HTMLElement {
 
   _startGateTimers() {
     this._gateTimerInterval = setInterval(() => {
-      if (this._activeTab !== 'osoby') return;
+      if (this._activeTab !== 'home') return;
       const cfg = this._config || {};
       const hass = this._hass;
       if (!hass) return;
@@ -2020,7 +2020,7 @@ class HomeDashboardCard extends HTMLElement {
   static getStubConfig() {
     return {
       title: 'MirHome',
-      tabs: ['osoby', 'energia', 'vaillant', 'metering', 'tplink', 'kamery', 'auta', 'proxmox', 'alerty'],
+      tabs: ['home', 'energia', 'vaillant', 'metering', 'tplink', 'kamery', 'auta', 'proxmox', 'alerty'],
     };
   }
 }
@@ -2030,7 +2030,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'home-dashboard-card',
   name: 'MirHome Dashboard',
-  description: 'Kompletny dashboard domowy — osoby, energia, Vaillant, metering, TP-Link, kamery, auta, Proxmox.',
+  description: 'Kompletny dashboard domowy — home, energia, Vaillant, metering, TP-Link, kamery, auta, Proxmox.',
   preview: true,
 });
 
