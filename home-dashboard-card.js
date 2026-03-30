@@ -163,7 +163,7 @@ const STYLES = `
 .hdc-sw-tile.on .hdc-sw-timer{display:block;color:#38bdf8}
 .hdc-sw-tile.on.light .hdc-sw-timer{color:#fbbf24}
 .hdc-comfort-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
-.hdc-comfort-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:12px 14px}
+.hdc-comfort-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:12px 14px;position:relative}
 .hdc-comfort-room{font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .hdc-comfort-sensors{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px}
 .hdc-cs{display:flex;flex-direction:column;gap:1px}
@@ -179,7 +179,7 @@ const STYLES = `
 .hdc-cbatt{display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.06);font-size:10px;color:#475569}
 .hdc-cbatt-bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
 .hdc-cbatt-fill{height:100%;border-radius:3px;transition:width .3s}
-.hdc-cupdated{font-size:9px;color:#334155;margin-top:6px;text-align:right;font-variant-numeric:tabular-nums}
+.hdc-cupdated{font-size:9px;color:#334155;font-variant-numeric:tabular-nums;position:absolute;bottom:8px;right:10px}
 `;
 
 // ============================================================
