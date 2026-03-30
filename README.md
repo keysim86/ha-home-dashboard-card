@@ -23,7 +23,7 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 | 🖧 **Proxmox** | Node stats (CPU, RAM%, wolna RAM w GB, Disk), LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
 | 🔔 **Alerty** | Reguły definiowane w YAML, badge z licznikiem na zakładce |
 | 💡 **Przełączniki** | Grupy kafelków `switch`/`light`/`fan` z live statusem; klik przełącza stan; opcjonalny timer czasu włączenia per grupa (`show_timer: true`) |
-| 🌡️ **Komfort** | Karty pomieszczeń z sensorami (temp, wilgotność, ciśnienie, nasłonecznienie, CO₂, AQI, PM2.5, PM10, VOC); kolory wartości wg norm; sterowanie humidifier; poziom baterii czujnika; znacznik czasu ostatniej aktualizacji |
+| 🌡️ **Klimat** | Karty pomieszczeń z sensorami (temp, wilgotność, ciśnienie, nasłonecznienie, CO₂, AQI, PM2.5, PM10, VOC); kolory wartości wg norm; sterowanie humidifier; poziom baterii czujnika; kliknięcie w sensor → modal z liniowym wykresem historii (7/14/30/60/90 dni) |
 
 ## Instalacja przez HACS
 
@@ -55,11 +55,11 @@ type: custom:home-dashboard-card
 title: MirHome
 
 # Kolejność i widoczność zakładek (opcjonalne — domyślnie wszystkie w kolejności poniżej)
-# Dostępne ID: home, energia, vaillant, metering, tplink, kamery, auta, proxmox, alerty, przelaczniki, komfort
-# przelaczniki i komfort pojawiają się automatycznie gdy skonfigurowane sekcje switches/comfort są obecne
+# Dostępne ID: home, energia, vaillant, metering, tplink, kamery, auta, proxmox, alerty, przelaczniki, klimat
+# przelaczniki i klimat pojawiają się automatycznie gdy skonfigurowane sekcje switches/comfort są obecne
 tabs:
   - home
-  - komfort
+  - klimat
   - przelaczniki
   - energia
   - vaillant

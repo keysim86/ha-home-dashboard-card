@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.7.0] - 2026-03-30
 
 ### Added
 - Zakładka **🌡️ Klimat**: kliknięcie w dowolny sensor (temp, wilgotność, ciśnienie, nasłonecznienie, CO₂, AQI, PM2.5, PM10, VOC, bateria) otwiera modal z liniowym wykresem historii; wybór zakresu 7/14/30/60/90 dni; dane z HA History API
