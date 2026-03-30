@@ -176,6 +176,7 @@ const STYLES = `
 .hdc-cbatt{display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.06);font-size:10px;color:#475569}
 .hdc-cbatt-bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
 .hdc-cbatt-fill{height:100%;border-radius:3px;transition:width .3s}
+.hdc-cupdated{font-size:9px;color:#334155;margin-top:6px;text-align:right;font-variant-numeric:tabular-nums}
 `;
 
 // ============================================================
@@ -238,6 +239,24 @@ function evalCondition(val, cond) {
 // ============================================================
 //  TAB RENDERERS
 // ============================================================
+
+function formatAgo(isoString) {
+  if (!isoString) return '—';
+  const secs = Math.floor((Date.now() - new Date(isoString).getTime()) / 1000);
+  if (secs < 5)   return 'przed chwilą';
+  if (secs < 60)  return `${secs} s temu`;
+  const m = Math.floor(secs / 60);
+  if (m < 60)     return `${m} min temu`;
+  const h = Math.floor(m / 60);
+  if (h < 24)     return `${h} h temu`;
+  return `${Math.floor(h / 24)} dni temu`;
+}
+
+function _comfortLastUpdated(hass, room) {
+  const entity = room.temperature || room.humidity || room.pressure;
+  if (!entity) return null;
+  return hass.states[entity]?.last_updated || null;
+}
 
 function formatGateElapsed(lastChanged) {
   const secs = Math.floor((Date.now() - new Date(lastChanged).getTime()) / 1000);
@@ -1149,13 +1168,16 @@ function _comfortBattHtml(hass, room) {
 function renderKomfort(hass, cfg) {
   const rooms = (cfg.comfort || {}).rooms || [];
   if (!rooms.length) return `<div style="color:#475569;font-size:12px;padding:12px">Brak konfiguracji.<br>Dodaj sekcję <code>comfort.rooms</code> w konfiguracji karty.</div>`;
-  return `<div class="hdc-comfort-grid">${rooms.map(room => `
-    <div class="hdc-comfort-card">
+  return `<div class="hdc-comfort-grid">${rooms.map((room, idx) => {
+    const lastUpd = _comfortLastUpdated(hass, room);
+    return `<div class="hdc-comfort-card">
       <div class="hdc-comfort-room">${room.icon || '🏠'} ${room.name || 'Pomieszczenie'}</div>
       <div class="hdc-comfort-sensors">${_comfortSensorHtml(hass, room)}</div>
       ${_comfortHumHtml(hass, room)}
       ${_comfortBattHtml(hass, room)}
-    </div>`).join('')}</div>`;
+      <div class="hdc-cupdated" id="hdc-cupdated-${idx}">🕐 ${formatAgo(lastUpd)}</div>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 // ============================================================
@@ -1891,7 +1913,7 @@ class HomeDashboardCard extends HTMLElement {
   _updateKomfortLive() {
     const hass = this._hass;
     const rooms = (this._config.comfort || {}).rooms || [];
-    rooms.forEach(room => {
+    rooms.forEach((room, idx) => {
       // Sensory
       COMFORT_SENSORS.filter(s => room[s.key]).forEach(s => {
         const el = this.shadowRoot.getElementById(`hdc-cs-${room[s.key].replace('.', '-')}`);
@@ -1934,6 +1956,9 @@ class HomeDashboardCard extends HTMLElement {
           if (fill) { fill.style.width = (isNaN(val) ? 0 : val) + '%'; fill.style.background = color; }
         }
       }
+      // Last updated
+      const updEl = this.shadowRoot.getElementById(`hdc-cupdated-${idx}`);
+      if (updEl) updEl.textContent = `🕐 ${formatAgo(_comfortLastUpdated(hass, room))}`;
     });
   }
 
@@ -1988,20 +2013,27 @@ class HomeDashboardCard extends HTMLElement {
 
   _startGateTimers() {
     this._gateTimerInterval = setInterval(() => {
-      if (this._activeTab !== 'home') return;
       const cfg = this._config || {};
       const hass = this._hass;
       if (!hass) return;
-      (cfg.gates || []).forEach(g => {
-        const tile = this.shadowRoot.getElementById(`hdc-gate-${g.entity.replace('.', '-')}`);
-        if (!tile) return;
-        const st = hass.states[g.entity];
-        const state = st?.state || 'unknown';
-        const tmEl = tile.querySelector('.hdc-gate-timer');
-        if (!tmEl) return;
-        const isOpen = ['open', 'unlocked', 'opening', 'closing'].includes(state);
-        tmEl.textContent = isOpen && st?.last_changed ? formatGateElapsed(st.last_changed) : '';
-      });
+      if (this._activeTab === 'home') {
+        (cfg.gates || []).forEach(g => {
+          const tile = this.shadowRoot.getElementById(`hdc-gate-${g.entity.replace('.', '-')}`);
+          if (!tile) return;
+          const st = hass.states[g.entity];
+          const state = st?.state || 'unknown';
+          const tmEl = tile.querySelector('.hdc-gate-timer');
+          if (!tmEl) return;
+          const isOpen = ['open', 'unlocked', 'opening', 'closing'].includes(state);
+          tmEl.textContent = isOpen && st?.last_changed ? formatGateElapsed(st.last_changed) : '';
+        });
+      }
+      if (this._activeTab === 'komfort') {
+        (cfg.comfort?.rooms || []).forEach((room, idx) => {
+          const updEl = this.shadowRoot.getElementById(`hdc-cupdated-${idx}`);
+          if (updEl) updEl.textContent = `🕐 ${formatAgo(_comfortLastUpdated(hass, room))}`;
+        });
+      }
     }, 1000);
   }
 
