@@ -1788,7 +1788,14 @@ class HomeDashboardCard extends HTMLElement {
       this._hass.callService('input_number', 'set_value', { entity_id: entity, value: clamped });
     }
     if (action === 'toggle') {
-      this._hass.callService('homeassistant', 'toggle', { entity_id: entity });
+      const domain = entity.split('.')[0];
+      const st = this._hass.states[entity];
+      const isOn = st?.state === 'on';
+      if (['switch', 'light', 'fan', 'humidifier', 'input_boolean'].includes(domain)) {
+        this._hass.callService(domain, isOn ? 'turn_off' : 'turn_on', { entity_id: entity });
+      } else {
+        this._hass.callService('homeassistant', 'toggle', { entity_id: entity });
+      }
     }
     if (action === 'set_preset') {
       this._hass.callService('climate', 'set_preset_mode', { entity_id: entity, preset_mode: btn.dataset.preset });
