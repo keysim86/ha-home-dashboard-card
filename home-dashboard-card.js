@@ -159,6 +159,9 @@ const STYLES = `
 .hdc-sw-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.1);flex-shrink:0}
 .hdc-sw-tile.on .hdc-sw-dot{background:#38bdf8}
 .hdc-sw-tile.on.light .hdc-sw-dot{background:#fbbf24}
+.hdc-sw-timer{font-size:9px;color:#475569;margin-top:2px;font-variant-numeric:tabular-nums;display:none}
+.hdc-sw-tile.on .hdc-sw-timer{display:block;color:#38bdf8}
+.hdc-sw-tile.on.light .hdc-sw-timer{color:#fbbf24}
 .hdc-comfort-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
 .hdc-comfort-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:12px 14px}
 .hdc-comfort-room{font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -1070,6 +1073,7 @@ function renderPrzelaczniki(hass, cfg) {
 
   return groups.map(group => {
     const entities = group.entities || [];
+    const showTimer = !!group.show_timer;
     const tiles = entities.map(item => {
       const st = hass.states[item.entity];
       const isOn = st ? st.state === 'on' : false;
@@ -1081,11 +1085,13 @@ function renderPrzelaczniki(hass, cfg) {
       const stateLabel = isOn ? 'Włączone' : 'Wyłączone';
       const typeClass = isLight ? 'light' : '';
       const swId = `hdc-sw-${item.entity.replace('.', '-')}`;
+      const timerHtml = showTimer ? `<div class="hdc-sw-timer">${isOn && st?.last_changed ? formatGateElapsed(st.last_changed) : ''}</div>` : '';
       return `<div id="${swId}" class="hdc-sw-tile${isOn ? ' on' : ''}${typeClass ? ' ' + typeClass : ''}" data-action="toggle" data-entity="${item.entity}">
         <div class="hdc-sw-tile-ico">${ico}</div>
         <div class="hdc-sw-tile-info">
           <div class="hdc-sw-tile-name">${name}</div>
           <div class="hdc-sw-tile-state">${stateLabel}</div>
+          ${timerHtml}
         </div>
         <div class="hdc-sw-dot"></div>
       </div>`;
@@ -2032,6 +2038,19 @@ class HomeDashboardCard extends HTMLElement {
         (cfg.comfort?.rooms || []).forEach((room, idx) => {
           const updEl = this.shadowRoot.getElementById(`hdc-cupdated-${idx}`);
           if (updEl) updEl.textContent = `🕐 ${formatAgo(_comfortLastUpdated(hass, room))}`;
+        });
+      }
+      if (this._activeTab === 'przelaczniki') {
+        (cfg.switches?.groups || []).filter(g => g.show_timer).forEach(group => {
+          (group.entities || []).forEach(item => {
+            const tile = this.shadowRoot.getElementById(`hdc-sw-${item.entity.replace('.', '-')}`);
+            if (!tile) return;
+            const tmEl = tile.querySelector('.hdc-sw-timer');
+            if (!tmEl) return;
+            const st = hass.states[item.entity];
+            const isOn = st?.state === 'on';
+            tmEl.textContent = isOn && st?.last_changed ? formatGateElapsed(st.last_changed) : '';
+          });
         });
       }
     }, 1000);
