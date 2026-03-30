@@ -166,7 +166,7 @@ const STYLES = `
 .hdc-comfort-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:12px 14px;position:relative}
 .hdc-comfort-room{font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .hdc-comfort-sensors{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px}
-.hdc-cs{display:flex;flex-direction:column;gap:1px}
+.hdc-cs{display:flex;flex-direction:column;gap:1px;cursor:pointer;border-radius:6px;padding:3px 4px;margin:-3px -4px;transition:background .12s}
 .hdc-cs-label{font-size:9px;color:#475569;text-transform:uppercase;letter-spacing:.04em}
 .hdc-cs-val{font-size:14px;font-weight:600;color:#e2e8f0;font-variant-numeric:tabular-nums}
 .hdc-cs-wide{grid-column:1/-1}
@@ -180,6 +180,19 @@ const STYLES = `
 .hdc-cbatt-bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
 .hdc-cbatt-fill{height:100%;border-radius:3px;transition:width .3s}
 .hdc-cupdated{font-size:9px;color:#334155;font-variant-numeric:tabular-nums;position:absolute;bottom:8px;right:10px}
+.hdc-cs:hover{background:rgba(255,255,255,.06)}
+.hdc-hm-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center}
+.hdc-hm-box{background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px;width:660px;max-width:95vw}
+.hdc-hm-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.hdc-hm-title{font-size:14px;font-weight:700;color:#e2e8f0}
+.hdc-hm-entity{font-size:10px;color:#475569;margin-top:2px}
+.hdc-hm-close{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#94a3b8;cursor:pointer;font-size:16px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.hdc-hm-close:hover{background:rgba(255,255,255,.12);color:#e2e8f0}
+.hdc-hm-ranges{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.hdc-hm-range{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:#94a3b8;cursor:pointer;font-size:11px;padding:5px 12px;transition:all .12s}
+.hdc-hm-range.active,.hdc-hm-range:hover{background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8}
+.hdc-hm-chart-wrap{position:relative;height:280px}
+.hdc-hm-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#475569;font-size:12px;background:#0f172a}
 `;
 
 // ============================================================
@@ -1136,7 +1149,7 @@ function _comfortSensorHtml(hass, room) {
     const raw = st ? parseFloat(st.state) : NaN;
     const display = isNaN(raw) ? '—' : raw.toFixed(s.dec) + s.unit;
     const color = !isNaN(raw) && s.colorFn ? s.colorFn(raw) : '#e2e8f0';
-    return `<div class="hdc-cs" id="hdc-cs-${room[s.key].replace('.', '-')}">
+    return `<div class="hdc-cs" id="hdc-cs-${room[s.key].replace('.', '-')}" data-action="sensor_history" data-entity="${room[s.key]}" data-label="${s.label}">
       <div class="hdc-cs-label">${s.label}</div>
       <div class="hdc-cs-val" style="color:${color}">${display}</div>
     </div>`;
@@ -1173,7 +1186,7 @@ function _comfortBattHtml(hass, room) {
   const color = isNaN(val) ? '#475569' : val > 50 ? '#4ade80' : val > 20 ? '#fbbf24' : '#f87171';
   const width = isNaN(val) ? 0 : val;
   const eid = room.battery.replace('.', '-');
-  return `<div class="hdc-cbatt" id="hdc-cbatt-${eid}">
+  return `<div class="hdc-cbatt" id="hdc-cbatt-${eid}" data-action="sensor_history" data-entity="${room.battery}" data-label="🔋 Bateria" style="cursor:pointer">
     🔋 <span style="color:${color};font-weight:600;min-width:28px">${display}</span>
     <div class="hdc-cbatt-bar"><div class="hdc-cbatt-fill" style="width:${width}%;background:${color}"></div></div>
   </div>`;
@@ -1209,7 +1222,7 @@ const ALL_TABS = [
   { id: 'proxmox',   label: '🖧 Proxmox',   render: renderProxmox },
   { id: 'alerty',    label: '🔔 Alerty',    render: renderAlerty, badge: true },
   { id: 'przelaczniki', label: '💡 Przełączniki', render: renderPrzelaczniki },
-  { id: 'komfort',      label: '🌡️ Komfort',     render: renderKomfort },
+  { id: 'klimat',       label: '🌡️ Klimat',      render: renderKomfort },
 ];
 
 class HomeDashboardCard extends HTMLElement {
@@ -1307,8 +1320,8 @@ class HomeDashboardCard extends HTMLElement {
       allowed.push('przelaczniki');
     }
     // Auto-dodaj komfort jeśli comfort.rooms jest skonfigurowane
-    if (cfg.tabs && (cfg.comfort || {}).rooms?.length && !allowed.includes('komfort')) {
-      allowed.push('komfort');
+    if (cfg.tabs && (cfg.comfort || {}).rooms?.length && !allowed.includes('klimat')) {
+      allowed.push('klimat');
     }
     // Zachowaj kolejność z YAML
     const tabMap = Object.fromEntries(ALL_TABS.map(t => [t.id, t]));
@@ -1337,7 +1350,7 @@ class HomeDashboardCard extends HTMLElement {
       if (this._activeTab === 'auta'         && !tabChanged) { this._updateAutaLive(); return; }
       if (this._activeTab === 'przelaczniki' && !tabChanged) { this._updateSwitchesLive(); return; }
       if (this._activeTab === 'tplink'       && !tabChanged) { this._updateTPLinkLive(); return; }
-      if (this._activeTab === 'komfort'      && !tabChanged) { this._updateKomfortLive(); return; }
+      if (this._activeTab === 'klimat'       && !tabChanged) { this._updateKomfortLive(); return; }
       pane.innerHTML = tab.render(this._hass, this._config);
       if (this._activeTab === 'home') setTimeout(() => this._initOsobyMap(), 0);
       if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
@@ -1809,6 +1822,11 @@ class HomeDashboardCard extends HTMLElement {
       const clamped = Math.min(max, Math.max(min, Math.round(newVal * 1000) / 1000));
       this._hass.callService('input_number', 'set_value', { entity_id: entity, value: clamped });
     }
+    if (action === 'sensor_history') {
+      const label = btn.dataset.label || entity;
+      this._showSensorHistory(entity, label);
+      return;
+    }
     if (action === 'set_preset') {
       this._hass.callService('climate', 'set_preset_mode', { entity_id: entity, preset_mode: btn.dataset.preset });
     }
@@ -2006,6 +2024,116 @@ class HomeDashboardCard extends HTMLElement {
     });
   }
 
+  _buildHistoryModal() {
+    if (this.shadowRoot.getElementById('hdc-hm-overlay')) return;
+    const el = document.createElement('div');
+    el.id = 'hdc-hm-overlay';
+    el.className = 'hdc-hm-overlay';
+    el.style.display = 'none';
+    el.innerHTML = `
+      <div class="hdc-hm-box">
+        <div class="hdc-hm-head">
+          <div>
+            <div class="hdc-hm-title" id="hdc-hm-title">Historia</div>
+            <div class="hdc-hm-entity" id="hdc-hm-entity"></div>
+          </div>
+          <button class="hdc-hm-close" id="hdc-hm-close">✕</button>
+        </div>
+        <div class="hdc-hm-ranges">
+          ${[7,14,30,60,90].map(d => `<button class="hdc-hm-range${d===7?' active':''}" data-days="${d}">${d} dni</button>`).join('')}
+        </div>
+        <div class="hdc-hm-chart-wrap">
+          <canvas id="hdc-hm-chart"></canvas>
+          <div class="hdc-hm-loading" id="hdc-hm-loading">Ładowanie…</div>
+        </div>
+      </div>`;
+    this.shadowRoot.appendChild(el);
+    el.addEventListener('click', e => {
+      if (e.target === el) this._closeHistoryModal();
+    });
+    this.shadowRoot.getElementById('hdc-hm-close').addEventListener('click', () => this._closeHistoryModal());
+    el.addEventListener('click', e => {
+      const btn = e.target.closest('.hdc-hm-range');
+      if (!btn) return;
+      el.querySelectorAll('.hdc-hm-range').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      this._loadHistoryChart(this._hmEntity, parseInt(btn.dataset.days));
+    });
+  }
+
+  _closeHistoryModal() {
+    const el = this.shadowRoot.getElementById('hdc-hm-overlay');
+    if (el) el.style.display = 'none';
+    const canvas = this.shadowRoot.getElementById('hdc-hm-chart');
+    if (canvas && canvas._hdcChart) { canvas._hdcChart.destroy(); canvas._hdcChart = null; }
+  }
+
+  _showSensorHistory(entity, label) {
+    this._buildHistoryModal();
+    this._hmEntity = entity;
+    const overlay = this.shadowRoot.getElementById('hdc-hm-overlay');
+    overlay.style.display = 'flex';
+    this.shadowRoot.getElementById('hdc-hm-title').textContent = label;
+    this.shadowRoot.getElementById('hdc-hm-entity').textContent = entity;
+    overlay.querySelectorAll('.hdc-hm-range').forEach(b => b.classList.toggle('active', b.dataset.days === '7'));
+    this._loadHistoryChart(entity, 7);
+  }
+
+  async _loadHistoryChart(entity, days) {
+    const loading = this.shadowRoot.getElementById('hdc-hm-loading');
+    if (loading) loading.style.display = 'flex';
+    const canvas = this.shadowRoot.getElementById('hdc-hm-chart');
+    if (canvas && canvas._hdcChart) { canvas._hdcChart.destroy(); canvas._hdcChart = null; }
+
+    const end = new Date();
+    const start = new Date(end.getTime() - days * 24 * 3600 * 1000);
+    let points = [];
+    try {
+      const raw = await this._hass.callApi('GET',
+        `history/period/${start.toISOString()}?filter_entity_id=${entity}&end_time=${end.toISOString()}&minimal_response=true&no_attributes=true`);
+      if (raw && raw[0]) {
+        points = raw[0]
+          .map(p => ({ x: new Date(p.last_changed), y: parseFloat(p.state) }))
+          .filter(p => !isNaN(p.y));
+      }
+    } catch(e) { console.warn('[hdc] history fetch error', e); }
+
+    if (loading) loading.style.display = 'none';
+    if (!canvas) return;
+
+    const drawChart = () => {
+      if (canvas._hdcChart) canvas._hdcChart.destroy();
+      canvas._hdcChart = new Chart(canvas, {
+        type: 'line',
+        data: { datasets: [{ data: points, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,.08)',
+          borderWidth: 1.5, pointRadius: 0, tension: 0.3, fill: true }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: false,
+          plugins: { legend: { display: false }, tooltip: {
+            callbacks: { label: ctx => `${ctx.parsed.y}` }
+          }},
+          scales: {
+            x: { type: 'time', time: { unit: days <= 14 ? 'day' : 'week' },
+              ticks: { color: '#475569', maxTicksLimit: 8 }, grid: { color: 'rgba(255,255,255,.04)' } },
+            y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,.04)' } }
+          }
+        }
+      });
+    };
+
+    if (window.Chart?.defaults) {
+      drawChart();
+    } else {
+      const loadScript = (id, src, cb) => {
+        if (document.getElementById(id)) { if (window.Chart) cb(); else document.getElementById(id).addEventListener('load', cb); return; }
+        const s = document.createElement('script'); s.id = id; s.src = src; s.onload = cb;
+        document.head.appendChild(s);
+      };
+      loadScript('hdc-chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js', () =>
+        loadScript('hdc-chartjs-adapter', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js', drawChart));
+    }
+  }
+
   _startClock() {
     const tick = () => {
       const el = this.shadowRoot.getElementById('hdc-clk');
@@ -2053,7 +2181,7 @@ class HomeDashboardCard extends HTMLElement {
           tmEl.textContent = isOpen && st?.last_changed ? formatGateElapsed(st.last_changed) : '';
         });
       }
-      if (this._activeTab === 'komfort') {
+      if (this._activeTab === 'klimat') {
         (cfg.comfort?.rooms || []).forEach((room, idx) => {
           const updEl = this.shadowRoot.getElementById(`hdc-cupdated-${idx}`);
           if (updEl) updEl.textContent = `🕐 ${formatAgo(_comfortLastUpdated(hass, room))}`;
