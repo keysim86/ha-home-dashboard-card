@@ -1983,18 +1983,18 @@ class HomeDashboardCard extends HTMLElement {
     const hass = this._hass;
     const t = this._config.tplink || {};
     const allPorts = [
-      ...(t.router_ports || []),
-      ...(t.sw01_ports || []),
-      ...(t.sw02_ports || []),
-      ...(t.sw03_ports || []),
+      ...(t.router_ports || []).map(p => ({ ...p, _poe: false })),
+      ...(t.sw01_ports  || []).map(p => ({ ...p, _poe: true })),
+      ...(t.sw02_ports  || []).map(p => ({ ...p, _poe: true })),
+      ...(t.sw03_ports  || []).map(p => ({ ...p, _poe: true })),
     ];
     allPorts.forEach(p => {
       const el = this.shadowRoot.getElementById(`hdc-port-${p.entity.replace('.', '-')}`);
       if (!el) return;
       const on = isOn(hass, p.entity);
-      const isPoe = p.entity.startsWith('switch.');
-      el.className = `hdc-port${isPoe ? ' clickable' : ''} ${on ? (isPoe ? 'poe' : 'up') : 'down'}`;
-      el.title = `${p.label}${isPoe ? (on ? ' — kliknij aby wyłączyć' : ' — kliknij aby włączyć') : ''}`;
+      const isSwitch = p.entity?.startsWith('switch.');
+      el.className = `hdc-port${isSwitch ? ' clickable' : ''} ${on ? (p._poe ? 'poe' : 'up') : 'down'}`;
+      el.title = `${p.label}${isSwitch ? (on ? ' — kliknij aby wyłączyć' : ' — kliknij aby włączyć') : ''}`;
     });
   }
 
