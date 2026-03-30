@@ -1274,7 +1274,9 @@ class HomeDashboardCard extends HTMLElement {
     if (cfg.tabs && (cfg.comfort || {}).rooms?.length && !allowed.includes('komfort')) {
       allowed.push('komfort');
     }
-    return ALL_TABS.filter(t => allowed.includes(t.id));
+    // Zachowaj kolejność z YAML
+    const tabMap = Object.fromEntries(ALL_TABS.map(t => [t.id, t]));
+    return allowed.filter(id => tabMap[id]).map(id => tabMap[id]);
   }
 
   _updatePane() {

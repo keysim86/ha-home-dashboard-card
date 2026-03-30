@@ -312,29 +312,50 @@ switches:
 
 comfort:
   rooms:
-    - name: Salon
-      icon: "🛋️"
-      temperature: sensor.salon_temperatura
-      humidity: sensor.salon_wilgotnosc
-      pressure: sensor.salon_cisnienie        # opcjonalne
-      co2: sensor.salon_co2                   # opcjonalne
-      aqi: sensor.salon_aqi                   # opcjonalne
-      pm25: sensor.salon_pm25                 # opcjonalne
-      pm10: sensor.salon_pm10                 # opcjonalne
-      voc: sensor.salon_voc                   # opcjonalne
-      humidifier: humidifier.salon            # opcjonalne — sterowanie nawilżaczem
-      battery: sensor.salon_bateria           # opcjonalne — poziom baterii czujnika
-    - name: Sypialnia
-      icon: "🛏️"
-      temperature: sensor.sypialnia_temperatura
-      humidity: sensor.sypialnia_wilgotnosc
-      humidifier: humidifier.osuszacz_sypialnia
     - name: Na zewnątrz
       icon: "🌤️"
-      temperature: sensor.temperatura_zewnetrzna
-      humidity: sensor.wilgotnosc_zewnetrzna
-      pressure: sensor.cisnienie_zewnetrzne
-      illuminance: sensor.nasłonecznienie
+      temperature: sensor.nettigo_air_monitor_bme280_temperatura
+      humidity: sensor.nettigo_air_monitor_bme280_wilgotnosc
+      pressure: sensor.nettigo_air_monitor_bme280_cisnienie
+      illuminance: sensor.nettigo_air_monitor_bh1750_natezenie_oswietlenia
+      co2: sensor.salon_co2
+      aqi: sensor.nettigo_air_monitor_sds011_poziom_caqi
+      pm25: sensor.nettigo_air_monitor_sds011_pm25
+      pm10: sensor.nettigo_air_monitor_sds011_pm10
+      voc: sensor.czujnik_salon_voc
+    - name: Salon
+      icon: "🛋️"
+      temperature: sensor.czujnik_salon_temperature
+      humidity: sensor.czujnik_salon_humidity
+      battery: sensor.czujnik_salon_battery
+      illuminance: sensor.salon_lux
+      voc: sensor.czujnik_salon_voc
+    - name: Sypialnia
+      icon: "🛏️"
+      temperature: sensor.czujnik_sypialnia_temperature
+      humidity: sensor.czujnik_sypialnia_humidity
+      pressure: sensor.salon_pressure
+      battery: sensor.czujnik_sypialnia_battery
+      humidifier: humidifier.osuszacz_sypialnia
+    - name: Pokój dzieci
+      icon: "🧒"
+      temperature: sensor.czujnik_pokoj_dzieci_temperature
+      humidity: sensor.czujnik_pokoj_dzieci_humidity
+      battery: sensor.czujnik_pokoj_dzieci_battery
+      humidifier: humidifier.osuszacz_pokoj_dzieci
+    - name: Łazienka
+      icon: "🚿"
+      temperature: sensor.czujnik_lazienka_temperature
+      humidity: sensor.czujnik_lazienka_humidity
+      battery: sensor.czujnik_lazienka_battery
+      humidifier: humidifier.osuszacz_pokoj_dzieci
+    - name: Suszarnia
+      icon: "🧺"
+      temperature: sensor.czujnik_suszarnia_temperature
+      humidity: sensor.czujnik_suszarnia_humidity
+      battery: sensor.czujnik_suszarnia_battery
+    # Wszystkie pola oprócz name są opcjonalne — nieużywane nie pojawią się na karcie
+    # Dostępne pola: temperature, humidity, pressure, illuminance, co2, aqi, pm25, pm10, voc, battery, humidifier
 
 alerts:
   - entity: sensor.pixel_8_battery_level
