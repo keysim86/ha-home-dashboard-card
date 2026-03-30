@@ -261,6 +261,14 @@ function _comfortLastUpdated(hass, room) {
   return hass.states[entity]?.last_updated || null;
 }
 
+function personLocation(hass, loc) {
+  if (!loc || loc === 'unknown') return { label: 'Poza domem', color: '#f87171', isHome: false };
+  if (loc === 'home') return { label: 'W domu', color: '#4ade80', isHome: true };
+  if (loc === 'not_home') return { label: 'Poza domem', color: '#f87171', isHome: false };
+  const zoneName = hass.states[`zone.${loc}`]?.attributes?.friendly_name || loc;
+  return { label: zoneName, color: '#fbbf24', isHome: false };
+}
+
 function formatGateElapsed(lastChanged) {
   const secs = Math.floor((Date.now() - new Date(lastChanged).getTime()) / 1000);
   if (secs < 0) return '';
@@ -276,7 +284,7 @@ function renderOsoby(hass, cfg) {
   const persons = cfg.persons || [];
   let cards = persons.map((p, i) => {
     const loc = sv(hass, p.entity, 'unknown');
-    const isHome = loc === 'home';
+    const { label: locLabel, color: locColor, isHome } = personLocation(hass, loc);
     const bl = sn(hass, p.battery_level, 0);
     const bst = sv(hass, p.battery_state, '');
     const charging = bst.toLowerCase() === 'charging';
@@ -289,7 +297,7 @@ function renderOsoby(hass, cfg) {
           <div>
             <div style="font-size:13px;font-weight:600;color:#f1f5f9">${p.name}</div>
             <div style="font-size:10px;color:#475569">${p.device_tracker ? sa(hass, p.device_tracker, 'friendly_name') || p.device_tracker : ''}</div>
-            <div style="font-size:10px;margin-top:2px;color:${isHome?'#4ade80':'#f87171'}">● ${isHome?'W domu':'Poza domem'}</div>
+            <div style="font-size:10px;margin-top:2px;color:${locColor}">● ${locLabel}</div>
           </div>
         </div>
         <div class="hdc-chips">
@@ -1348,7 +1356,7 @@ class HomeDashboardCard extends HTMLElement {
     const persons = cfg.persons || [];
     const cards = persons.map((p) => {
       const loc = sv(hass, p.entity, 'unknown');
-      const isHome = loc === 'home';
+      const { label: locLabel, color: locColor, isHome } = personLocation(hass, loc);
       const bl = sn(hass, p.battery_level, 0);
       const bst = sv(hass, p.battery_state, '');
       const charging = bst.toLowerCase() === 'charging';
@@ -1361,7 +1369,7 @@ class HomeDashboardCard extends HTMLElement {
             <div>
               <div style="font-size:13px;font-weight:600;color:#f1f5f9">${p.name}</div>
               <div style="font-size:10px;color:#475569">${p.device_tracker ? sa(hass, p.device_tracker, 'friendly_name') || p.device_tracker : ''}</div>
-              <div style="font-size:10px;margin-top:2px;color:${isHome?'#4ade80':'#f87171'}">● ${isHome?'W domu':'Poza domem'}</div>
+              <div style="font-size:10px;margin-top:2px;color:${locColor}">● ${locLabel}</div>
             </div>
           </div>
           <div class="hdc-chips">
