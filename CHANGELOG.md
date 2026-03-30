@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.6.0] - 2026-03-30
+
+### Added
+- Zakładka **💡 Przełączniki**: opcjonalne odliczanie czasu włączenia per grupa (`show_timer: true` w `switches.groups[]`) — timer widoczny tylko gdy włącznik jest włączony, aktualizowany co sekundę
+- Zakładka **🌡️ Komfort**: znacznik czasu ostatniej aktualizacji na każdej karcie pomieszczenia (na podstawie temperatury/wilgotności/ciśnienia), aktualizowany co sekundę
+- Zakładka **📶 TP-Link**: porty PoE (`switch.*`) są teraz klikalne — włączanie/wyłączanie bezpośrednio z karty; live update stanu bez przeładowania zakładki
+
+### Changed
+- ID zakładki `osoby` zmieniono na `home` — zaktualizuj `tabs:` w konfiguracji YAML
+- Kolejność zakładek wynika z kolejności w `tabs:` w YAML (wcześniej kolejność była stała)
+
+### Fixed
+- Akcja toggle używa teraz domenowych serwisów (`switch.turn_on/off`, `light.turn_on/off` itp.) zamiast `homeassistant.toggle` — naprawia błąd z portami TP-Link PoE i innymi integracjami
+
 ## [1.5.0] - 2026-03-30
 
 ### Added
