@@ -303,7 +303,7 @@ function renderOsoby(hass, cfg) {
     const steps = sv(hass, p.steps, '—');
     const initials = p.name ? p.name[0] : '?';
     return `
-      <div class="hdc-pc ${isHome?'home':'away'}">
+      <div class="hdc-pc ${isHome?'home':'away'}"${p.entity ? ` data-action="person_map" data-entity="${p.entity}" style="cursor:pointer"` : ''}>
         <div style="display:flex;gap:10px;margin-bottom:9px;align-items:flex-start">
           <div class="hdc-pav" style="color:${p.color};background:${p.color}22">${initials}</div>
           <div>
@@ -400,17 +400,9 @@ function renderOsoby(hass, cfg) {
   }
 
   return `
-    <div style="display:flex;gap:12px;align-items:flex-start">
-      <div style="flex:1;min-width:0">
-        <div id="hdc-persons-list"><div class="hdc-ga">${cards}</div></div>
-        ${gatesHtml}
-        ${wasteRows}
-      </div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:10px;color:#475569;margin:0 0 4px;padding-left:2px">📍 Lokalizacje</div>
-        <div id="hdc-fmap-real" style="height:570px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.07)"></div>
-      </div>
-    </div>`;
+    <div id="hdc-persons-list"><div class="hdc-ga">${cards}</div></div>
+    ${gatesHtml}
+    ${wasteRows}`;
 }
 
 function renderEnergia(hass, cfg) {
@@ -1374,7 +1366,7 @@ class HomeDashboardCard extends HTMLElement {
       if (this._activeTab === 'tplink'       && !tabChanged) { this._updateTPLinkLive(); return; }
       if (this._activeTab === 'klimat'       && !tabChanged) { this._updateKomfortLive(); return; }
       pane.innerHTML = tab.render(this._hass, this._config);
-      if (this._activeTab === 'home') setTimeout(() => this._initOsobyMap(), 0);
+      // home tab — no post-render init needed (map shown on-demand via modal)
       if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
       if (this._activeTab === 'vaillant') setTimeout(() => this._initVaillantCharts(), 0);
     } catch(err) {
@@ -1398,7 +1390,7 @@ class HomeDashboardCard extends HTMLElement {
       const steps = sv(hass, p.steps, '—');
       const initials = p.name ? p.name[0] : '?';
       return `
-        <div class="hdc-pc ${isHome?'home':'away'}">
+        <div class="hdc-pc ${isHome?'home':'away'}"${p.entity ? ` data-action="person_map" data-entity="${p.entity}" style="cursor:pointer"` : ''}>
           <div style="display:flex;gap:10px;margin-bottom:9px;align-items:flex-start">
             <div class="hdc-pav" style="color:${p.color};background:${p.color}22">${initials}</div>
             <div>
@@ -1751,6 +1743,45 @@ class HomeDashboardCard extends HTMLElement {
     }
   }
 
+  _showPersonMap(entity) {
+    const p = (this._config.persons || []).find(pc => pc.entity === entity);
+    if (!p) return;
+    this._closePersonMapModal();
+    const el = document.createElement('div');
+    el.id = 'hdc-pm-overlay';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
+    el.innerHTML = `
+      <div style="background:#0f172a;border:1px solid rgba(255,255,255,.1);border-radius:16px;width:100%;max-width:600px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.07)">
+          <div style="font-size:13px;font-weight:600;color:#f1f5f9">📍 Lokalizacja — ${p.name}</div>
+          <button id="hdc-pm-close" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;padding:0 4px;line-height:1">✕</button>
+        </div>
+        <div id="hdc-pm-map" style="height:420px;width:100%;flex:1"></div>
+      </div>`;
+    this.shadowRoot.appendChild(el);
+    el.addEventListener('click', e => { if (e.target === el) this._closePersonMapModal(); });
+    this.shadowRoot.getElementById('hdc-pm-close').addEventListener('click', () => this._closePersonMapModal());
+    window.loadCardHelpers?.().then(helpers => {
+      const mapDiv = this.shadowRoot.getElementById('hdc-pm-map');
+      if (!mapDiv) return;
+      const card = helpers.createCardElement({
+        type: 'map',
+        entities: [{ entity: p.entity }],
+        auto_fit: true,
+        default_zoom: 15,
+        dark_mode: true,
+      });
+      card.style.cssText = 'display:block;height:420px;width:100%';
+      mapDiv.appendChild(card);
+      card.hass = this._hass;
+    });
+  }
+
+  _closePersonMapModal() {
+    const el = this.shadowRoot.getElementById('hdc-pm-overlay');
+    if (el) el.remove();
+  }
+
   _initOsobyMap() {
     const mapDiv = this.shadowRoot.getElementById('hdc-fmap-real');
     if (!mapDiv) return;
@@ -1855,6 +1886,10 @@ class HomeDashboardCard extends HTMLElement {
       const clamped = Math.min(max, Math.max(min, Math.round(newVal * 1000) / 1000));
       const domain = entity.split('.')[0];
       this._hass.callService(domain, 'set_value', { entity_id: entity, value: clamped });
+    }
+    if (action === 'person_map') {
+      this._showPersonMap(entity);
+      return;
     }
     if (action === 'sensor_history') {
       const label = btn.dataset.label || entity;
