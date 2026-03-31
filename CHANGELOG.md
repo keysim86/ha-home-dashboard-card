@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.7.3] - 2026-03-31
+
+### Fixed
+- Vaillant · sekcja Ustawienia: przyciski +/− nie działały gdy encja miała domenę `number.*` — service był hardcodowany jako `input_number.set_value`; teraz domena pobierana dynamicznie z entity ID
+
 ## [1.7.2] - 2026-03-31
 
 ### Added

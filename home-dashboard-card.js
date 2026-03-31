@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.7.2
+//  home-dashboard-card.js  v1.7.3
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -1829,7 +1829,8 @@ class HomeDashboardCard extends HTMLElement {
       const max = parseFloat(btn.dataset.max ?? '9999');
       const newVal = action === 'input_up' ? current + step : current - step;
       const clamped = Math.min(max, Math.max(min, Math.round(newVal * 1000) / 1000));
-      this._hass.callService('input_number', 'set_value', { entity_id: entity, value: clamped });
+      const domain = entity.split('.')[0];
+      this._hass.callService(domain, 'set_value', { entity_id: entity, value: clamped });
     }
     if (action === 'sensor_history') {
       const label = btn.dataset.label || entity;
