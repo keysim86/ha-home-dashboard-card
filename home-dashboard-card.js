@@ -456,26 +456,27 @@ function renderEnergia(hass, cfg) {
 
   const vColor = v => v > 253 ? 'r' : v < 207 ? 'y' : 'g';
 
+  const sh = (entity, label) => entity ? ` style="cursor:pointer" data-action="sensor_history" data-entity="${entity}" data-label="${label}"` : '';
   return `
     <div class="hdc-g3" style="margin-bottom:10px">
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Moc całkowita</div><div class="hdc-sc-val" style="color:#38bdf8">${pw} W</div><div class="hdc-sc-sub">live · teraz</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Zużycie dziś</div><div class="hdc-sc-val" style="color:#fbbf24">${kwh} kWh</div><div class="hdc-sc-sub">dobowe</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Ten miesiąc</div><div class="hdc-sc-val" style="color:#4ade80">${mkwh} kWh</div><div class="hdc-sc-sub">kalendarzowo</div></div>
+      <div class="hdc-sc"${sh(e.total_power,  'Moc całkowita')}><div class="hdc-sc-lbl">Moc całkowita</div><div class="hdc-sc-val" style="color:#38bdf8">${pw} W</div><div class="hdc-sc-sub">live · teraz</div></div>
+      <div class="hdc-sc"${sh(e.daily_kwh,    'Zużycie dziś')}><div class="hdc-sc-lbl">Zużycie dziś</div><div class="hdc-sc-val" style="color:#fbbf24">${kwh} kWh</div><div class="hdc-sc-sub">dobowe</div></div>
+      <div class="hdc-sc"${sh(e.monthly_kwh,  'Ten miesiąc')}><div class="hdc-sc-lbl">Ten miesiąc</div><div class="hdc-sc-val" style="color:#4ade80">${mkwh} kWh</div><div class="hdc-sc-sub">kalendarzowo</div></div>
     </div>
     ${e.voltage_l1 ? `
     <div class="hdc-st">Napięcia i moce fazowe</div>
     <div class="hdc-g3" style="margin-bottom:10px">
-      <div class="hdc-box">
+      <div class="hdc-box"${sh(e.voltage_l1, 'Napięcie L1')}>
         <div class="hdc-box-title">L1</div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Napięcie</span><span class="hdc-ir-val ${vColor(v1)}">${v1} V</span></div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Moc</span><span class="hdc-ir-val b">${p1} W</span></div>
       </div>
-      <div class="hdc-box">
+      <div class="hdc-box"${sh(e.voltage_l2, 'Napięcie L2')}>
         <div class="hdc-box-title">L2</div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Napięcie</span><span class="hdc-ir-val ${vColor(v2)}">${v2} V</span></div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Moc</span><span class="hdc-ir-val b">${p2} W</span></div>
       </div>
-      <div class="hdc-box">
+      <div class="hdc-box"${sh(e.voltage_l3, 'Napięcie L3')}>
         <div class="hdc-box-title">L3</div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Napięcie</span><span class="hdc-ir-val ${vColor(v3)}">${v3} V</span></div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Moc</span><span class="hdc-ir-val b">${p3} W</span></div>
@@ -486,17 +487,17 @@ function renderEnergia(hass, cfg) {
     <div style="display:grid;grid-template-columns:${t.szczytowa_monthly ? '1fr 1fr' : '1fr'};gap:8px;margin-bottom:10px">
       <div class="hdc-box">
         <div class="hdc-box-title">Zużycie dziś</div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">☀ Szczytowa</span><span class="hdc-ir-val o">${tSD} kWh</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">🌤 Pozaszczytowa</span><span class="hdc-ir-val y">${tPD} kWh</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">🌙 Nocna</span><span class="hdc-ir-val b">${tND} kWh</span></div>
+        <div class="hdc-ir"${sh(t.szczytowa_daily,     '☀ Szczytowa dziś')}><span class="hdc-ir-lbl">☀ Szczytowa</span><span class="hdc-ir-val o">${tSD} kWh</span></div>
+        <div class="hdc-ir"${sh(t.pozaszczytowa_daily, '🌤 Pozaszczytowa dziś')}><span class="hdc-ir-lbl">🌤 Pozaszczytowa</span><span class="hdc-ir-val y">${tPD} kWh</span></div>
+        <div class="hdc-ir"${sh(t.nocna_daily,         '🌙 Nocna dziś')}><span class="hdc-ir-lbl">🌙 Nocna</span><span class="hdc-ir-val b">${tND} kWh</span></div>
         <div class="hdc-ir" style="border-top:1px solid rgba(255,255,255,.07);margin-top:4px;padding-top:4px"><span class="hdc-ir-lbl">Σ Razem</span><span class="hdc-ir-val">${tSumD} kWh</span></div>
       </div>
       ${t.szczytowa_monthly ? `
       <div class="hdc-box">
         <div class="hdc-box-title">Zużycie w miesiącu</div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">☀ Szczytowa</span><span class="hdc-ir-val o">${tSM} kWh</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">🌤 Pozaszczytowa</span><span class="hdc-ir-val y">${tPM} kWh</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">🌙 Nocna</span><span class="hdc-ir-val b">${tNM} kWh</span></div>
+        <div class="hdc-ir"${sh(t.szczytowa_monthly,     '☀ Szczytowa miesiąc')}><span class="hdc-ir-lbl">☀ Szczytowa</span><span class="hdc-ir-val o">${tSM} kWh</span></div>
+        <div class="hdc-ir"${sh(t.pozaszczytowa_monthly, '🌤 Pozaszczytowa miesiąc')}><span class="hdc-ir-lbl">🌤 Pozaszczytowa</span><span class="hdc-ir-val y">${tPM} kWh</span></div>
+        <div class="hdc-ir"${sh(t.nocna_monthly,         '🌙 Nocna miesiąc')}><span class="hdc-ir-lbl">🌙 Nocna</span><span class="hdc-ir-val b">${tNM} kWh</span></div>
         <div class="hdc-ir" style="border-top:1px solid rgba(255,255,255,.07);margin-top:4px;padding-top:4px"><span class="hdc-ir-lbl">Σ Razem</span><span class="hdc-ir-val">${tSumM} kWh</span></div>
       </div>` : ''}
     </div>` : ''}
