@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Zakładka **🌡️ Klimat**: widget wentylacji łazienki na dole karty — wilgotność z kolorem (zielony/żółty/czerwony), przycisk toggle wentylatora i światła; konfiguracja przez `comfort.ventilation`
+
 ## [1.7.3] - 2026-03-31
 
 ### Fixed

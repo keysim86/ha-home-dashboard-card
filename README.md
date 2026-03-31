@@ -364,6 +364,12 @@ comfort:
       battery: sensor.czujnik_suszarnia_battery
     # Wszystkie pola oprócz name są opcjonalne — nieużywane nie pojawią się na karcie
     # Dostępne pola: temperature, humidity, pressure, illuminance, co2, aqi, pm25, pm10, voc, battery, humidifier
+  # Opcjonalny widget wentylacji łazienki (wyświetlany na dole karty Klimat)
+  ventilation:
+    name: Wentylacja łazienki   # opcjonalne, domyślnie "Wentylacja łazienki"
+    humidity: sensor.czujnik_lazienka_humidity
+    fan: switch.wentylator_lazienka_gora
+    light: light.swiatlo_lazienka_gora
 
 alerts:
   - entity: sensor.pixel_8_battery_level

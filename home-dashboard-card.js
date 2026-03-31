@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.7.3
+//  home-dashboard-card.js  v1.7.4
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -180,6 +180,13 @@ const STYLES = `
 .hdc-cbatt-bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
 .hdc-cbatt-fill{height:100%;border-radius:3px;transition:width .3s}
 .hdc-cupdated{font-size:9px;color:#334155;font-variant-numeric:tabular-nums;position:absolute;bottom:8px;right:10px}
+.hdc-vent-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:12px 14px;margin-top:10px}
+.hdc-vent-title{font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.hdc-vent-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.hdc-vent-row:last-child{border-bottom:none}
+.hdc-vent-lbl{font-size:11px;color:#64748b}
+.hdc-vent-val{font-size:13px;font-weight:600}
+.hdc-vent-btn{font-size:11px;height:26px;padding:0 12px;width:auto;cursor:pointer}
 .hdc-cs:hover{background:rgba(255,255,255,.06)}
 .hdc-hm-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center}
 .hdc-hm-box{background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px;width:660px;max-width:95vw}
@@ -1201,6 +1208,38 @@ function _comfortBattHtml(hass, room) {
   </div>`;
 }
 
+function _ventHtml(hass, vent) {
+  if (!vent) return '';
+  const humSt  = vent.humidity ? hass.states[vent.humidity] : null;
+  const fanSt  = vent.fan      ? hass.states[vent.fan]      : null;
+  const lightSt= vent.light    ? hass.states[vent.light]    : null;
+  const hum    = humSt  ? parseFloat(humSt.state).toFixed(1)  : '—';
+  const humColor = humSt ? (parseFloat(humSt.state) > 75 ? '#f87171' : parseFloat(humSt.state) > 65 ? '#fbbf24' : '#4ade80') : '#64748b';
+  const fanOn  = fanSt?.state === 'on';
+  const lightOn= lightSt?.state === 'on';
+  return `<div class="hdc-vent-box" id="hdc-vent-box">
+    <div class="hdc-vent-title">🚿 ${vent.name || 'Wentylacja łazienki'}</div>
+    ${vent.humidity ? `<div class="hdc-vent-row">
+      <span class="hdc-vent-lbl">Wilgotność</span>
+      <span class="hdc-vent-val" id="hdc-vent-hum" style="color:${humColor}">${hum}%</span>
+    </div>` : ''}
+    ${vent.fan ? `<div class="hdc-vent-row">
+      <span class="hdc-vent-lbl">Wentylator</span>
+      <button id="hdc-vent-fan-btn" class="hdc-tbtn hdc-vent-btn" data-action="toggle" data-entity="${vent.fan}"
+        style="${fanOn ? 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8' : ''}">
+        💨 ${fanOn ? 'Włączony' : 'Wyłączony'}
+      </button>
+    </div>` : ''}
+    ${vent.light ? `<div class="hdc-vent-row">
+      <span class="hdc-vent-lbl">Światło</span>
+      <button id="hdc-vent-light-btn" class="hdc-tbtn hdc-vent-btn" data-action="toggle" data-entity="${vent.light}"
+        style="${lightOn ? 'background:rgba(251,191,36,.15);border-color:#fbbf24;color:#fbbf24' : ''}">
+        💡 ${lightOn ? 'Włączone' : 'Wyłączone'}
+      </button>
+    </div>` : ''}
+  </div>`;
+}
+
 function renderKomfort(hass, cfg) {
   const rooms = (cfg.comfort || {}).rooms || [];
   if (!rooms.length) return `<div style="color:#475569;font-size:12px;padding:12px">Brak konfiguracji.<br>Dodaj sekcję <code>comfort.rooms</code> w konfiguracji karty.</div>`;
@@ -1213,7 +1252,8 @@ function renderKomfort(hass, cfg) {
       ${_comfortBattHtml(hass, room)}
       <div class="hdc-cupdated" id="hdc-cupdated-${idx}">🕐 ${formatAgo(lastUpd)}</div>
     </div>`;
-  }).join('')}</div>`;
+  }).join('')}</div>
+  ${_ventHtml(hass, (cfg.comfort || {}).ventilation)}`;
 }
 
 // ============================================================
@@ -2013,6 +2053,33 @@ class HomeDashboardCard extends HTMLElement {
       const updEl = this.shadowRoot.getElementById(`hdc-cupdated-${idx}`);
       if (updEl) updEl.textContent = `🕐 ${formatAgo(_comfortLastUpdated(hass, room))}`;
     });
+    // Ventilation widget
+    const vent = (this._config.comfort || {}).ventilation;
+    if (vent && this.shadowRoot.getElementById('hdc-vent-box')) {
+      const humSt = vent.humidity ? hass.states[vent.humidity] : null;
+      if (humSt) {
+        const hum = parseFloat(humSt.state).toFixed(1);
+        const humColor = parseFloat(humSt.state) > 75 ? '#f87171' : parseFloat(humSt.state) > 65 ? '#fbbf24' : '#4ade80';
+        const humEl = this.shadowRoot.getElementById('hdc-vent-hum');
+        if (humEl) { humEl.textContent = hum + '%'; humEl.style.color = humColor; }
+      }
+      if (vent.fan) {
+        const fanOn = hass.states[vent.fan]?.state === 'on';
+        const fanBtn = this.shadowRoot.getElementById('hdc-vent-fan-btn');
+        if (fanBtn) {
+          fanBtn.textContent = `💨 ${fanOn ? 'Włączony' : 'Wyłączony'}`;
+          fanBtn.style.cssText = fanOn ? 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8' : '';
+        }
+      }
+      if (vent.light) {
+        const lightOn = hass.states[vent.light]?.state === 'on';
+        const lightBtn = this.shadowRoot.getElementById('hdc-vent-light-btn');
+        if (lightBtn) {
+          lightBtn.textContent = `💡 ${lightOn ? 'Włączone' : 'Wyłączone'}`;
+          lightBtn.style.cssText = lightOn ? 'background:rgba(251,191,36,.15);border-color:#fbbf24;color:#fbbf24' : '';
+        }
+      }
+    }
   }
 
   _updateTPLinkLive() {
