@@ -1797,7 +1797,8 @@ class HomeDashboardCard extends HTMLElement {
       const domain = entity.split('.')[0];
       const st = this._hass.states[entity];
       const on = st?.state === 'on';
-      if (['switch', 'light', 'fan', 'input_boolean'].includes(domain)) {
+      console.debug('[hdc] toggle', entity, '| domain:', domain, '| state:', st?.state, '| on:', on);
+      if (['switch', 'light', 'fan', 'input_boolean', 'number'].includes(domain)) {
         this._hass.callService(domain, on ? 'turn_off' : 'turn_on', { entity_id: entity });
       } else {
         this._hass.callService('homeassistant', 'toggle', { entity_id: entity });
