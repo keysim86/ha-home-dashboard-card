@@ -986,9 +986,9 @@ function renderAuta(hass, cfg) {
         </div>
         <div class="hdc-carbar"><div class="hdc-carbar-fill" style="width:${fuel}%;background:${fuelColor}"></div></div>
         <div class="hdc-g3" style="gap:6px;margin-bottom:8px">
-          <div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Zasięg</div><div class="hdc-sc-val" style="color:${fuelColor};font-size:15px">${range}</div></div>
-          <div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Przebieg</div><div class="hdc-sc-val" style="font-size:15px">${parseInt(odo).toLocaleString('pl')}</div></div>
-          ${bat !== null ? `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Bat. 12V</div><div class="hdc-sc-val" style="color:${battColor(bat)};font-size:15px">${bat}%</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">&nbsp;</div><div class="hdc-sc-val">&nbsp;</div></div>`}
+          ${v.fuel_range ? `<div class="hdc-sc" style="padding:8px;cursor:pointer" data-action="sensor_history" data-entity="${v.fuel_range}" data-label="Zasięg"><div class="hdc-sc-lbl">Zasięg</div><div class="hdc-sc-val" style="color:${fuelColor};font-size:15px">${range}</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Zasięg</div><div class="hdc-sc-val" style="color:${fuelColor};font-size:15px">${range}</div></div>`}
+          ${v.odometer   ? `<div class="hdc-sc" style="padding:8px;cursor:pointer" data-action="sensor_history" data-entity="${v.odometer}"   data-label="Przebieg"><div class="hdc-sc-lbl">Przebieg</div><div class="hdc-sc-val" style="font-size:15px">${parseInt(odo).toLocaleString('pl')}</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Przebieg</div><div class="hdc-sc-val" style="font-size:15px">${parseInt(odo).toLocaleString('pl')}</div></div>`}
+          ${bat !== null ? `<div class="hdc-sc" style="padding:8px;cursor:pointer" data-action="sensor_history" data-entity="${v.battery}"    data-label="Bat. 12V"><div class="hdc-sc-lbl">Bat. 12V</div><div class="hdc-sc-val" style="color:${battColor(bat)};font-size:15px">${bat}%</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">&nbsp;</div><div class="hdc-sc-val">&nbsp;</div></div>`}
         </div>
         ${lastUpd !== '—' ? `<div style="font-size:10px;color:#475569;margin-bottom:6px">🕐 ${lastUpd}</div>` : ''}
         <div class="hdc-chips">
