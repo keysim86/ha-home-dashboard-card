@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.7.1
+//  home-dashboard-card.js  v1.7.2
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -685,6 +685,9 @@ function renderMetering(hass, cfg) {
   const orlenMeter= sv(hass, m.orlen_meter, '—');
   const orlenInv  = sv(hass, m.orlen_invoice, '—');
   const orlenCost = sv(hass, m.orlen_cost, '—');
+  const orlenWearM3  = sv(hass, m.orlen_wear_m3, '—');
+  const orlenWearKwh = sv(hass, m.orlen_wear_kwh, '—');
+  const orlenConv    = sv(hass, m.orlen_conversion, '—');
   const waterMeter= sn(hass, m.water_meter, 3);
   const waterQ    = sn(hass, m.water_quarterly, 1);
   const salt      = sn(hass, m.ecowater_salt, 0);
@@ -717,10 +720,15 @@ function renderMetering(hass, cfg) {
       <div class="hdc-box"><div class="hdc-box-title" style="color:#38bdf8">🌙 Nocna</div><div class="hdc-sc-val" style="color:#38bdf8;font-size:22px">${dailyNight} kWh</div></div>
     </div>
     <div class="hdc-st">🔵 myORLEN · Gaz</div>
-    <div class="hdc-g3" style="margin-bottom:10px">
+    <div class="hdc-g3" style="margin-bottom:6px">
       <div class="hdc-sc"><div class="hdc-sc-lbl">Odczyt licznika</div><div class="hdc-sc-val" style="color:#a78bfa;font-size:15px">${orlenMeter} m³</div></div>
       <div class="hdc-sc"><div class="hdc-sc-lbl">Ostatnia faktura</div><div class="hdc-sc-val" style="color:#fbbf24;font-size:15px">${orlenInv}</div></div>
       <div class="hdc-sc"><div class="hdc-sc-lbl">Tracking kosztów</div><div class="hdc-sc-val" style="color:#4ade80;font-size:15px">${orlenCost}</div></div>
+    </div>
+    <div class="hdc-g3" style="margin-bottom:10px">
+      <div class="hdc-sc"><div class="hdc-sc-lbl">Zużycie (faktura) m³</div><div class="hdc-sc-val" style="color:#a78bfa;font-size:15px">${orlenWearM3} m³</div></div>
+      <div class="hdc-sc"><div class="hdc-sc-lbl">Zużycie (faktura) kWh</div><div class="hdc-sc-val" style="color:#38bdf8;font-size:15px">${orlenWearKwh} kWh</div></div>
+      <div class="hdc-sc"><div class="hdc-sc-lbl">Wsp. konwersji</div><div class="hdc-sc-val" style="color:#fb923c;font-size:15px">${orlenConv} kWh/m³</div></div>
     </div>
     <div class="hdc-st">💧 Woda</div>
     <div class="hdc-g2" style="margin-bottom:10px">

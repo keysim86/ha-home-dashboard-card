@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.7.2] - 2026-03-31
+
+### Added
+- Zakładka **📊 Metering** · sekcja myORLEN: zużycie z ostatniej faktury w m³ (`orlen_wear_m3`), w kWh (`orlen_wear_kwh`) oraz współczynnik konwersji gazu (`orlen_conversion`, kWh/m³)
+
 ## [1.7.1] - 2026-03-31
 
 ### Fixed

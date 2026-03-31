@@ -146,6 +146,9 @@ metering:
   orlen_meter: sensor.myorlen_gas_sensor_8018590365500075144345_6067986
   orlen_invoice: sensor.myorlen_gas_invoice_sensor_8018590365500075144345_6067986
   orlen_cost: sensor.myorlen_gas_cost_tracking_sensor_8018590365500075144345_6067986
+  orlen_wear_m3: sensor.myorlen_gas_last_invoice_wear_m3_8018590365500075144345_6067986
+  orlen_wear_kwh: sensor.myorlen_gas_last_invoice_wear_kwh_8018590365500075144345_6067986
+  orlen_conversion: sensor.myorlen_gas_conversion_factor_8018590365500075144345_6067986
   water_meter: sensor.miresphome04_licznik_wody
   water_quarterly: sensor.licznik_wody_kwartalnie
   ecowater_salt: sensor.ecowater_ac000w007136026_salt_level_percentage
