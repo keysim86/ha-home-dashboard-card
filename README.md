@@ -13,17 +13,17 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 
 | Zakładka | Zawartość |
 |----------|-----------|
-| 🏠 **Home** | Lokalizacja, bateria, kroki, mapa `ha-map` z GPS, bramy/garaże z kontrolą, wskaźnikiem światła i live timerem czasu otwarcia, widget skrzynki pocztowej z poziomem baterii, harmonogram odpadów komunalnych z badge |
-| ⚡ **Energia** | Moc całkowita live, napięcia L1/L2/L3, taryfy G13s (dziennie/miesięcznie), top odbiorniki |
-| 🔥 **Vaillant** | Termostaty CO + CWU ze sterowaniem (tryby, presety), wykresy temperatur 24h, wykresy zużycia gazu 30-dniowe i 12-miesięczne, ustawienia `input_number` |
-| 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), myORLEN gaz, licznik wody, EcoWater, zmywarka Haier hOn |
+| 🏠 **Home** | Lokalizacja, bateria, kroki; kliknięcie w kafelek osoby → modal z mapą `ha-map` GPS; bramy/garaże z kontrolą, wskaźnikiem światła i live timerem czasu otwarcia; widget skrzynki pocztowej z poziomem baterii; harmonogram odpadów komunalnych z badge |
+| ⚡ **Energia** | Moc całkowita live, napięcia L1/L2/L3, taryfy G13s (dziennie/miesięcznie), top odbiorniki; kliknięcie w kafelek → modal z wykresem historii |
+| 🔥 **Vaillant** | Termostaty CO + CWU ze sterowaniem (tryby, presety), wykresy temperatur 24h, wykresy zużycia gazu 30-dniowe i 12-miesięczne, ustawienia `input_number`; kliknięcie w temperaturę CO/CWU → modal z wykresem historii |
+| 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), myORLEN gaz, licznik wody, EcoWater, zmywarka Haier hOn; kliknięcie w kafelek → modal z wykresem historii |
 | 📶 **TP-Link** | Omada AP/SW porty PoE (klikalne — włącz/wyłącz), odkurzacz Zosia, aktualizacje firmware, drukarka HP |
 | 📹 **Kamery** | Grid HIKVISION NVR, focus view (max-height 600px), status dysku, live refresh co 10s |
-| 🚗 **Auta** | Paliwo + litry, zasięg, przebieg, bateria 12V, blokada (klikalna lock/unlock), status połączenia, lokalizacja GPS, mapa `ha-map` |
+| 🚗 **Auta** | Paliwo + litry, zasięg, przebieg, bateria 12V, blokada (klikalna lock/unlock), status połączenia, lokalizacja GPS, mapa `ha-map`; kliknięcie w kafelek sensora → modal z wykresem historii |
 | 🖧 **Proxmox** | Node stats (CPU, RAM%, wolna RAM w GB, Disk), LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
 | 🔔 **Alerty** | Reguły definiowane w YAML, badge z licznikiem na zakładce |
-| 💡 **Przełączniki** | Grupy kafelków `switch`/`light`/`fan` z live statusem; klik przełącza stan; opcjonalny timer czasu włączenia per grupa (`show_timer: true`) |
-| 🌡️ **Klimat** | Karty pomieszczeń z sensorami (temp, wilgotność, ciśnienie, nasłonecznienie, CO₂, AQI, PM2.5, PM10, VOC); kolory wartości wg norm; sterowanie humidifier; poziom baterii czujnika; kliknięcie w sensor → modal z liniowym wykresem historii (7/14/30/60/90 dni) |
+| 💡 **Przełączniki** | Grupy kafelków `switch`/`light`/`fan` z live statusem; klik przełącza stan; opcjonalny timer czasu włączenia per grupa (`show_timer: true`); opcjonalne grupowanie po pokojach (`room:` w YAML) |
+| 🌡️ **Klimat** | Karty pomieszczeń z sensorami (temp, wilgotność, ciśnienie, nasłonecznienie, CO₂, AQI, PM2.5, PM10, VOC); kolory wartości wg norm; sterowanie humidifier; sterowanie wentylatorem i światłem per pokój (`fan`, `light`); poziom baterii czujnika; kliknięcie w sensor → modal z liniowym wykresem historii (7/14/30/60/90 dni) |
 
 ## Instalacja przez HACS
 
@@ -296,6 +296,7 @@ mailbox:
 
 switches:
   groups:
+    # Grupowanie po typie (domyślne — brak pola room)
     - name: Gniazdka
       icon: "🔌"
       show_timer: true       # opcjonalne — pokazuje czas włączenia na kafelku
@@ -317,6 +318,28 @@ switches:
       entities:
         - entity: fan.wentylator
           name: Wentylator
+
+    # Grupowanie po pokojach (gdy dowolna grupa ma pole room)
+    # Sekcja 1. poziomu = pokój, 2. poziomu = typ urządzenia
+    - name: Gniazdka
+      room: Salon
+      icon: "🔌"
+      show_timer: true
+      entities:
+        - entity: switch.tv_salon
+          name: TV Salon
+    - name: Gniazdka
+      room: Garaż
+      icon: "🔌"
+      entities:
+        - entity: switch.listwa_garaz
+          name: Listwa
+    - name: Światło
+      room: Garaż
+      icon: "💡"
+      entities:
+        - entity: light.garaz
+          name: Garaż
 
 comfort:
   rooms:

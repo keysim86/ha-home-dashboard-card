@@ -2,8 +2,21 @@
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-03-31
+
 ### Added
-- Zakładka **🌡️ Klimat**: widget wentylacji łazienki na dole karty — wilgotność z kolorem (zielony/żółty/czerwony), przycisk toggle wentylatora i światła; konfiguracja przez `comfort.ventilation`
+- Zakładki **📊 Metering**, **⚡ Energia**, **🚗 Auta**, **🔥 Vaillant**: kliknięcie w kafelek sensora otwiera modal z wykresem historii (zakresy 7/14/30/60/90 dni) — identyczny mechanizm jak w zakładce 🌡️ Klimat
+- Zakładka **🏠 Home**: kliknięcie w kafelek osoby otwiera modal z mapą `ha-map` aktualnej lokalizacji (zoom 15, ciemny motyw)
+- Zakładka **🌡️ Klimat**: sterowanie wentylatorem i światłem per pokój — pola `fan` i `light` w `comfort.rooms[]`; przyciski toggle wyświetlane na dole karty pokoju
+- Zakładka **💡 Przełączniki**: opcjonalne grupowanie po pokojach — pole `room` w grupie YAML; sekcja pierwszego poziomu = pokój, drugi poziom = typ urządzenia (Gniazdka / Światło / Inne)
+
+### Changed
+- Zakładka **🏠 Home**: usunięto stałą mapę boczną (lepsza responsywność na smartfonach) — lokalizacja dostępna przez modal po kliknięciu w kafelek osoby
+
+### Fixed
+- Zakładka **💡 Przełączniki**: nazwy urządzeń zawijają się w max. 2 linie zamiast być ucinane wielokropkiem
+- Zakładka **🔥 Vaillant** · sekcja Ustawienia: wartość wyświetlana na kafelku odświeża się live po kliknięciu +/− (poprzednio wymagało przeładowania zakładki)
+- Zakładka **🔥 Vaillant** · tryby HVAC: gdy encja zgłasza jednocześnie `auto` i `heat_cool`, wyświetlał się duplikat przycisku "Auto" — teraz pokazywane jako osobne przyciski z poprawnymi etykietami: `heat_cool` = "Grzanie", `auto` = "Auto"
 
 ## [1.7.3] - 2026-03-31
 
