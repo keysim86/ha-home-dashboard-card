@@ -151,7 +151,8 @@ const STYLES = `
 .hdc-sw-tile.on.light{background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.3)}
 .hdc-sw-tile-ico{font-size:20px;width:32px;text-align:center;flex-shrink:0}
 .hdc-sw-tile-info{flex:1;min-width:0}
-.hdc-sw-tile-name{font-size:11px;font-weight:500;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdc-sw-tile-name{font-size:12px;font-weight:500;color:#94a3b8;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35;word-break:break-word}
+.hdc-st-sub{font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#1e293b;margin:8px 0 5px;padding-left:2px}
 .hdc-sw-tile.on .hdc-sw-tile-name{color:#e2e8f0}
 .hdc-sw-tile-state{font-size:10px;margin-top:2px;color:#334155}
 .hdc-sw-tile.on .hdc-sw-tile-state{color:#38bdf8}
@@ -1093,34 +1094,64 @@ function renderPrzelaczniki(hass, cfg) {
   const groups = (cfg.switches || {}).groups || [];
   if (!groups.length) return `<div style="color:#475569;font-size:12px;padding:12px">Brak konfiguracji przełączników.<br>Dodaj sekcję <code>switches.groups</code> w konfiguracji karty.</div>`;
 
-  return groups.map(group => {
-    const entities = group.entities || [];
-    const showTimer = !!group.show_timer;
-    const tiles = entities.map(item => {
-      const st = hass.states[item.entity];
-      const isOn = st ? st.state === 'on' : false;
-      const isLight = item.entity.startsWith('light.');
-      const domain = item.entity.split('.')[0];
-      const defaultIco = isLight ? (isOn ? '💡' : '🔆') : domain === 'switch' ? '🔌' : domain === 'fan' ? '💨' : '⚙️';
-      const ico = item.icon || defaultIco;
-      const name = item.name || st?.attributes?.friendly_name || item.entity;
-      const stateLabel = isOn ? 'Włączone' : 'Wyłączone';
-      const typeClass = isLight ? 'light' : '';
-      const swId = `hdc-sw-${item.entity.replace('.', '-')}`;
-      const timerHtml = showTimer ? `<div class="hdc-sw-timer">${isOn && st?.last_changed ? formatGateElapsed(st.last_changed) : ''}</div>` : '';
-      return `<div id="${swId}" class="hdc-sw-tile${isOn ? ' on' : ''}${typeClass ? ' ' + typeClass : ''}" data-action="toggle" data-entity="${item.entity}">
-        <div class="hdc-sw-tile-ico">${ico}</div>
-        <div class="hdc-sw-tile-info">
-          <div class="hdc-sw-tile-name">${name}</div>
-          <div class="hdc-sw-tile-state">${stateLabel}</div>
-          ${timerHtml}
-        </div>
-        <div class="hdc-sw-dot"></div>
-      </div>`;
-    }).join('');
+  const renderTiles = (group) => (group.entities || []).map(item => {
+    const st = hass.states[item.entity];
+    const isOn = st ? st.state === 'on' : false;
+    const isLight = item.entity.startsWith('light.');
+    const domain = item.entity.split('.')[0];
+    const defaultIco = isLight ? (isOn ? '💡' : '🔆') : domain === 'switch' ? '🔌' : domain === 'fan' ? '💨' : '⚙️';
+    const ico = item.icon || defaultIco;
+    const name = item.name || st?.attributes?.friendly_name || item.entity;
+    const stateLabel = isOn ? 'Włączone' : 'Wyłączone';
+    const typeClass = isLight ? 'light' : '';
+    const swId = `hdc-sw-${item.entity.replace('.', '-')}`;
+    const timerHtml = group.show_timer ? `<div class="hdc-sw-timer">${isOn && st?.last_changed ? formatGateElapsed(st.last_changed) : ''}</div>` : '';
+    return `<div id="${swId}" class="hdc-sw-tile${isOn ? ' on' : ''}${typeClass ? ' ' + typeClass : ''}" data-action="toggle" data-entity="${item.entity}">
+      <div class="hdc-sw-tile-ico">${ico}</div>
+      <div class="hdc-sw-tile-info">
+        <div class="hdc-sw-tile-name">${name}</div>
+        <div class="hdc-sw-tile-state">${stateLabel}</div>
+        ${timerHtml}
+      </div>
+      <div class="hdc-sw-dot"></div>
+    </div>`;
+  }).join('');
 
-    return `<div class="hdc-st">${group.icon ? group.icon + ' ' : ''}${group.name || 'Grupa'}</div>
-      <div class="hdc-gaa" style="margin-bottom:14px">${tiles}</div>`;
+  // Detect room-based grouping (any group with 'room' field)
+  const useRooms = groups.some(g => g.room);
+
+  if (!useRooms) {
+    // Flat grouping by type (backward compatible)
+    return groups.map(group =>
+      `<div class="hdc-st">${group.icon ? group.icon + ' ' : ''}${group.name || 'Grupa'}</div>
+      <div class="hdc-gaa" style="margin-bottom:14px">${renderTiles(group)}</div>`
+    ).join('');
+  }
+
+  // Room-first grouping: collect unique rooms (preserve order of first appearance)
+  const roomOrder = [];
+  const roomGroups = new Map();
+  groups.forEach(group => {
+    const room = group.room || '—';
+    if (!roomGroups.has(room)) {
+      roomOrder.push(room);
+      roomGroups.set(room, []);
+    }
+    roomGroups.get(room).push(group);
+  });
+
+  return roomOrder.map(room => {
+    const roomGroupList = roomGroups.get(room);
+    const multiType = roomGroupList.length > 1;
+    const innerHtml = roomGroupList.map(group => {
+      const tiles = renderTiles(group);
+      if (!tiles) return '';
+      const subHeader = multiType
+        ? `<div class="hdc-st-sub">${group.icon ? group.icon + ' ' : ''}${group.name || ''}</div>`
+        : '';
+      return subHeader + `<div class="hdc-gaa" style="margin-bottom:${multiType ? '10px' : '14px'}">${tiles}</div>`;
+    }).join('');
+    return `<div class="hdc-st">${room}</div>${innerHtml}`;
   }).join('');
 }
 
