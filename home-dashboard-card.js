@@ -709,30 +709,30 @@ function renderMetering(hass, cfg) {
   return `
     <div class="hdc-st">⚡ Tauron AMIplus · G13s</div>
     <div class="hdc-g3" style="margin-bottom:10px">
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Dziś łącznie</div><div class="hdc-sc-val" style="color:#fbbf24">${daily} kWh</div><div class="hdc-sc-sub">szczyt+poza+noc</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Miesiąc</div><div class="hdc-sc-val" style="color:#4ade80">${monthly} kWh</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Cena aktualna</div><div class="hdc-sc-val" style="color:#f87171">${price} zł/kWh</div></div>
+      ${m.tauron_daily     ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_daily}"     data-label="Dziś łącznie"><div class="hdc-sc-lbl">Dziś łącznie</div><div class="hdc-sc-val" style="color:#fbbf24">${daily} kWh</div><div class="hdc-sc-sub">szczyt+poza+noc</div></div>` : ''}
+      ${m.tauron_monthly   ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_monthly}"   data-label="Miesiąc"><div class="hdc-sc-lbl">Miesiąc</div><div class="hdc-sc-val" style="color:#4ade80">${monthly} kWh</div></div>` : ''}
+      ${m.tauron_price     ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_price}"     data-label="Cena aktualna"><div class="hdc-sc-lbl">Cena aktualna</div><div class="hdc-sc-val" style="color:#f87171">${price} zł/kWh</div></div>` : ''}
     </div>
     <div class="hdc-g3" style="margin-bottom:12px">
-      <div class="hdc-box"><div class="hdc-box-title" style="color:#fbbf24">⚡ Szczytowa</div><div class="hdc-sc-val" style="color:#fbbf24;font-size:22px">${dailyPeak} kWh</div></div>
-      <div class="hdc-box"><div class="hdc-box-title" style="color:#a78bfa">⚡ Pozaszczytowa</div><div class="hdc-sc-val" style="color:#a78bfa;font-size:22px">${dailyOff} kWh</div></div>
-      <div class="hdc-box"><div class="hdc-box-title" style="color:#38bdf8">🌙 Nocna</div><div class="hdc-sc-val" style="color:#38bdf8;font-size:22px">${dailyNight} kWh</div></div>
+      ${m.tauron_daily_peak    ? `<div class="hdc-box" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_daily_peak}"    data-label="⚡ Szczytowa"><div class="hdc-box-title" style="color:#fbbf24">⚡ Szczytowa</div><div class="hdc-sc-val" style="color:#fbbf24;font-size:22px">${dailyPeak} kWh</div></div>` : ''}
+      ${m.tauron_daily_offpeak ? `<div class="hdc-box" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_daily_offpeak}" data-label="⚡ Pozaszczytowa"><div class="hdc-box-title" style="color:#a78bfa">⚡ Pozaszczytowa</div><div class="hdc-sc-val" style="color:#a78bfa;font-size:22px">${dailyOff} kWh</div></div>` : ''}
+      ${m.tauron_daily_night   ? `<div class="hdc-box" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_daily_night}"   data-label="🌙 Nocna"><div class="hdc-box-title" style="color:#38bdf8">🌙 Nocna</div><div class="hdc-sc-val" style="color:#38bdf8;font-size:22px">${dailyNight} kWh</div></div>` : ''}
     </div>
     <div class="hdc-st">🔵 myORLEN · Gaz</div>
     <div class="hdc-g3" style="margin-bottom:6px">
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Odczyt licznika</div><div class="hdc-sc-val" style="color:#a78bfa;font-size:15px">${orlenMeter} m³</div></div>
+      ${m.orlen_meter   ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.orlen_meter}"   data-label="Odczyt licznika"><div class="hdc-sc-lbl">Odczyt licznika</div><div class="hdc-sc-val" style="color:#a78bfa;font-size:15px">${orlenMeter} m³</div></div>` : ''}
       <div class="hdc-sc"><div class="hdc-sc-lbl">Ostatnia faktura</div><div class="hdc-sc-val" style="color:#fbbf24;font-size:15px">${orlenInv}</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Tracking kosztów</div><div class="hdc-sc-val" style="color:#4ade80;font-size:15px">${orlenCost}</div></div>
+      ${m.orlen_cost    ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.orlen_cost}"    data-label="Tracking kosztów"><div class="hdc-sc-lbl">Tracking kosztów</div><div class="hdc-sc-val" style="color:#4ade80;font-size:15px">${orlenCost}</div></div>` : ''}
     </div>
     <div class="hdc-g3" style="margin-bottom:10px">
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Zużycie (faktura) m³</div><div class="hdc-sc-val" style="color:#a78bfa;font-size:15px">${orlenWearM3} m³</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Zużycie (faktura) kWh</div><div class="hdc-sc-val" style="color:#38bdf8;font-size:15px">${orlenWearKwh} kWh</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Wsp. konwersji</div><div class="hdc-sc-val" style="color:#fb923c;font-size:15px">${orlenConv} kWh/m³</div></div>
+      ${m.orlen_wear_m3   ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.orlen_wear_m3}"   data-label="Zużycie m³"><div class="hdc-sc-lbl">Zużycie (faktura) m³</div><div class="hdc-sc-val" style="color:#a78bfa;font-size:15px">${orlenWearM3} m³</div></div>` : ''}
+      ${m.orlen_wear_kwh  ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.orlen_wear_kwh}"  data-label="Zużycie kWh"><div class="hdc-sc-lbl">Zużycie (faktura) kWh</div><div class="hdc-sc-val" style="color:#38bdf8;font-size:15px">${orlenWearKwh} kWh</div></div>` : ''}
+      ${m.orlen_conversion? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.orlen_conversion}" data-label="Wsp. konwersji"><div class="hdc-sc-lbl">Wsp. konwersji</div><div class="hdc-sc-val" style="color:#fb923c;font-size:15px">${orlenConv} kWh/m³</div></div>` : ''}
     </div>
     <div class="hdc-st">💧 Woda</div>
     <div class="hdc-g2" style="margin-bottom:10px">
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Stan licznika</div><div class="hdc-sc-val" style="color:#2dd4bf">${waterMeter} m³</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Kwartalnie</div><div class="hdc-sc-val" style="color:#38bdf8">${waterQ} m³</div></div>
+      ${m.water_meter    ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.water_meter}"    data-label="Stan licznika"><div class="hdc-sc-lbl">Stan licznika</div><div class="hdc-sc-val" style="color:#2dd4bf">${waterMeter} m³</div></div>` : ''}
+      ${m.water_quarterly? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.water_quarterly}" data-label="Kwartalnie"><div class="hdc-sc-lbl">Kwartalnie</div><div class="hdc-sc-val" style="color:#38bdf8">${waterQ} m³</div></div>` : ''}
     </div>
     <div class="hdc-box" style="margin-bottom:10px">
       <div class="hdc-box-title">💎 EcoWater · Zmiękczacz</div>
