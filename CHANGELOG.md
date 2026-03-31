@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.7.1] - 2026-03-31
+
+### Fixed
+- Zakładka **📶 TP-Link**: porty PoE (sw01/sw02/sw03) zawsze klikalne niezależnie od domeny encji — wcześniej klikanie działało tylko dla encji `switch.*`, inne domeny były ignorowane
+
 ## [1.7.0] - 2026-03-30
 
 ### Added

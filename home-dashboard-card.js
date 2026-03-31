@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.7.0
+//  home-dashboard-card.js  v1.7.1
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
