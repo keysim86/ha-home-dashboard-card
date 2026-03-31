@@ -779,10 +779,11 @@ function renderTPLink(hass, cfg) {
 
   const renderPorts = (ports, poe = false) => (ports || []).map(p => {
     const on = isOn(hass, p.entity);
-    const isSwitch = p.entity && p.entity.startsWith('switch.');
-    const clickAttr = isSwitch ? ` data-action="toggle" data-entity="${p.entity}"` : '';
+    // Porty PoE (sw01/sw02/sw03) są zawsze klikalne; porty routera tylko gdy switch.*
+    const canClick = p.entity && (poe || p.entity.startsWith('switch.'));
+    const clickAttr = canClick ? ` data-action="toggle" data-entity="${p.entity}"` : '';
     const eid = `hdc-port-${p.entity.replace('.', '-')}`;
-    return `<div id="${eid}" class="hdc-port${isSwitch?' clickable':''} ${on?(poe?'poe':'up'):'down'}" title="${p.label}${isSwitch?(on?' — kliknij aby wyłączyć':' — kliknij aby włączyć'):''}"${clickAttr}>
+    return `<div id="${eid}" class="hdc-port${canClick?' clickable':''} ${on?(poe?'poe':'up'):'down'}" title="${p.label}${canClick?(on?' — kliknij aby wyłączyć':' — kliknij aby włączyć'):''}"${clickAttr}>
       <span class="hdc-port-ico">${poe?'⚡':'🔗'}</span>
       <span class="hdc-port-num">${p.label}</span>
     </div>`;
@@ -2018,9 +2019,9 @@ class HomeDashboardCard extends HTMLElement {
       const el = this.shadowRoot.getElementById(`hdc-port-${p.entity.replace('.', '-')}`);
       if (!el) return;
       const on = isOn(hass, p.entity);
-      const isSwitch = p.entity?.startsWith('switch.');
-      el.className = `hdc-port${isSwitch ? ' clickable' : ''} ${on ? (p._poe ? 'poe' : 'up') : 'down'}`;
-      el.title = `${p.label}${isSwitch ? (on ? ' — kliknij aby wyłączyć' : ' — kliknij aby włączyć') : ''}`;
+      const canClick = p.entity && (p._poe || p.entity.startsWith('switch.'));
+      el.className = `hdc-port${canClick ? ' clickable' : ''} ${on ? (p._poe ? 'poe' : 'up') : 'down'}`;
+      el.title = `${p.label}${canClick ? (on ? ' — kliknij aby wyłączyć' : ' — kliknij aby włączyć') : ''}`;
     });
   }
 
