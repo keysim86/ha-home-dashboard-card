@@ -527,7 +527,7 @@ function renderVaillant(hass, cfg) {
 
   const PM_LABEL   = { schedule:'Harmonogram', manual:'Ręczny', eco:'Eco', away:'Poza domem',
     boost:'Turbo', sleep:'Sen', home:'Dom', comfort:'Komfort', off:'Wyłączony', none:'—' };
-  const HVAC_LABEL = { heat:'Grzanie', auto:'Auto', heat_cool:'Auto', cool:'Chłodzenie',
+  const HVAC_LABEL = { heat:'Grzanie', auto:'Auto', heat_cool:'Grzanie', cool:'Chłodzenie',
     fan_only:'Wentylator', dry:'Osuszanie', off:'Wył.' };
   const pmLabel   = p => PM_LABEL[p]   || p;
   const hvacLabel = m => HVAC_LABEL[m] || m;
