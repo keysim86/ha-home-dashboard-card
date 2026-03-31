@@ -546,9 +546,9 @@ function renderVaillant(hass, cfg) {
 
   const modeBtns = (entity, pmList, pmCur, hvac, hvacModes) => `
     <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;justify-content:center">
-      ${hvacModes.filter(m => m !== 'none').map(m => {
+      ${((() => { const seen = new Set(); return hvacModes.filter(m => m !== 'none').filter(m => { const lbl = hvacLabel(m); if (seen.has(lbl)) return false; seen.add(lbl); return true; }); })()).map(m => {
         const isOff = m === 'off';
-        const active = hvac === m;
+        const active = hvac === m || (m === 'auto' && hvac === 'heat_cool') || (m === 'heat_cool' && hvac === 'auto');
         const style = active ? (isOff
           ? 'background:rgba(248,113,113,.2);border-color:#f87171;color:#f87171'
           : 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8') : '';
