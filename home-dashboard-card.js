@@ -571,7 +571,7 @@ function renderVaillant(hass, cfg) {
     <div class="hdc-ga" style="margin-bottom:10px">
       <div class="hdc-thcard">
         <div class="hdc-th-title">🏠 Ogrzewanie CO</div>
-        <div id="hdc-vl-coact" class="hdc-th-big" style="color:#fb923c">${coAct}°</div>
+        <div id="hdc-vl-coact" class="hdc-th-big" style="color:#fb923c;${(v.temp_indoor||v.climate_co)?'cursor:pointer':''}" ${(v.temp_indoor||v.climate_co)?`data-action="sensor_history" data-entity="${v.temp_indoor||v.climate_co}" data-label="Temp. CO"`:''} >${coAct}°</div>
         <div class="hdc-th-target">cel: <span id="hdc-co-set">${coSet}</span>°C</div>
         <div class="hdc-th-btns">
           ${coTmpInp ? `
@@ -587,7 +587,7 @@ function renderVaillant(hass, cfg) {
       </div>
       <div class="hdc-thcard">
         <div class="hdc-th-title">🚿 CWU</div>
-        <div id="hdc-vl-cwucur" class="hdc-th-big" style="color:#38bdf8">${cwuCur}°</div>
+        <div id="hdc-vl-cwucur" class="hdc-th-big" style="color:#38bdf8;${v.cwu_current?'cursor:pointer':''}" ${v.cwu_current?`data-action="sensor_history" data-entity="${v.cwu_current}" data-label="Temp. CWU"`:''} >${cwuCur}°</div>
         <div class="hdc-th-target">cel: <span id="hdc-cwu-set">${cwuTgt}</span>°C</div>
         <div class="hdc-th-btns">
           <button class="hdc-tbtn" data-action="climate_down" data-entity="${v.climate_cwu}" data-step="1">−</button>
