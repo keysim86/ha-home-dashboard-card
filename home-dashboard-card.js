@@ -640,7 +640,7 @@ function renderVaillant(hass, cfg) {
           <span class="hdc-ir-lbl">${s.name || s.entity}</span>
           <span style="display:flex;align-items:center;gap:6px">
             <button class="hdc-tbtn" data-action="input_down" data-entity="${s.entity}" data-step="${step}" data-min="${min}" data-max="${max}">−</button>
-            <span style="min-width:50px;text-align:center;font-size:13px;font-weight:600;color:#f1f5f9">${val.toFixed(dec)}${unit ? ' ' + unit : ''}</span>
+            <span id="hdc-vl-set-${s.entity.replace(/\./g,'-')}" style="min-width:50px;text-align:center;font-size:13px;font-weight:600;color:#f1f5f9">${val.toFixed(dec)}${unit ? ' ' + unit : ''}</span>
             <button class="hdc-tbtn" data-action="input_up" data-entity="${s.entity}" data-step="${step}" data-min="${min}" data-max="${max}">+</button>
           </span>
         </div>`;
@@ -1518,6 +1518,17 @@ class HomeDashboardCard extends HTMLElement {
     setText('hdc-vl-flameval', `🔥 ${flame ? 'Aktywny' : 'Nieaktywny'}`);
     setText('hdc-vl-elco',    `${elCO} kWh`);
     setText('hdc-vl-elcwu',   `${elCWU} kWh`);
+    (v.settings || []).forEach(s => {
+      const st = hass.states[s.entity];
+      if (!st) return;
+      const val = parseFloat(st.state);
+      if (isNaN(val)) return;
+      const step = parseFloat(st.attributes.step) || 1;
+      const dec  = s.decimals !== undefined ? s.decimals : (step < 0.01 ? 3 : step < 0.1 ? 2 : step < 1 ? 1 : 0);
+      const unit = s.unit !== undefined ? s.unit : (st.attributes.unit_of_measurement || '');
+      const el = sr.getElementById('hdc-vl-set-' + s.entity.replace(/\./g, '-'));
+      if (el) el.textContent = val.toFixed(dec) + (unit ? ' ' + unit : '');
+    });
   }
 
   async _initVaillantCharts() {
