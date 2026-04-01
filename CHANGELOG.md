@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.10.1] - 2026-04-02
+
+### Fixed
+- Widget pogody: błąd składni JS `Invalid or unexpected token` — znak Unicode minus `−` (U+2212) w funkcji kolorowania temperatury zamiast zwykłego `-`; karta nie ładowała się wcale
+
 ## [1.10.0] - 2026-04-02
 
 ### Added
