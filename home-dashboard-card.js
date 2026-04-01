@@ -352,12 +352,19 @@ function renderOsoby(hass, cfg) {
       const battSt = mbCfg.battery ? hass.states[mbCfg.battery] : null;
       const battVal = battSt ? Math.round(parseFloat(battSt.state)) : null;
       const battColor = battVal !== null ? (battVal > 50 ? '#4ade80' : battVal > 20 ? '#fbbf24' : '#f87171') : '#475569';
-      mailboxHtml = `<div id="hdc-mailbox" class="hdc-mailbox${hasMail ? ' mail' : ''}">
-        <div class="hdc-mailbox-ico">${hasMail ? '📬' : '📭'}</div>
-        <div class="hdc-mailbox-info">
-          <div class="hdc-mailbox-status">${mbCfg.name || 'Skrzynka pocztowa'} — ${hasMail ? 'Jest poczta!' : 'Pusta'}</div>
-          ${battVal !== null ? `<div class="hdc-mailbox-batt" style="color:${battColor}">🔋 ${battVal}%</div>` : ''}
+      const windyUrl = cfg.weather && cfg.weather.windy_embed;
+      const weatherBtn = windyUrl
+        ? `<button class="hdc-tbtn" data-action="windy_open" style="font-size:11px;height:32px;padding:0 12px;width:auto;flex-shrink:0">🌤️ Pogoda</button>`
+        : '';
+      mailboxHtml = `<div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+        <div id="hdc-mailbox" class="hdc-mailbox${hasMail ? ' mail' : ''}" style="flex:1;margin-top:0">
+          <div class="hdc-mailbox-ico">${hasMail ? '📬' : '📭'}</div>
+          <div class="hdc-mailbox-info">
+            <div class="hdc-mailbox-status">${mbCfg.name || 'Skrzynka pocztowa'} — ${hasMail ? 'Jest poczta!' : 'Pusta'}</div>
+            ${battVal !== null ? `<div class="hdc-mailbox-batt" style="color:${battColor}">🔋 ${battVal}%</div>` : ''}
+          </div>
         </div>
+        ${weatherBtn}
       </div>`;
     }
     gatesHtml = `<div class="hdc-st" style="margin-top:14px">Bramy i garaże</div>
@@ -400,17 +407,9 @@ function renderOsoby(hass, cfg) {
       <div style="display:flex;flex-direction:column;gap:6px">${rows || '<div style="color:#475569;font-size:11px;padding:8px">Brak danych</div>'}</div>`;
   }
 
-  const windyUrl = cfg.weather && cfg.weather.windy_embed;
-  const windyHtml = windyUrl ? `
-    <div class="hdc-st" style="margin-top:14px">Pogoda</div>
-    <div style="border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.07);margin-bottom:4px">
-      <iframe src="${windyUrl}" style="display:block;width:100%;height:450px;border:none" loading="lazy" allowfullscreen></iframe>
-    </div>` : '';
-
   return `
     <div id="hdc-persons-list"><div class="hdc-ga">${cards}</div></div>
     ${gatesHtml}
-    ${windyHtml}
     ${wasteRows}`;
 }
 
@@ -1783,6 +1782,32 @@ class HomeDashboardCard extends HTMLElement {
     }
   }
 
+  _showWindyModal() {
+    const url = this._config.weather && this._config.weather.windy_embed;
+    if (!url) return;
+    const existing = this.shadowRoot.getElementById('hdc-windy-overlay');
+    if (existing) { existing.style.display = 'flex'; return; }
+    const el = document.createElement('div');
+    el.id = 'hdc-windy-overlay';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
+    el.innerHTML = `
+      <div style="background:#0f172a;border:1px solid rgba(255,255,255,.1);border-radius:16px;width:100%;max-width:900px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0">
+          <div style="font-size:13px;font-weight:600;color:#f1f5f9">🌤️ Pogoda</div>
+          <button id="hdc-windy-close" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;padding:0 4px;line-height:1">✕</button>
+        </div>
+        <iframe src="${url}" style="display:block;width:100%;height:560px;border:none;flex:1" allowfullscreen loading="lazy"></iframe>
+      </div>`;
+    this.shadowRoot.appendChild(el);
+    el.addEventListener('click', e => { if (e.target === el) this._closeWindyModal(); });
+    this.shadowRoot.getElementById('hdc-windy-close').addEventListener('click', () => this._closeWindyModal());
+  }
+
+  _closeWindyModal() {
+    const el = this.shadowRoot.getElementById('hdc-windy-overlay');
+    if (el) el.remove();
+  }
+
   _showPersonMap(entity) {
     const p = (this._config.persons || []).find(pc => pc.entity === entity);
     if (!p) return;
@@ -1885,6 +1910,12 @@ class HomeDashboardCard extends HTMLElement {
     const action = btn.dataset.action;
     const entity = btn.dataset.entity;
     const step   = parseFloat(btn.dataset.step || '0.5');
+
+    if (action === 'windy_open') {
+      this._showWindyModal();
+      return;
+    }
+
     if (!this._hass || !entity) return;
 
     // Toggle obsługujemy przed sprawdzeniem stanu — encja może być unavailable
