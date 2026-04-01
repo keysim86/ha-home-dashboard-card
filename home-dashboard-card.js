@@ -548,7 +548,7 @@ function renderVaillant(hass, cfg) {
     <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;justify-content:center">
       ${((() => { const seen = new Set(); return hvacModes.filter(m => m !== 'none').filter(m => { const lbl = hvacLabel(m); if (seen.has(lbl)) return false; seen.add(lbl); return true; }); })()).map(m => {
         const isOff = m === 'off';
-        const active = hvac === m || (m === 'auto' && hvac === 'heat_cool') || (m === 'heat_cool' && hvac === 'auto');
+        const active = hvac === m;
         const style = active ? (isOff
           ? 'background:rgba(248,113,113,.2);border-color:#f87171;color:#f87171'
           : 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8') : '';
@@ -1195,7 +1195,7 @@ function _comfortHumHtml(hass, room) {
   const target = st?.attributes?.humidity ?? null;
   const minH = st?.attributes?.min_humidity ?? 20;
   const maxH = st?.attributes?.max_humidity ?? 80;
-  const step = Math.max(1, Math.round((maxH - minH) / 15));
+  const step = 1;
   const eid = room.humidifier.replace('.', '-');
   return `<div class="hdc-chum" id="hdc-chum-${eid}">
     <button class="hdc-tbtn hdc-chum-toggle" data-action="humidifier_toggle" data-entity="${room.humidifier}"
@@ -1895,14 +1895,14 @@ class HomeDashboardCard extends HTMLElement {
     if (!state) return;
 
     if (action === 'climate_up' || action === 'climate_down') {
-      const hasTemp = state.attributes.temperature != null;
-      const hasHigh = state.attributes.target_temp_high != null;
-      const hasLow  = state.attributes.target_temp_low != null;
+      const rawTemp = parseFloat(state.attributes.temperature);
+      const rawHigh = parseFloat(state.attributes.target_temp_high);
+      const rawLow  = parseFloat(state.attributes.target_temp_low);
+      const hasTemp = !isNaN(rawTemp);
+      const hasHigh = !isNaN(rawHigh);
+      const hasLow  = !isNaN(rawLow);
       if (!hasTemp && !hasHigh && !hasLow) return;
-      const current = hasTemp
-        ? parseFloat(state.attributes.temperature)
-        : hasHigh ? parseFloat(state.attributes.target_temp_high)
-        : parseFloat(state.attributes.target_temp_low);
+      const current = hasTemp ? rawTemp : hasHigh ? rawHigh : rawLow;
       const newTemp = Math.round((action === 'climate_up' ? current + step : current - step) * 10) / 10;
       const params = { entity_id: entity };
       if (hasTemp) { params.temperature = newTemp; }
