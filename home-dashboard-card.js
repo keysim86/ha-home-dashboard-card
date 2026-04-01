@@ -1889,7 +1889,7 @@ class HomeDashboardCard extends HTMLElement {
         if (code <= 86)  return '🌨️';
         return '⛈️';
       };
-      const tCol = t => t<=−10?'#a8d8ff':t<=0?'#38bdf8':t<=5?'#7dd3fc':t<=10?'#86efac':t<=15?'#bef264':t<=20?'#fde047':t<=25?'#fb923c':t<=30?'#f87171':'#e11d48';
+      const tCol = t => t<=-10?'#a8d8ff':t<=0?'#38bdf8':t<=5?'#7dd3fc':t<=10?'#86efac':t<=15?'#bef264':t<=20?'#fde047':t<=25?'#fb923c':t<=30?'#f87171':'#e11d48';
       const wCol = v => v<10?'#475569':v<20?'#94a3b8':v<30?'#bef264':v<40?'#fde047':v<50?'#fb923c':v<70?'#f87171':'#e11d48';
       const pCol = v => v===0?'#1e293b':v<0.5?'#7dd3fc':v<2?'#38bdf8':v<5?'#0ea5e9':v<10?'#2563eb':'#1d4ed8';
 
