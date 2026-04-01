@@ -624,9 +624,10 @@ function renderVaillant(hass, cfg) {
       ${(v.settings || []).map(s => {
         const st = hass.states[s.entity];
         const val = st ? parseFloat(st.state) : 0;
-        const step = st ? (parseFloat(st.attributes.step) || 1) : 1;
-        const min  = st ? (parseFloat(st.attributes.min)  ?? -999) : -999;
-        const max  = st ? (parseFloat(st.attributes.max)  ?? 9999) : 9999;
+        const _n = (v, fb) => { const n = parseFloat(v); return isNaN(n) ? fb : n; };
+        const step = _n(st?.attributes?.step, 1);
+        const min  = _n(st?.attributes?.min,  -999);
+        const max  = _n(st?.attributes?.max,  9999);
         const dec  = s.decimals !== undefined ? s.decimals : (step < 0.01 ? 3 : step < 0.1 ? 2 : step < 1 ? 1 : 0);
         const unit = s.unit !== undefined ? s.unit : (st?.attributes.unit_of_measurement || '');
         return `<div class="hdc-ir" style="padding:6px 0">
@@ -1911,8 +1912,10 @@ class HomeDashboardCard extends HTMLElement {
     }
     if (action === 'input_up' || action === 'input_down') {
       const current = parseFloat(state.state);
-      const min = parseFloat(btn.dataset.min ?? '-999');
-      const max = parseFloat(btn.dataset.max ?? '9999');
+      if (isNaN(current)) return;
+      const _n = (v, fb) => { const n = parseFloat(v); return isNaN(n) ? fb : n; };
+      const min = _n(btn.dataset.min, -999);
+      const max = _n(btn.dataset.max,  9999);
       const newVal = action === 'input_up' ? current + step : current - step;
       const clamped = Math.min(max, Math.max(min, Math.round(newVal * 1000) / 1000));
       const domain = entity.split('.')[0];
