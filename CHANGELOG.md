@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-04-01
+
+### Added
+- Zakładka **🌡️ Klimat**: pole `humidifier_switch` w `comfort.rooms[]` — przycisk toggle 💧 Wł./Wył. dla `switch.*`/`input_boolean.*` osuszacza, wyświetlany obok fan/light na dole karty pokoju
+
+### Changed
+- Zakładka **🏠 Home** · Pogoda: modal powiększony do pełnego ekranu; przycisk Pogoda jako osobny widget pod skrzynką pocztową (zamiast małego przycisku obok)
+
 ## [1.9.0] - 2026-04-01
 
 ### Added

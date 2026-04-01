@@ -23,7 +23,7 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 | 🖧 **Proxmox** | Node stats (CPU, RAM%, wolna RAM w GB, Disk), LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
 | 🔔 **Alerty** | Reguły definiowane w YAML, badge z licznikiem na zakładce |
 | 💡 **Przełączniki** | Grupy kafelków `switch`/`light`/`fan` z live statusem; klik przełącza stan; opcjonalny timer czasu włączenia per grupa (`show_timer: true`); opcjonalne grupowanie po pokojach (`room:` w YAML) |
-| 🌡️ **Klimat** | Karty pomieszczeń z sensorami (temp, wilgotność, ciśnienie, nasłonecznienie, CO₂, AQI, PM2.5, PM10, VOC); kolory wartości wg norm; sterowanie humidifier; sterowanie wentylatorem i światłem per pokój (`fan`, `light`); poziom baterii czujnika; kliknięcie w sensor → modal z liniowym wykresem historii (7/14/30/60/90 dni) |
+| 🌡️ **Klimat** | Karty pomieszczeń z sensorami (temp, wilgotność, ciśnienie, nasłonecznienie, CO₂, AQI, PM2.5, PM10, VOC); kolory wartości wg norm; sterowanie humidifier; przyciski toggle: wentylator (`fan`), światło (`light`), osuszacz (`humidifier_switch`); poziom baterii czujnika; kliknięcie w sensor → modal z liniowym wykresem historii (7/14/30/60/90 dni) |
 
 ## Instalacja przez HACS
 
