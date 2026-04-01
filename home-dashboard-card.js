@@ -352,19 +352,12 @@ function renderOsoby(hass, cfg) {
       const battSt = mbCfg.battery ? hass.states[mbCfg.battery] : null;
       const battVal = battSt ? Math.round(parseFloat(battSt.state)) : null;
       const battColor = battVal !== null ? (battVal > 50 ? '#4ade80' : battVal > 20 ? '#fbbf24' : '#f87171') : '#475569';
-      const windyUrl = cfg.weather && cfg.weather.windy_embed;
-      const weatherBtn = windyUrl
-        ? `<button class="hdc-tbtn" data-action="windy_open" style="font-size:11px;height:32px;padding:0 12px;width:auto;flex-shrink:0">🌤️ Pogoda</button>`
-        : '';
-      mailboxHtml = `<div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-        <div id="hdc-mailbox" class="hdc-mailbox${hasMail ? ' mail' : ''}" style="flex:1;margin-top:0">
-          <div class="hdc-mailbox-ico">${hasMail ? '📬' : '📭'}</div>
-          <div class="hdc-mailbox-info">
-            <div class="hdc-mailbox-status">${mbCfg.name || 'Skrzynka pocztowa'} — ${hasMail ? 'Jest poczta!' : 'Pusta'}</div>
-            ${battVal !== null ? `<div class="hdc-mailbox-batt" style="color:${battColor}">🔋 ${battVal}%</div>` : ''}
-          </div>
+      mailboxHtml = `<div id="hdc-mailbox" class="hdc-mailbox${hasMail ? ' mail' : ''}">
+        <div class="hdc-mailbox-ico">${hasMail ? '📬' : '📭'}</div>
+        <div class="hdc-mailbox-info">
+          <div class="hdc-mailbox-status">${mbCfg.name || 'Skrzynka pocztowa'} — ${hasMail ? 'Jest poczta!' : 'Pusta'}</div>
+          ${battVal !== null ? `<div class="hdc-mailbox-batt" style="color:${battColor}">🔋 ${battVal}%</div>` : ''}
         </div>
-        ${weatherBtn}
       </div>`;
     }
     gatesHtml = `<div class="hdc-st" style="margin-top:14px">Bramy i garaże</div>
@@ -407,9 +400,21 @@ function renderOsoby(hass, cfg) {
       <div style="display:flex;flex-direction:column;gap:6px">${rows || '<div style="color:#475569;font-size:11px;padding:8px">Brak danych</div>'}</div>`;
   }
 
+  const windyUrl = cfg.weather && cfg.weather.windy_embed;
+  const windyBtnHtml = windyUrl ? `
+    <button data-action="windy_open" style="display:flex;align-items:center;gap:10px;width:100%;background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.15);border-radius:11px;padding:10px 14px;cursor:pointer;margin-top:7px;text-align:left;transition:background .15s" onmouseover="this.style.background='rgba(56,189,248,.12)'" onmouseout="this.style.background='rgba(56,189,248,.06)'">
+      <span style="font-size:22px;flex-shrink:0">🌤️</span>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#7dd3fc">Pogoda</div>
+        <div style="font-size:10px;color:#475569;margin-top:1px">Kliknij aby zobaczyć mapę pogody</div>
+      </div>
+      <span style="margin-left:auto;font-size:14px;color:#475569">›</span>
+    </button>` : '';
+
   return `
     <div id="hdc-persons-list"><div class="hdc-ga">${cards}</div></div>
     ${gatesHtml}
+    ${windyBtnHtml}
     ${wasteRows}`;
 }
 
@@ -1789,14 +1794,14 @@ class HomeDashboardCard extends HTMLElement {
     if (existing) { existing.style.display = 'flex'; return; }
     const el = document.createElement('div');
     el.id = 'hdc-windy-overlay';
-    el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:stretch;justify-content:stretch;padding:10px;box-sizing:border-box';
     el.innerHTML = `
-      <div style="background:#0f172a;border:1px solid rgba(255,255,255,.1);border-radius:16px;width:100%;max-width:900px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0">
+      <div style="background:#0f172a;border:1px solid rgba(255,255,255,.1);border-radius:14px;width:100%;display:flex;flex-direction:column;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0">
           <div style="font-size:13px;font-weight:600;color:#f1f5f9">🌤️ Pogoda</div>
-          <button id="hdc-windy-close" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;padding:0 4px;line-height:1">✕</button>
+          <button id="hdc-windy-close" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#94a3b8;font-size:16px;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center">✕</button>
         </div>
-        <iframe src="${url}" style="display:block;width:100%;height:560px;border:none;flex:1" allowfullscreen loading="lazy"></iframe>
+        <iframe src="${url}" style="display:block;width:100%;flex:1;border:none;min-height:0" allowfullscreen loading="lazy"></iframe>
       </div>`;
     this.shadowRoot.appendChild(el);
     el.addEventListener('click', e => { if (e.target === el) this._closeWindyModal(); });
