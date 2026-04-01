@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-04-02
+
+### Added
+- Zakładka **🏠 Home** · Pogoda: prognoza 16-dniowa ECMWF z Open-Meteo — scrollowalna tabela godzinowa (godzina, ikona pogody, temperatura, opady, wiatr, porywy, kierunek wiatru) ze sticky nagłówkami dni i kolorowaniem komórek; konfiguracja przez `weather.lat`/`weather.lon`; gdy skonfigurowane też `weather.windy_embed` — modal ma dwie zakładki 📅 Prognoza / 🗺️ Mapa Windy
+
 ## [1.9.1] - 2026-04-01
 
 ### Added
