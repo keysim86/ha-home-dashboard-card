@@ -391,8 +391,9 @@ comfort:
       humidity: sensor.czujnik_suszarnia_humidity
       battery: sensor.czujnik_suszarnia_battery
     # Wszystkie pola oprócz name są opcjonalne — nieużywane nie pojawią się na karcie
-    # Dostępne pola: temperature, humidity, pressure, illuminance, co2, aqi, pm25, pm10, voc, battery, humidifier, fan, light
-    # fan i light dodają przyciski toggle na dole karty pokoju
+    # Dostępne pola: temperature, humidity, pressure, illuminance, co2, aqi, pm25, pm10, voc, battery, humidifier, fan, light, humidifier_switch
+    # fan, light, humidifier_switch dodają przyciski toggle na dole karty pokoju
+    # humidifier_switch: switch.* lub input_boolean.* do włączania/wyłączania osuszacza (w odróżnieniu od humidifier: encja humidifier.* z regulacją wilgotności)
 
 alerts:
   - entity: sensor.pixel_8_battery_level

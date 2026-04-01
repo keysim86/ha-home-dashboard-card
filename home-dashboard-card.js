@@ -1238,14 +1238,17 @@ function _comfortBattHtml(hass, room) {
 }
 
 function _comfortControlsHtml(hass, room) {
-  if (!room.fan && !room.light) return '';
-  const fanOn   = room.fan   ? hass.states[room.fan]?.state   === 'on' : false;
-  const lightOn = room.light ? hass.states[room.light]?.state === 'on' : false;
-  const fanId   = room.fan   ? room.fan.replace('.', '-')   : '';
-  const lightId = room.light ? room.light.replace('.', '-') : '';
+  if (!room.fan && !room.light && !room.humidifier_switch) return '';
+  const fanOn   = room.fan              ? hass.states[room.fan]?.state              === 'on' : false;
+  const lightOn = room.light            ? hass.states[room.light]?.state            === 'on' : false;
+  const humSwOn = room.humidifier_switch? hass.states[room.humidifier_switch]?.state === 'on' : false;
+  const fanId   = room.fan              ? room.fan.replace('.', '-')              : '';
+  const lightId = room.light            ? room.light.replace('.', '-')            : '';
+  const humSwId = room.humidifier_switch? room.humidifier_switch.replace('.', '-'): '';
   return `<div style="display:flex;gap:6px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.06);flex-wrap:wrap">
-    ${room.fan ? `<button id="hdc-ctrl-fan-${fanId}" class="hdc-tbtn" style="font-size:10px;height:26px;padding:0 10px;width:auto;${fanOn?'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8':''}" data-action="toggle" data-entity="${room.fan}">💨 ${fanOn?'Wł.':'Wył.'}</button>` : ''}
-    ${room.light ? `<button id="hdc-ctrl-light-${lightId}" class="hdc-tbtn" style="font-size:10px;height:26px;padding:0 10px;width:auto;${lightOn?'background:rgba(251,191,36,.15);border-color:#fbbf24;color:#fbbf24':''}" data-action="toggle" data-entity="${room.light}">💡 ${lightOn?'Wł.':'Wył.'}</button>` : ''}
+    ${room.fan              ? `<button id="hdc-ctrl-fan-${fanId}"    class="hdc-tbtn" style="font-size:10px;height:26px;padding:0 10px;width:auto;${fanOn  ?'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8':''}"   data-action="toggle" data-entity="${room.fan}">💨 ${fanOn  ?'Wł.':'Wył.'}</button>` : ''}
+    ${room.light            ? `<button id="hdc-ctrl-light-${lightId}" class="hdc-tbtn" style="font-size:10px;height:26px;padding:0 10px;width:auto;${lightOn?'background:rgba(251,191,36,.15);border-color:#fbbf24;color:#fbbf24':''}" data-action="toggle" data-entity="${room.light}">💡 ${lightOn?'Wł.':'Wył.'}</button>` : ''}
+    ${room.humidifier_switch? `<button id="hdc-ctrl-humidsw-${humSwId}" class="hdc-tbtn" style="font-size:10px;height:26px;padding:0 10px;width:auto;${humSwOn?'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8':''}" data-action="toggle" data-entity="${room.humidifier_switch}">💧 ${humSwOn?'Wł.':'Wył.'}</button>` : ''}
   </div>`;
 }
 
@@ -2166,6 +2169,14 @@ class HomeDashboardCard extends HTMLElement {
         if (btn) {
           btn.textContent = `💡 ${lightOn ? 'Wł.' : 'Wył.'}`;
           btn.style.cssText = `font-size:10px;height:26px;padding:0 10px;width:auto;${lightOn ? 'background:rgba(251,191,36,.15);border-color:#fbbf24;color:#fbbf24' : ''}`;
+        }
+      }
+      if (room.humidifier_switch) {
+        const humSwOn = hass.states[room.humidifier_switch]?.state === 'on';
+        const btn = this.shadowRoot.getElementById(`hdc-ctrl-humidsw-${room.humidifier_switch.replace('.', '-')}`);
+        if (btn) {
+          btn.textContent = `💧 ${humSwOn ? 'Wł.' : 'Wył.'}`;
+          btn.style.cssText = `font-size:10px;height:26px;padding:0 10px;width:auto;${humSwOn ? 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8' : ''}`;
         }
       }
     });
