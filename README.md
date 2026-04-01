@@ -13,7 +13,7 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 
 | Zakładka | Zawartość |
 |----------|-----------|
-| 🏠 **Home** | Lokalizacja, bateria, kroki; kliknięcie w kafelek osoby → modal z mapą `ha-map` GPS; bramy/garaże z kontrolą, wskaźnikiem światła i live timerem czasu otwarcia; widget skrzynki pocztowej z poziomem baterii; harmonogram odpadów komunalnych z badge |
+| 🏠 **Home** | Lokalizacja, bateria, kroki; kliknięcie w kafelek osoby → modal z mapą `ha-map` GPS; bramy/garaże z kontrolą, wskaźnikiem światła i live timerem czasu otwarcia; widget skrzynki pocztowej z poziomem baterii; przycisk 🌤️ Pogoda → modal z mapą Windy.com; harmonogram odpadów komunalnych z badge |
 | ⚡ **Energia** | Moc całkowita live, napięcia L1/L2/L3, taryfy G13s (dziennie/miesięcznie), top odbiorniki; kliknięcie w kafelek → modal z wykresem historii |
 | 🔥 **Vaillant** | Termostaty CO + CWU ze sterowaniem (tryby, presety), wykresy temperatur 24h, wykresy zużycia gazu 30-dniowe i 12-miesięczne, ustawienia `input_number`; kliknięcie w temperaturę CO/CWU → modal z wykresem historii |
 | 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), myORLEN gaz, licznik wody, EcoWater, zmywarka Haier hOn; kliknięcie w kafelek → modal z wykresem historii |

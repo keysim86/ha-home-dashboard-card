@@ -2,8 +2,17 @@
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-04-01
+
 ### Added
-- Zakładka **🏠 Home**: sekcja Pogoda — embed Windy.com (mapa wiatru/opadów/temp); konfiguracja przez `weather.windy_embed` w YAML
+- Zakładka **🏠 Home**: przycisk 🌤️ Pogoda przy skrzynce pocztowej — otwiera modal z mapą Windy.com (embed); konfiguracja przez `weather.windy_embed` w YAML
+
+### Fixed
+- Zakładka **🔥 Vaillant** · tryby HVAC: dwa przyciski były jednocześnie aktywne gdy encja zgłasza `auto` i `heat_cool` — usunięto błędny cross-match; etykiety: `heat_cool` = "Grzanie", `auto` = "Auto"
+- Zakładka **🔥 Vaillant** · termostat CO: przyciski +/− nie działały gdy atrybut `temperature` encji był `null`/`unavailable` — `parseFloat(null)` dawało `NaN`; teraz sprawdzane przez `!isNaN()`
+- Zakładka **🔥 Vaillant** · sekcja Ustawienia: przyciski +/− wysyłały `value: NaN` gdy encja nie ma atrybutów `min`/`max` — `parseFloat(undefined) ?? fallback` nie łapało NaN; naprawiono przez explicit `isNaN` check
+- Zakładka **🌡️ Klimat** · osuszacz: krok +/− wynosił 3–4 zamiast 1 (błędny wzór `(max-min)/15`); zmieniono na stały krok `1`
+- Modal historii: wykres był pusty dla sensorów z `minimal_response=true` (HA zwraca `last_updated` zamiast `last_changed` dla kolejnych punktów) — dodano fallback `p.last_changed || p.last_updated`
 
 ## [1.8.0] - 2026-03-31
 
