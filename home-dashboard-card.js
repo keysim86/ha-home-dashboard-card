@@ -2212,8 +2212,8 @@ class HomeDashboardCard extends HTMLElement {
         `history/period/${start.toISOString()}?filter_entity_id=${entity}&end_time=${end.toISOString()}&minimal_response=true&no_attributes=true`);
       if (raw && raw[0]) {
         points = raw[0]
-          .map(p => ({ x: new Date(p.last_changed), y: parseFloat(p.state) }))
-          .filter(p => !isNaN(p.y));
+          .map(p => ({ x: new Date(p.last_changed || p.last_updated), y: parseFloat(p.state) }))
+          .filter(p => !isNaN(p.y) && p.x instanceof Date && !isNaN(p.x));
       }
     } catch(e) { console.warn('[hdc] history fetch error', e); }
 
