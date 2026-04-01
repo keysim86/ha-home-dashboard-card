@@ -1791,24 +1791,161 @@ class HomeDashboardCard extends HTMLElement {
   }
 
   _showWindyModal() {
-    const url = this._config.weather && this._config.weather.windy_embed;
-    if (!url) return;
+    const cfg = this._config.weather || {};
+    const windyUrl = cfg.windy_embed;
+    const hasCoords = cfg.lat && cfg.lon;
+    if (!windyUrl && !hasCoords) return;
+
     const existing = this.shadowRoot.getElementById('hdc-windy-overlay');
     if (existing) { existing.style.display = 'flex'; return; }
+
+    const hasBoth = windyUrl && hasCoords;
+    const tabsHtml = hasBoth ? `
+      <div id="hdc-wx-tabs" style="display:flex;gap:4px;padding:8px 14px 0;flex-shrink:0">
+        <button class="hdc-wx-tab active" data-tab="forecast" style="background:rgba(56,189,248,.15);border:1px solid #38bdf8;border-radius:7px;color:#38bdf8;cursor:pointer;font-size:11px;padding:4px 12px">📅 Prognoza</button>
+        <button class="hdc-wx-tab" data-tab="map" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:#94a3b8;cursor:pointer;font-size:11px;padding:4px 12px">🗺️ Mapa Windy</button>
+      </div>` : '';
+
     const el = document.createElement('div');
     el.id = 'hdc-windy-overlay';
     el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:stretch;justify-content:stretch;padding:10px;box-sizing:border-box';
     el.innerHTML = `
-      <div style="background:#0f172a;border:1px solid rgba(255,255,255,.1);border-radius:14px;width:100%;display:flex;flex-direction:column;overflow:hidden">
+      <div style="background:#0a1120;border:1px solid rgba(255,255,255,.1);border-radius:14px;width:100%;display:flex;flex-direction:column;overflow:hidden">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0">
           <div style="font-size:13px;font-weight:600;color:#f1f5f9">🌤️ Pogoda</div>
           <button id="hdc-windy-close" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#94a3b8;font-size:16px;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center">✕</button>
         </div>
-        <iframe src="${url}" style="display:block;width:100%;flex:1;border:none;min-height:0" allowfullscreen loading="lazy"></iframe>
+        ${tabsHtml}
+        <div id="hdc-wx-forecast" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0"></div>
+        ${windyUrl ? `<iframe id="hdc-wx-map" src="${windyUrl}" style="display:${hasBoth?'none':'block'};width:100%;flex:1;border:none;min-height:0" allowfullscreen loading="${hasBoth?'lazy':'eager'}"></iframe>` : ''}
       </div>`;
     this.shadowRoot.appendChild(el);
     el.addEventListener('click', e => { if (e.target === el) this._closeWindyModal(); });
     this.shadowRoot.getElementById('hdc-windy-close').addEventListener('click', () => this._closeWindyModal());
+
+    if (hasBoth) {
+      el.querySelectorAll('.hdc-wx-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          el.querySelectorAll('.hdc-wx-tab').forEach(b => {
+            b.style.cssText = 'background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:#94a3b8;cursor:pointer;font-size:11px;padding:4px 12px';
+          });
+          btn.style.cssText = 'background:rgba(56,189,248,.15);border:1px solid #38bdf8;border-radius:7px;color:#38bdf8;cursor:pointer;font-size:11px;padding:4px 12px';
+          const forecast = el.querySelector('#hdc-wx-forecast');
+          const map = el.querySelector('#hdc-wx-map');
+          if (btn.dataset.tab === 'forecast') {
+            if (forecast) forecast.style.display = 'flex';
+            if (map) map.style.display = 'none';
+          } else {
+            if (forecast) forecast.style.display = 'none';
+            if (map) { map.style.display = 'block'; map.loading = 'eager'; }
+          }
+        });
+      });
+    }
+
+    if (hasCoords) {
+      const forecastEl = el.querySelector('#hdc-wx-forecast');
+      if (forecastEl) this._loadWeatherWidget(forecastEl, cfg.lat, cfg.lon);
+    } else {
+      const forecastEl = el.querySelector('#hdc-wx-forecast');
+      if (forecastEl) forecastEl.style.display = 'none';
+    }
+  }
+
+  async _loadWeatherWidget(container, lat, lon) {
+    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:160px;color:#475569;font-size:12px">⏳ Pobieranie prognozy ECMWF…</div>';
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,weathercode,windspeed_10m,windgusts_10m,winddirection_10m&models=ecmwf_ifs025&forecast_days=16&timezone=auto`;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const h = data.hourly;
+
+      const idx = h.time.map((t, i) => i).filter(i => parseInt(h.time[i].substring(11,13)) % 3 === 0);
+      const dayMap = new Map();
+      idx.forEach(i => {
+        const d = h.time[i].substring(0,10);
+        if (!dayMap.has(d)) dayMap.set(d, []);
+        dayMap.get(d).push(i);
+      });
+      const days = Array.from(dayMap.entries());
+
+      const PL_DAY = ['Nie','Pon','Wt','Śr','Czw','Pt','Sob'];
+      const PL_MON = ['sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','lis','gru'];
+      const fmtDay  = s => { const d = new Date(s+'T12:00:00'); return `${PL_DAY[d.getDay()]} ${d.getDate()} ${PL_MON[d.getMonth()]}`; };
+
+      const wmoIcon = (code, hr) => {
+        const day = hr >= 6 && hr < 21;
+        if (code === 0)  return day ? '☀️' : '🌙';
+        if (code <= 1)   return day ? '🌤️' : '🌤️';
+        if (code <= 2)   return '⛅';
+        if (code === 3)  return '☁️';
+        if (code <= 48)  return '🌫️';
+        if (code <= 55)  return '🌦️';
+        if (code <= 65)  return '🌧️';
+        if (code <= 67)  return '🌨️';
+        if (code <= 75)  return '❄️';
+        if (code <= 82)  return '🌧️';
+        if (code <= 86)  return '🌨️';
+        return '⛈️';
+      };
+      const tCol = t => t<=−10?'#a8d8ff':t<=0?'#38bdf8':t<=5?'#7dd3fc':t<=10?'#86efac':t<=15?'#bef264':t<=20?'#fde047':t<=25?'#fb923c':t<=30?'#f87171':'#e11d48';
+      const wCol = v => v<10?'#475569':v<20?'#94a3b8':v<30?'#bef264':v<40?'#fde047':v<50?'#fb923c':v<70?'#f87171':'#e11d48';
+      const pCol = v => v===0?'#1e293b':v<0.5?'#7dd3fc':v<2?'#38bdf8':v<5?'#0ea5e9':v<10?'#2563eb':'#1d4ed8';
+
+      const CELL = 46; const LBL = 112;
+
+      const cell = (content, bg, extra='') =>
+        `<td style="text-align:center;padding:3px 2px;border-right:1px solid rgba(255,255,255,.04);min-width:${CELL}px;background:${bg};${extra}">${content}</td>`;
+
+      const lbl = (ico, txt, unit, bg) =>
+        `<td style="position:sticky;left:0;background:${bg};font-size:10px;color:#64748b;padding:4px 10px;white-space:nowrap;border-right:1px solid rgba(255,255,255,.1);z-index:1;min-width:${LBL}px">${ico} ${txt}${unit?`<span style='color:#334155;margin-left:3px;font-size:9px'>${unit}</span>`:''}</td>`;
+
+      const allIdx = days.flatMap(([,a]) => a);
+
+      const dayHdrs = days.map(([day, a]) =>
+        `<th colspan="${a.length}" style="position:sticky;top:0;z-index:2;background:#0d1829;font-size:11px;font-weight:700;color:#e2e8f0;padding:6px 4px;text-align:center;border-bottom:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.06);white-space:nowrap">${fmtDay(day)}</th>`
+      ).join('');
+
+      const R = [
+        { ico:'🕐', lbl:'Godzina', unit:'',    bg1:'#060d1a', bg2:'#080f1e',
+          fn: i => `<span style="font-size:10px;color:#475569">${h.time[i].substring(11,16)}</span>` },
+        { ico:'',   lbl:'Pogoda',  unit:'',    bg1:'#080f1e', bg2:'#060d1a',
+          fn: i => `<span style="font-size:15px">${wmoIcon(h.weathercode[i], parseInt(h.time[i].substring(11,13)))}</span>` },
+        { ico:'🌡️', lbl:'Temperatura', unit:'°C', bg1:'#060d1a', bg2:'#080f1e',
+          fn: i => `<span style="font-size:11px;font-weight:700;color:${tCol(h.temperature_2m[i])}">${Math.round(h.temperature_2m[i])}°</span>` },
+        { ico:'💧', lbl:'Deszcz',  unit:'mm',  bg1:'#080f1e', bg2:'#060d1a',
+          fn: i => { const p=h.precipitation[i]??0; return `<span style="font-size:10px;font-weight:600;color:${pCol(p)}">${p===0?'':p<0.1?'<0.1':p.toFixed(1)}</span>`; } },
+        { ico:'💨', lbl:'Wiatr',   unit:'km/h',bg1:'#060d1a', bg2:'#080f1e',
+          fn: i => `<span style="font-size:11px;font-weight:600;color:${wCol(h.windspeed_10m[i])}">${Math.round(h.windspeed_10m[i])}</span>` },
+        { ico:'💨', lbl:'Porywy',  unit:'km/h',bg1:'#080f1e', bg2:'#060d1a',
+          fn: i => `<span style="font-size:11px;font-weight:600;color:${wCol(h.windgusts_10m[i])}">${Math.round(h.windgusts_10m[i])}</span>` },
+        { ico:'🧭', lbl:'Kier. wiatru', unit:'',bg1:'#060d1a', bg2:'#080f1e',
+          fn: i => `<div style="display:inline-block;transform:rotate(${h.winddirection_10m[i]}deg);font-size:13px;color:#475569;line-height:1">↓</div>` },
+      ];
+
+      const rows = R.map((r, ri) => {
+        const bg = ri % 2 === 0 ? r.bg1 : r.bg2;
+        return `<tr>${lbl(r.ico, r.lbl, r.unit, bg)}${allIdx.map(i => cell(r.fn(i), bg)).join('')}</tr>`;
+      }).join('');
+
+      container.style.cssText = 'flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0';
+      container.innerHTML = `
+        <div style="overflow:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch">
+          <table style="border-collapse:collapse;width:max-content">
+            <thead>
+              <tr>
+                <th style="position:sticky;left:0;top:0;z-index:3;background:#0d1829;min-width:${LBL}px;border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.08)"></th>
+                ${dayHdrs}
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+        <div style="font-size:9px;color:#1e293b;padding:3px 10px;flex-shrink:0;text-align:right;background:#060d1a">Dane: Open-Meteo · ECMWF IFS 0.25° · 16 dni</div>`;
+    } catch(e) {
+      container.innerHTML = `<div style="color:#f87171;padding:20px;font-size:12px">Błąd: ${e.message}</div>`;
+    }
   }
 
   _closeWindyModal() {

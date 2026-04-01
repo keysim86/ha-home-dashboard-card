@@ -295,8 +295,12 @@ mailbox:
   name: Skrzynka pocztowa                    # opcjonalne
 
 weather:
+  lat: 50.038                          # szerokość geograficzna
+  lon: 19.552                          # długość geograficzna
   windy_embed: "https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=11&overlay=wind&product=ecmwf&level=surface&lat=49.998&lon=19.549&detailLat=50.038&detailLon=19.552&detail=true"
-  # URL z embed.windy.com — wygeneruj na stronie windy.com → Share → Embed
+  # lat/lon: prognoza 16-dniowa ECMWF (Open-Meteo) z tabelą godzinową
+  # windy_embed: mapa animowana Windy.com (opcjonalna)
+  # Jeśli skonfigurowane oba — modal ma dwie zakładki: Prognoza + Mapa Windy
 
 switches:
   groups:
