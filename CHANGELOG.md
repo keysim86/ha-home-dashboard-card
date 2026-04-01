@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- Zakładka **🏠 Home**: sekcja Pogoda — embed Windy.com (mapa wiatru/opadów/temp); konfiguracja przez `weather.windy_embed` w YAML
+
 ## [1.8.0] - 2026-03-31
 
 ### Added

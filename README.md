@@ -294,6 +294,10 @@ mailbox:
   battery: sensor.supla_skrzynka_poziom_baterii_w_skrzynce_pocztowej  # opcjonalne, w %
   name: Skrzynka pocztowa                    # opcjonalne
 
+weather:
+  windy_embed: "https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=11&overlay=wind&product=ecmwf&level=surface&lat=49.998&lon=19.549&detailLat=50.038&detailLon=19.552&detail=true"
+  # URL z embed.windy.com — wygeneruj na stronie windy.com → Share → Embed
+
 switches:
   groups:
     # Grupowanie po typie (domyślne — brak pola room)

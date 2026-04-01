@@ -400,9 +400,17 @@ function renderOsoby(hass, cfg) {
       <div style="display:flex;flex-direction:column;gap:6px">${rows || '<div style="color:#475569;font-size:11px;padding:8px">Brak danych</div>'}</div>`;
   }
 
+  const windyUrl = cfg.weather && cfg.weather.windy_embed;
+  const windyHtml = windyUrl ? `
+    <div class="hdc-st" style="margin-top:14px">Pogoda</div>
+    <div style="border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.07);margin-bottom:4px">
+      <iframe src="${windyUrl}" style="display:block;width:100%;height:450px;border:none" loading="lazy" allowfullscreen></iframe>
+    </div>` : '';
+
   return `
     <div id="hdc-persons-list"><div class="hdc-ga">${cards}</div></div>
     ${gatesHtml}
+    ${windyHtml}
     ${wasteRows}`;
 }
 
