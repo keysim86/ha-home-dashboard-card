@@ -1526,7 +1526,7 @@ class HomeDashboardCard extends HTMLElement {
     const elCWU  = sn(hass, v.el_cwu, 2);
     const PM_LABEL   = { schedule:'Harmonogram', manual:'Ręczny', eco:'Eco', away:'Poza domem',
       boost:'Turbo', sleep:'Sen', home:'Dom', comfort:'Komfort', off:'Wyłączony', none:'—' };
-    const HVAC_LABEL = { heat:'Grzanie', auto:'Auto', heat_cool:'Auto', cool:'Chłodzenie',
+    const HVAC_LABEL = { heat:'Grzanie', auto:'Auto', heat_cool:'Grzanie', cool:'Chłodzenie',
       fan_only:'Wentylator', dry:'Osuszanie', off:'Wył.' };
     const hvacLabel = m => HVAC_LABEL[m] || m;
     const pmLabel   = p => PM_LABEL[p]   || p;
@@ -2089,6 +2089,26 @@ class HomeDashboardCard extends HTMLElement {
       if (!hasTemp && !hasHigh && !hasLow) return;
       const current = hasTemp ? rawTemp : hasHigh ? rawHigh : rawLow;
       const newTemp = Math.round((action === 'climate_up' ? current + step : current - step) * 10) / 10;
+
+      // Vaillant CO — sterowanie przez MQTT zamiast climate.set_temperature
+      const vCfg = this._config.vaillant || {};
+      if (entity === vCfg.climate_co && vCfg.sf_mode_topic) {
+        const minT = parseFloat(state.attributes.min_temp) || 7;
+        const maxT = parseFloat(state.attributes.max_temp) || 35;
+        const t = String(Math.min(maxT, Math.max(minT, newTemp)));
+        const hvacMode = state.state;
+        if (hvacMode === 'heat_cool') {
+          // Grzanie — tylko Z1ActualRoomTempDesired
+          this._hass.callService('mqtt', 'publish', { topic: vCfg.actual_temp_topic + '/set', payload: t });
+        } else {
+          // Auto — Quick Veto
+          this._hass.callService('mqtt', 'publish', { topic: vCfg.sf_mode_topic + '/set', payload: 'veto' });
+          this._hass.callService('mqtt', 'publish', { topic: vCfg.veto_temp_topic + '/set', payload: t });
+          this._hass.callService('mqtt', 'publish', { topic: vCfg.actual_temp_topic + '/set', payload: t });
+        }
+        return;
+      }
+
       const params = { entity_id: entity };
       if (hasTemp) { params.temperature = newTemp; }
       else { params.target_temp_high = newTemp; params.target_temp_low = newTemp; }
@@ -2118,7 +2138,13 @@ class HomeDashboardCard extends HTMLElement {
       this._hass.callService('climate', 'set_preset_mode', { entity_id: entity, preset_mode: btn.dataset.preset });
     }
     if (action === 'set_hvac_mode') {
-      this._hass.callService('climate', 'set_hvac_mode', { entity_id: entity, hvac_mode: btn.dataset.mode });
+      const mode = btn.dataset.mode;
+      this._hass.callService('climate', 'set_hvac_mode', { entity_id: entity, hvac_mode: mode });
+      // Vaillant CO — przy zmianie trybu resetuj Z1SFMode na auto
+      const vCfg2 = this._config.vaillant || {};
+      if (entity === vCfg2.climate_co && vCfg2.sf_mode_topic && mode !== 'off') {
+        this._hass.callService('mqtt', 'publish', { topic: vCfg2.sf_mode_topic + '/set', payload: 'auto' });
+      }
     }
     if (action === 'lock_toggle') {
       const lockState = this._hass.states[entity];
