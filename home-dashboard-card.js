@@ -1815,11 +1815,22 @@ class HomeDashboardCard extends HTMLElement {
     const existing = this.shadowRoot.getElementById('hdc-windy-overlay');
     if (existing) { existing.style.display = 'flex'; return; }
 
-    const hasBoth = windyUrl && hasCoords;
-    const tabsHtml = hasBoth ? `
-      <div id="hdc-wx-tabs" style="display:flex;gap:4px;padding:8px 14px 0;flex-shrink:0">
-        <button class="hdc-wx-tab active" data-tab="forecast" style="background:rgba(56,189,248,.15);border:1px solid #38bdf8;border-radius:7px;color:#38bdf8;cursor:pointer;font-size:11px;padding:4px 12px">📅 Prognoza</button>
-        <button class="hdc-wx-tab" data-tab="map" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:#94a3b8;cursor:pointer;font-size:11px;padding:4px 12px">🗺️ Mapa Windy</button>
+    // Budujemy listę zakładek dynamicznie
+    const tabs = [];
+    if (hasCoords)  tabs.push({ id: 'forecast', label: '📅 Prognoza' });
+    if (hasCoords)  tabs.push({ id: 'radar',    label: '🌧️ Radar' });
+    if (windyUrl)   tabs.push({ id: 'map',      label: '🗺️ Mapa Windy' });
+    const firstTab = tabs[0].id;
+    const multiTab = tabs.length > 1;
+
+    const rvUrl = hasCoords
+      ? `https://www.rainviewer.com/map.html?loc=${cfg.lat},${cfg.lon},8&oFa=0&oC=1&oU=0&oCS=1&oF=0&oAP=1&rmt=4&c=1&o=83&lm=0&layer=radar&sm=1&sn=1`
+      : '';
+
+    const tabsHtml = multiTab ? `
+      <div id="hdc-wx-tabs" style="display:flex;gap:4px;padding:8px 14px 0;flex-shrink:0;flex-wrap:wrap">
+        ${tabs.map((t, i) => `<button class="hdc-wx-tab${i===0?' active':''}" data-tab="${t.id}"
+          style="${i===0?'background:rgba(56,189,248,.15);border:1px solid #38bdf8;color:#38bdf8':'background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#94a3b8'};border-radius:7px;cursor:pointer;font-size:11px;padding:4px 12px">${t.label}</button>`).join('')}
       </div>` : '';
 
     const el = document.createElement('div');
@@ -1832,14 +1843,15 @@ class HomeDashboardCard extends HTMLElement {
           <button id="hdc-windy-close" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#94a3b8;font-size:16px;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center">✕</button>
         </div>
         ${tabsHtml}
-        <div id="hdc-wx-forecast" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0"></div>
-        ${windyUrl ? `<iframe id="hdc-wx-map" src="${windyUrl}" style="display:${hasBoth?'none':'block'};width:100%;flex:1;border:none;min-height:0" allowfullscreen loading="${hasBoth?'lazy':'eager'}"></iframe>` : ''}
+        <div id="hdc-wx-forecast" style="flex:1;display:${firstTab==='forecast'?'flex':'none'};flex-direction:column;overflow:hidden;min-height:0"></div>
+        ${rvUrl    ? `<iframe id="hdc-wx-radar" src="${rvUrl}"   style="display:${firstTab==='radar'?'block':'none'};width:100%;flex:1;border:none;min-height:0" allowfullscreen loading="lazy"></iframe>` : ''}
+        ${windyUrl ? `<iframe id="hdc-wx-map"   src="${windyUrl}" style="display:${firstTab==='map'  ?'block':'none'};width:100%;flex:1;border:none;min-height:0" allowfullscreen loading="lazy"></iframe>` : ''}
       </div>`;
     this.shadowRoot.appendChild(el);
     el.addEventListener('click', e => { if (e.target === el) this._closeWindyModal(); });
     this.shadowRoot.getElementById('hdc-windy-close').addEventListener('click', () => this._closeWindyModal());
 
-    if (hasBoth) {
+    if (multiTab) {
       el.querySelectorAll('.hdc-wx-tab').forEach(btn => {
         btn.addEventListener('click', () => {
           el.querySelectorAll('.hdc-wx-tab').forEach(b => {
@@ -1847,14 +1859,12 @@ class HomeDashboardCard extends HTMLElement {
           });
           btn.style.cssText = 'background:rgba(56,189,248,.15);border:1px solid #38bdf8;border-radius:7px;color:#38bdf8;cursor:pointer;font-size:11px;padding:4px 12px';
           const forecast = el.querySelector('#hdc-wx-forecast');
-          const map = el.querySelector('#hdc-wx-map');
-          if (btn.dataset.tab === 'forecast') {
-            if (forecast) forecast.style.display = 'flex';
-            if (map) map.style.display = 'none';
-          } else {
-            if (forecast) forecast.style.display = 'none';
-            if (map) { map.style.display = 'block'; map.loading = 'eager'; }
-          }
+          const radar    = el.querySelector('#hdc-wx-radar');
+          const map      = el.querySelector('#hdc-wx-map');
+          const tab = btn.dataset.tab;
+          if (forecast) forecast.style.display = tab === 'forecast' ? 'flex'   : 'none';
+          if (radar)    { radar.style.display   = tab === 'radar'    ? 'block'  : 'none'; if (tab==='radar') radar.loading='eager'; }
+          if (map)      { map.style.display     = tab === 'map'      ? 'block'  : 'none'; if (tab==='map')   map.loading='eager'; }
         });
       });
     }
@@ -1862,9 +1872,6 @@ class HomeDashboardCard extends HTMLElement {
     if (hasCoords) {
       const forecastEl = el.querySelector('#hdc-wx-forecast');
       if (forecastEl) this._loadWeatherWidget(forecastEl, cfg.lat, cfg.lon);
-    } else {
-      const forecastEl = el.querySelector('#hdc-wx-forecast');
-      if (forecastEl) forecastEl.style.display = 'none';
     }
   }
 
