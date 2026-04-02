@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-04-02
+
+### Added
+- Zakładka **🔥 Vaillant** · termostat CO: sterowanie Quick Veto przez MQTT (ebusd) — nowe pola `sf_mode_topic`, `veto_temp_topic`, `actual_temp_topic` w konfiguracji; +/− w trybie `auto` ustawia veto (`Z1SFMode=veto`, `Z1QuickVetoTemp`, `Z1ActualRoomTempDesired`); +/− w trybie `heat_cool` (Grzanie) ustawia tylko `Z1ActualRoomTempDesired`; zmiana trybu HVAC resetuje `Z1SFMode=auto`
+
 ## [1.10.1] - 2026-04-02
 
 ### Fixed

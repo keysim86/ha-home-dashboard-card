@@ -110,6 +110,10 @@ vaillant:
   climate_cwu: climate.ciepla_woda
   # Opcjonalne: input_number jako alternatywa gdy encja climate nie obsługuje set_temperature
   co_temp_input: input_number.temperatura_co
+  # Quick Veto przez MQTT (ebusd) — gdy skonfigurowane, +/− w trybie auto ustawia veto
+  sf_mode_topic: "ebusd/ctlv2/Z1SFMode"           # topic Z1SFMode (wartości: auto / veto)
+  veto_temp_topic: "ebusd/ctlv2/Z1QuickVetoTemp"  # topic Z1QuickVetoTemp
+  actual_temp_topic: "ebusd/ctlv2/Z1ActualRoomTempDesired"  # topic Z1ActualRoomTempDesired
   temp_supply: sensor.ogrzewanie_temperatura_zasilania
   temp_return: sensor.ogrzewanie_temperatura_powrotu
   temp_target_supply: sensor.ogrzewanie_docelowa_temperatura_zasilania
