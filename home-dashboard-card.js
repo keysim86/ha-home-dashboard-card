@@ -180,7 +180,7 @@ const STYLES = `
 .hdc-cbatt{display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.06);font-size:10px;color:#475569}
 .hdc-cbatt-bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
 .hdc-cbatt-fill{height:100%;border-radius:3px;transition:width .3s}
-.hdc-cupdated{font-size:9px;color:#334155;font-variant-numeric:tabular-nums;position:absolute;bottom:8px;right:10px}.hdc-cs:hover{background:rgba(255,255,255,.06)}
+.hdc-cupdated{font-size:9px;color:#334155;font-variant-numeric:tabular-nums;text-align:right;margin-top:6px}.hdc-cs:hover{background:rgba(255,255,255,.06)}
 .hdc-hm-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center}
 .hdc-hm-box{background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px;width:660px;max-width:95vw}
 .hdc-hm-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
