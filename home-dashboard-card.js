@@ -546,6 +546,13 @@ function renderVaillant(hass, cfg) {
   const modeStatus = (hvac, pmCur) => hvac === 'off' ? 'Wyłączone'
     : `${hvacLabel(hvac)}${pmCur && pmCur !== 'none' ? ' · ' + pmLabel(pmCur) : ''}`;
 
+  const sfMode    = v.sf_mode_entity ? sv(hass, v.sf_mode_entity, 'auto') : 'auto';
+  const isVeto    = sfMode === 'veto';
+  const vetoDate  = v.veto_end_date ? sv(hass, v.veto_end_date, '') : '';
+  const vetoTime  = v.veto_end_time ? sv(hass, v.veto_end_time, '').substring(0, 5) : '';
+  const vetoUntil = (vetoDate || vetoTime) ? `do ${vetoDate}${vetoDate && vetoTime ? ' ' : ''}${vetoTime}` : '';
+  const coModeText = isVeto ? `🔒 Veto${vetoUntil ? ' ' + vetoUntil : ''}` : null;
+
   const coPmCur   = sa(hass, v.climate_co,  'preset_mode')  || '';
   const coPmList  = (sa(hass, v.climate_co,  'preset_modes') || []).filter(p => p !== 'none');
   const coHvac    = sv(hass, v.climate_co,   'off');
@@ -587,7 +594,7 @@ function renderVaillant(hass, cfg) {
           <button class="hdc-tbtn" data-action="climate_up"   data-entity="${v.climate_co}" data-step="0.5">+</button>
           `}
         </div>
-        <div id="hdc-vl-flame" class="hdc-th-mode heat">● ${modeStatus(coHvac, coPmCur)}</div>
+        <div id="hdc-vl-flame" class="hdc-th-mode heat" style="${isVeto?'color:#fb923c':''}">● ${coModeText || modeStatus(coHvac, coPmCur)}</div>
         ${modeBtns(v.climate_co, coPmList, coPmCur, coHvac, coHvacModes)}
       </div>
       <div class="hdc-thcard">
@@ -1536,6 +1543,16 @@ class HomeDashboardCard extends HTMLElement {
     const coPmCur = sa(hass, v.climate_co,  'preset_mode') || '';
     const cwuHvac  = sv(hass, v.climate_cwu, 'off');
     const cwuPmCur = sa(hass, v.climate_cwu, 'preset_mode') || '';
+    const sfModeL  = v.sf_mode_entity ? sv(hass, v.sf_mode_entity, 'auto') : 'auto';
+    const isVetoL  = sfModeL === 'veto';
+    const vetoDateL = v.veto_end_date ? sv(hass, v.veto_end_date, '') : '';
+    const vetoTimeL = v.veto_end_time ? sv(hass, v.veto_end_time, '').substring(0, 5) : '';
+    const vetoUntilL = (vetoDateL || vetoTimeL) ? `do ${vetoDateL}${vetoDateL && vetoTimeL ? ' ' : ''}${vetoTimeL}` : '';
+    const flameEl = this.shadowRoot.getElementById('hdc-vl-flame');
+    if (flameEl) {
+      flameEl.textContent = isVetoL ? `● 🔒 Veto${vetoUntilL ? ' ' + vetoUntilL : ''}` : `● ${modeStatus(coHvac, coPmCur)}`;
+      flameEl.style.color = isVetoL ? '#fb923c' : '';
+    }
     setText('hdc-vl-tind',    `${tInd}°C`);
     setText('hdc-vl-tout',    `${tOut}°C`);
     setText('hdc-vl-tgtSup',  `${tTgtSup}°C`);
@@ -1544,7 +1561,6 @@ class HomeDashboardCard extends HTMLElement {
     setText('hdc-vl-ret',     `${tRet}°C`);
     setText('hdc-vl-coact',   `${coAct}°`);
     setText('hdc-co-set',     coSet);
-    setText('hdc-vl-flame',   `● ${modeStatus(coHvac, coPmCur)}`);
     setText('hdc-vl-cwumode', `● ${modeStatus(cwuHvac, cwuPmCur)}`);
     setText('hdc-vl-cwucur',  `${cwuCur}°`);
     setText('hdc-cwu-set',    cwuTgt);
