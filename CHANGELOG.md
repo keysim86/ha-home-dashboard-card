@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-04-02
+
+### Added
+- Zakładka **🏠 Home** · Modal pogody: zakładka **🌧️ Radar** z animowanym radarem opadów RainViewer — pojawia się automatycznie gdy skonfigurowane `weather.lat`/`weather.lon`; brak dodatkowej konfiguracji
+- Zakładka **🔥 Vaillant** · termostat CO: status **🔒 Veto** z czasem zakończenia — gdy `Z1SFMode=veto` pomarańczowy kafelek pokazuje `Veto do DD.MM.YYYY HH:MM` zamiast mylącego `Auto`; wymaga nowych pól `sf_mode_entity`, `veto_end_date`, `veto_end_time`
+
+### Fixed
+- Zakładka **🌡️ Klimat**: czas ostatniej aktualizacji nachodził na przyciski kontrolne (fan/light/humidifier_switch) — zmieniono z `position:absolute` na normalny przepływ dokumentu
+
 ## [1.11.0] - 2026-04-02
 
 ### Added

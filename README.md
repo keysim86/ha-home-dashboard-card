@@ -13,7 +13,7 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 
 | Zakładka | Zawartość |
 |----------|-----------|
-| 🏠 **Home** | Lokalizacja, bateria, kroki; kliknięcie w kafelek osoby → modal z mapą `ha-map` GPS; bramy/garaże z kontrolą, wskaźnikiem światła i live timerem czasu otwarcia; widget skrzynki pocztowej z poziomem baterii; przycisk 🌤️ Pogoda → modal z mapą Windy.com; harmonogram odpadów komunalnych z badge |
+| 🏠 **Home** | Lokalizacja, bateria, kroki; kliknięcie w kafelek osoby → modal z mapą `ha-map` GPS; bramy/garaże z kontrolą, wskaźnikiem światła i live timerem czasu otwarcia; widget skrzynki pocztowej z poziomem baterii; przycisk 🌤️ Pogoda → modal z zakładkami: 📅 Prognoza ECMWF 16 dni, 🌧️ Radar RainViewer (animacja opadów), 🗺️ Mapa Windy (opcjonalna); harmonogram odpadów komunalnych z badge |
 | ⚡ **Energia** | Moc całkowita live, napięcia L1/L2/L3, taryfy G13s (dziennie/miesięcznie), top odbiorniki; kliknięcie w kafelek → modal z wykresem historii |
 | 🔥 **Vaillant** | Termostaty CO + CWU ze sterowaniem (tryby, presety), wykresy temperatur 24h, wykresy zużycia gazu 30-dniowe i 12-miesięczne, ustawienia `input_number`; kliknięcie w temperaturę CO/CWU → modal z wykresem historii |
 | 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), myORLEN gaz, licznik wody, EcoWater, zmywarka Haier hOn; kliknięcie w kafelek → modal z wykresem historii |
@@ -114,6 +114,10 @@ vaillant:
   sf_mode_topic: "ebusd/ctlv2/Z1SFMode"           # topic Z1SFMode (wartości: auto / veto)
   veto_temp_topic: "ebusd/ctlv2/Z1QuickVetoTemp"  # topic Z1QuickVetoTemp
   actual_temp_topic: "ebusd/ctlv2/Z1ActualRoomTempDesired"  # topic Z1ActualRoomTempDesired
+  # Status veto w kafelku (wymaga sensorów MQTT)
+  sf_mode_entity: sensor.vaillant_sf_mode          # sensor.* dla Z1SFMode (auto/veto)
+  veto_end_date: sensor.vaillant_quick_veto_end_date
+  veto_end_time: sensor.vaillant_quick_veto_end_time
   temp_supply: sensor.ogrzewanie_temperatura_zasilania
   temp_return: sensor.ogrzewanie_temperatura_powrotu
   temp_target_supply: sensor.ogrzewanie_docelowa_temperatura_zasilania
