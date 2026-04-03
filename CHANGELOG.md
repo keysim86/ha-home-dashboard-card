@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.14.2] - 2026-04-03
+
+### Changed
+- Zakładka **📶 TP-Link** · sekcja Zosia (odkurzacz) przeniesiona nad HP OfficeJet Pro 8020
+
+### Fixed
+- Zakładka **📶 TP-Link** · sekcja Status: usunięto ikonę 📊 renderującą się jako kolorowy kwadrat; cały wiersz jest teraz klikalny i otwiera modal historii
+- Modal historii: `binary_sensor` wyświetlał pusty wykres — stany `on`/`off` są teraz mapowane na `1`/`0`
+
 ## [1.14.0] - 2026-04-03
 
 ### Added

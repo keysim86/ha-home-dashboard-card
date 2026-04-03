@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.14.0
+//  home-dashboard-card.js  v1.14.2
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -827,19 +827,13 @@ function renderTPLink(hass, cfg) {
 
   const statusItems = (t.status_monitors || []).map(item => {
     const on = isOn(hass, item.entity);
-    const hist = item.history || [];
-    const bars = hist.map(h => {
-      const v = isOn(hass, h) ? 1 : (s(hass, h) ? 0 : -1);
-      return `<div style="flex:1;height:100%;border-radius:2px;background:${v===1?'#4ade80':v===0?'#f87171':'#334155'};margin:0 1px"></div>`;
-    }).join('');
-    return `<div class="hdc-box" style="margin-bottom:8px;display:flex;align-items:center;gap:12px;padding:10px 14px">
+    const clickAttr = item.entity ? ` style="cursor:pointer" data-action="sensor_history" data-entity="${item.entity}" data-label="${item.name}"` : '';
+    return `<div class="hdc-box" style="margin-bottom:8px;display:flex;align-items:center;gap:12px;padding:10px 14px${item.entity?';cursor:pointer':''}"${clickAttr}>
       <div style="width:8px;height:8px;border-radius:50%;background:${on?'#4ade80':'#f87171'};flex-shrink:0;box-shadow:0 0 6px ${on?'#4ade8080':'#f8717180'}"></div>
       <div style="flex:1;min-width:0">
         <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${item.name}</div>
         <div style="font-size:10px;color:${on?'#4ade80':'#f87171'};font-weight:600">${on?'on':'off'}</div>
       </div>
-      ${item.entity ? `<div style="font-size:9px;color:#334155;cursor:pointer" data-action="sensor_history" data-entity="${item.entity}" data-label="${item.name}">📊</div>` : ''}
-      <div style="display:flex;align-items:center;height:28px;width:120px;flex-shrink:0">${bars}</div>
     </div>`;
   }).join('');
 
@@ -870,21 +864,6 @@ function renderTPLink(hass, cfg) {
       </div>
       <div style="position:relative;height:160px"><canvas id="hdc-speedtest-chart"></canvas></div>
     </div>` : ''}
-    <div class="hdc-st">🤖 Zosia (odkurzacz)</div>
-    <div class="hdc-box" style="margin-bottom:10px">
-      <div class="hdc-g3">
-        <div>
-          <div class="hdc-ir"><span class="hdc-ir-lbl">Status</span><span class="hdc-ir-val g">${vacState}</span></div>
-          <div class="hdc-ir"><span class="hdc-ir-lbl">Bateria</span><span class="hdc-ir-val ${battColor(vacBat)}">${vacBat}%</span></div>
-          <div class="hdc-ir"><span class="hdc-ir-lbl">Błąd</span><span class="hdc-ir-val ${vacErr&&vacErr!=='Brak'?'r':'g'}">${vacErr||'Brak'}</span></div>
-        </div>
-        <div>
-          <div class="hdc-ir"><span class="hdc-ir-lbl">Pow. dziś</span><span class="hdc-ir-val b">${vacArea} m²</span></div>
-          <div class="hdc-ir"><span class="hdc-ir-lbl">Czas pracy</span><span class="hdc-ir-val b">${vacTime}</span></div>
-          <div class="hdc-ir"><span class="hdc-ir-lbl">Sygnał WiFi</span><span class="hdc-ir-val g">${vacSig}</span></div>
-        </div>
-      </div>
-    </div>
     <div class="hdc-st">🔄 Firmware</div>
     <div class="hdc-gaa" style="margin-bottom:10px">${updates}</div>
     <div class="hdc-st">🔌 MIR-R01 · Router</div>
@@ -902,6 +881,21 @@ function renderTPLink(hass, cfg) {
     <div class="hdc-st">🔌 MIR-SW03 · 8-port PoE</div>
     <div class="hdc-box" style="margin-bottom:10px">
       <div class="hdc-ports">${renderPorts(t.sw03_ports, true)}</div>
+    </div>
+    <div class="hdc-st">🤖 Zosia (odkurzacz)</div>
+    <div class="hdc-box" style="margin-bottom:10px">
+      <div class="hdc-g3">
+        <div>
+          <div class="hdc-ir"><span class="hdc-ir-lbl">Status</span><span class="hdc-ir-val g">${vacState}</span></div>
+          <div class="hdc-ir"><span class="hdc-ir-lbl">Bateria</span><span class="hdc-ir-val ${battColor(vacBat)}">${vacBat}%</span></div>
+          <div class="hdc-ir"><span class="hdc-ir-lbl">Błąd</span><span class="hdc-ir-val ${vacErr&&vacErr!=='Brak'?'r':'g'}">${vacErr||'Brak'}</span></div>
+        </div>
+        <div>
+          <div class="hdc-ir"><span class="hdc-ir-lbl">Pow. dziś</span><span class="hdc-ir-val b">${vacArea} m²</span></div>
+          <div class="hdc-ir"><span class="hdc-ir-lbl">Czas pracy</span><span class="hdc-ir-val b">${vacTime}</span></div>
+          <div class="hdc-ir"><span class="hdc-ir-lbl">Sygnał WiFi</span><span class="hdc-ir-val g">${vacSig}</span></div>
+        </div>
+      </div>
     </div>
     <div class="hdc-st">🖨 HP OfficeJet Pro 8020</div>
     <div class="hdc-g2">
@@ -2577,7 +2571,11 @@ class HomeDashboardCard extends HTMLElement {
         `history/period/${start.toISOString()}?filter_entity_id=${entity}&end_time=${end.toISOString()}&minimal_response=true&no_attributes=true`);
       if (raw && raw[0]) {
         points = raw[0]
-          .map(p => ({ x: new Date(p.last_changed || p.last_updated), y: parseFloat(p.state) }))
+          .map(p => {
+            const st = p.state;
+            const y = st === 'on' ? 1 : st === 'off' ? 0 : parseFloat(st);
+            return { x: new Date(p.last_changed || p.last_updated), y };
+          })
           .filter(p => !isNaN(p.y) && p.x instanceof Date && !isNaN(p.x));
       }
     } catch(e) { console.warn('[hdc] history fetch error', e); }
