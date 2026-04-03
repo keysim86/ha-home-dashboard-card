@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.14.2
+//  home-dashboard-card.js  v1.14.3
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -709,7 +709,7 @@ function renderMetering(hass, cfg) {
   const orlenLastInvDate = _orlenInvDateRaw ? String(_orlenInvDateRaw).substring(0,10).split("-").reverse().join(".") : "";
   const orlenLastInvAmt  = sa(hass, m.orlen_cost, "last_invoice_gross_amount");
   const orlenLastInvNum  = sa(hass, m.orlen_cost, "last_invoice_number") || "";
-  const orlenLastInvAmtFmt = orlenLastInvAmt != null ? parseFloat(orlenLastInvAmt).toFixed(2) + " zl" : "";
+  const orlenLastInvAmtFmt = orlenLastInvAmt != null ? parseFloat(orlenLastInvAmt).toFixed(2) + " zł" : "";
   const waterMeter= sn(hass, m.water_meter, 3);
   const waterQ    = sn(hass, m.water_quarterly, 1);
   const salt      = sn(hass, m.ecowater_salt, 0);

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.14.3] - 2026-04-03
+
+### Fixed
+- Zakładka **📊 Metering** · sekcja myORLEN: kwota ostatniej faktury wyświetlała `zl` zamiast `zł`
+
 ## [1.14.2] - 2026-04-03
 
 ### Changed
