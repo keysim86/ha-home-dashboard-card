@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-04-03
+
+### Changed
+- Zakładka **📊 Metering** · sekcja myORLEN · Gaz: nagłówek wyświetla numer taryfy pobierany z atrybutu `tariff` sensora licznika
+- Zakładka **📊 Metering** · kafelek Odczyt licznika: dodano datę ostatniego odczytu (`reading_date_local`) i typ odczytu (`reading_type`) jako podpis pod wartością
+- Zakładka **📊 Metering** · kafelek Saldo / Ostatnia faktura: połączono aktualne saldo (nieopłacone faktury) z danymi ostatniej faktury — kwota brutto, data, numer; kliknięcie otwiera historię sensora faktury
+
 ## [1.12.0] - 2026-04-02
 
 ### Added

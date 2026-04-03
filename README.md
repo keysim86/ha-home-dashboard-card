@@ -16,7 +16,7 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 | 🏠 **Home** | Lokalizacja, bateria, kroki; kliknięcie w kafelek osoby → modal z mapą `ha-map` GPS; bramy/garaże z kontrolą, wskaźnikiem światła i live timerem czasu otwarcia; widget skrzynki pocztowej z poziomem baterii; przycisk 🌤️ Pogoda → modal z zakładkami: 📅 Prognoza ECMWF 16 dni, 🌧️ Radar RainViewer (animacja opadów), 🗺️ Mapa Windy (opcjonalna); harmonogram odpadów komunalnych z badge |
 | ⚡ **Energia** | Moc całkowita live, napięcia L1/L2/L3, taryfy G13s (dziennie/miesięcznie), top odbiorniki; kliknięcie w kafelek → modal z wykresem historii |
 | 🔥 **Vaillant** | Termostaty CO + CWU ze sterowaniem (tryby, presety), wykresy temperatur 24h, wykresy zużycia gazu 30-dniowe i 12-miesięczne, ustawienia `input_number`; kliknięcie w temperaturę CO/CWU → modal z wykresem historii |
-| 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), myORLEN gaz, licznik wody, EcoWater, zmywarka Haier hOn; kliknięcie w kafelek → modal z wykresem historii |
+| 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), myORLEN gaz (taryfa w nagłówku, data i typ odczytu licznika, saldo + ostatnia faktura), licznik wody, EcoWater, zmywarka Haier hOn; kliknięcie w kafelek → modal z wykresem historii |
 | 📶 **TP-Link** | Omada AP/SW porty PoE (klikalne — włącz/wyłącz), odkurzacz Zosia, aktualizacje firmware, drukarka HP |
 | 📹 **Kamery** | Grid HIKVISION NVR, focus view (max-height 600px), status dysku, live refresh co 10s |
 | 🚗 **Auta** | Paliwo + litry, zasięg, przebieg, bateria 12V, blokada (klikalna lock/unlock), status połączenia, lokalizacja GPS, mapa `ha-map`; kliknięcie w kafelek sensora → modal z wykresem historii |

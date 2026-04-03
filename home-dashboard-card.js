@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.12.0
+//  home-dashboard-card.js  v1.13.0
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -701,6 +701,15 @@ function renderMetering(hass, cfg) {
   const orlenWearM3  = sv(hass, m.orlen_wear_m3, '—');
   const orlenWearKwh = sv(hass, m.orlen_wear_kwh, '—');
   const orlenConv    = sv(hass, m.orlen_conversion, '—');
+  const orlenTariff  = sa(hass, m.orlen_meter, "tariff") || "";
+  const _orlenReadRaw    = sa(hass, m.orlen_meter, "reading_date_local");
+  const orlenReadDate    = _orlenReadRaw ? String(_orlenReadRaw).substring(0,10).split("-").reverse().join(".") : "";
+  const orlenReadType    = sa(hass, m.orlen_meter, "reading_type") || "";
+  const _orlenInvDateRaw = sa(hass, m.orlen_cost, "last_invoice_date");
+  const orlenLastInvDate = _orlenInvDateRaw ? String(_orlenInvDateRaw).substring(0,10).split("-").reverse().join(".") : "";
+  const orlenLastInvAmt  = sa(hass, m.orlen_cost, "last_invoice_gross_amount");
+  const orlenLastInvNum  = sa(hass, m.orlen_cost, "last_invoice_number") || "";
+  const orlenLastInvAmtFmt = orlenLastInvAmt != null ? parseFloat(orlenLastInvAmt).toFixed(2) + " zl" : "";
   const waterMeter= sn(hass, m.water_meter, 3);
   const waterQ    = sn(hass, m.water_quarterly, 1);
   const salt      = sn(hass, m.ecowater_salt, 0);
@@ -732,10 +741,10 @@ function renderMetering(hass, cfg) {
       ${m.tauron_daily_offpeak ? `<div class="hdc-box" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_daily_offpeak}" data-label="⚡ Pozaszczytowa"><div class="hdc-box-title" style="color:#a78bfa">⚡ Pozaszczytowa</div><div class="hdc-sc-val" style="color:#a78bfa;font-size:22px">${dailyOff} kWh</div></div>` : ''}
       ${m.tauron_daily_night   ? `<div class="hdc-box" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_daily_night}"   data-label="🌙 Nocna"><div class="hdc-box-title" style="color:#38bdf8">🌙 Nocna</div><div class="hdc-sc-val" style="color:#38bdf8;font-size:22px">${dailyNight} kWh</div></div>` : ''}
     </div>
-    <div class="hdc-st">🔵 myORLEN · Gaz</div>
+    <div class="hdc-st">🔵 myORLEN · Gaz${orlenTariff ? ` · <span style="color:#94a3b8;font-size:11px">${orlenTariff}</span>` : ""}</div>
     <div class="hdc-g3" style="margin-bottom:6px">
-      ${m.orlen_meter   ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.orlen_meter}"   data-label="Odczyt licznika"><div class="hdc-sc-lbl">Odczyt licznika</div><div class="hdc-sc-val" style="color:#a78bfa;font-size:15px">${orlenMeter} m³</div></div>` : ''}
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Ostatnia faktura</div><div class="hdc-sc-val" style="color:#fbbf24;font-size:15px">${orlenInv}</div></div>
+      ${m.orlen_meter   ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.orlen_meter}"   data-label="Odczyt licznika"><div class="hdc-sc-lbl">Odczyt licznika</div><div class="hdc-sc-val" style="color:#a78bfa;font-size:15px">${orlenMeter} m³</div>${orlenReadDate ? `<div class="hdc-sc-sub">${orlenReadDate}${orlenReadType ? " · " + orlenReadType : ""}</div>` : ""}</div>` : ''}
+      ${m.orlen_invoice ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.orlen_invoice}" data-label="Saldo / Ostatnia faktura"><div class="hdc-sc-lbl">Saldo / Ostatnia faktura</div><div class="hdc-sc-val" style="color:#fbbf24;font-size:15px">${orlenInv} PLN</div>${orlenLastInvAmtFmt ? `<div class="hdc-sc-sub">${orlenLastInvAmtFmt}${orlenLastInvDate ? " · "+orlenLastInvDate : ""}</div>` : ""}${orlenLastInvNum ? `<div class="hdc-sc-sub" style="font-size:9px;color:#475569">${orlenLastInvNum}</div>` : ""}</div>` : ""}
       ${m.orlen_cost    ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.orlen_cost}"    data-label="Tracking kosztów"><div class="hdc-sc-lbl">Tracking kosztów</div><div class="hdc-sc-val" style="color:#4ade80;font-size:15px">${orlenCost}</div></div>` : ''}
     </div>
     <div class="hdc-g3" style="margin-bottom:10px">
