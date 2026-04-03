@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+- Zakładka **📶 TP-Link** · sekcja **📡 Status** — monitorowanie binary_sensorów (Google, Router, Node itp.) z kolorowym wskaźnikiem on/off i paskiem historii; konfiguracja przez `tplink.status_monitors` (lista `{entity, name, history:[...]}`)
+- Zakładka **📶 TP-Link** · sekcja **📶 SpeedTest** — wykres prędkości pobierania/wysyłania (Mbit/s) i pingu (ms) z ostatnich 24h (Chart.js, dual Y-axis); aktualne wartości w nagłówku; konfiguracja przez `tplink.speedtest_download`, `tplink.speedtest_upload`, `tplink.speedtest_ping`, `tplink.speedtest_label`
+
 ## [1.13.0] - 2026-04-03
 
 ### Changed

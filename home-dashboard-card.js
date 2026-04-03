@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.13.0
+//  home-dashboard-card.js  v1.14.0
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -825,7 +825,51 @@ function renderTPLink(hass, cfg) {
   const ink_yellow  = sn(hass, t.ink_yellow, 0);
   const inkColor = v => v < 15 ? '#f87171' : v < 30 ? '#fbbf24' : '#94a3b8';
 
+  const statusItems = (t.status_monitors || []).map(item => {
+    const on = isOn(hass, item.entity);
+    const hist = item.history || [];
+    const bars = hist.map(h => {
+      const v = isOn(hass, h) ? 1 : (s(hass, h) ? 0 : -1);
+      return `<div style="flex:1;height:100%;border-radius:2px;background:${v===1?'#4ade80':v===0?'#f87171':'#334155'};margin:0 1px"></div>`;
+    }).join('');
+    return `<div class="hdc-box" style="margin-bottom:8px;display:flex;align-items:center;gap:12px;padding:10px 14px">
+      <div style="width:8px;height:8px;border-radius:50%;background:${on?'#4ade80':'#f87171'};flex-shrink:0;box-shadow:0 0 6px ${on?'#4ade8080':'#f8717180'}"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${item.name}</div>
+        <div style="font-size:10px;color:${on?'#4ade80':'#f87171'};font-weight:600">${on?'on':'off'}</div>
+      </div>
+      ${item.entity ? `<div style="font-size:9px;color:#334155;cursor:pointer" data-action="sensor_history" data-entity="${item.entity}" data-label="${item.name}">📊</div>` : ''}
+      <div style="display:flex;align-items:center;height:28px;width:120px;flex-shrink:0">${bars}</div>
+    </div>`;
+  }).join('');
+
+  const dlVal = sn(hass, t.speedtest_download, 1);
+  const ulVal = sn(hass, t.speedtest_upload, 1);
+  const pingVal = sn(hass, t.speedtest_ping, 0);
+
   return `
+    ${statusItems ? `<div class="hdc-st">📡 Status</div>
+    <div style="margin-bottom:10px">${statusItems}</div>` : ''}
+    ${(t.speedtest_download || t.speedtest_upload || t.speedtest_ping) ? `
+    <div class="hdc-st">📶 SpeedTest</div>
+    <div class="hdc-box" style="margin-bottom:10px">
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:10px">${t.speedtest_label || 'Prędkość Internetu (24h)'}</div>
+      <div class="hdc-g3" style="margin-bottom:12px">
+        ${t.speedtest_download ? `<div style="cursor:pointer" data-action="sensor_history" data-entity="${t.speedtest_download}" data-label="Pobieranie">
+          <div style="font-size:24px;font-weight:700;color:#38bdf8">${dlVal}</div>
+          <div style="font-size:10px;color:#475569">Pobieranie (Mbit/s)</div>
+        </div>` : ''}
+        ${t.speedtest_upload ? `<div style="cursor:pointer" data-action="sensor_history" data-entity="${t.speedtest_upload}" data-label="Wysyłanie">
+          <div style="font-size:24px;font-weight:700;color:#fb923c">${ulVal}</div>
+          <div style="font-size:10px;color:#475569">Wysyłanie (Mbit/s)</div>
+        </div>` : ''}
+        ${t.speedtest_ping ? `<div style="cursor:pointer" data-action="sensor_history" data-entity="${t.speedtest_ping}" data-label="Ping">
+          <div style="font-size:24px;font-weight:700;color:#f87171">${pingVal}</div>
+          <div style="font-size:10px;color:#475569">Ping (ms)</div>
+        </div>` : ''}
+      </div>
+      <div style="position:relative;height:160px"><canvas id="hdc-speedtest-chart"></canvas></div>
+    </div>` : ''}
     <div class="hdc-st">🤖 Zosia (odkurzacz)</div>
     <div class="hdc-box" style="margin-bottom:10px">
       <div class="hdc-g3">
@@ -1432,6 +1476,7 @@ class HomeDashboardCard extends HTMLElement {
       // home tab — no post-render init needed (map shown on-demand via modal)
       if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
       if (this._activeTab === 'vaillant') setTimeout(() => this._initVaillantCharts(), 0);
+      if (this._activeTab === 'tplink') setTimeout(() => this._initSpeedTestChart(), 0);
     } catch(err) {
       pane.innerHTML = `<div style="color:#f87171;font-size:12px;padding:12px">Błąd renderowania: ${err.message}</div>`;
       console.error('[home-dashboard-card]', err);
@@ -2374,6 +2419,73 @@ class HomeDashboardCard extends HTMLElement {
           btn.style.cssText = `font-size:10px;height:26px;padding:0 10px;width:auto;${humSwOn ? 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8' : ''}`;
         }
       }
+    });
+  }
+
+  async _initSpeedTestChart() {
+    const t = this._config.tplink || {};
+    const hass = this._hass;
+    const entities = [t.speedtest_download, t.speedtest_upload, t.speedtest_ping].filter(Boolean);
+    if (!entities.length) return;
+
+    const draw = async () => {
+      const now = new Date();
+      const start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      let hist;
+      try {
+        hist = await hass.callWS({
+          type: 'history/history_during_period',
+          start_time: start.toISOString(),
+          end_time: now.toISOString(),
+          entity_ids: entities,
+          minimal_response: true,
+          no_attributes: true,
+          significant_changes_only: false,
+        });
+      } catch(e) { console.error('[hdc] speedtest chart', e); return; }
+
+      const pts = id => (hist[id] || [])
+        .filter(d => d.s && d.s !== 'unavailable' && d.s !== 'unknown')
+        .map(d => ({ x: new Date((d.lu || d.last_updated_ts) * 1000), y: parseFloat(d.s) }))
+        .filter(d => !isNaN(d.y));
+
+      const el = this.shadowRoot.getElementById('hdc-speedtest-chart');
+      if (!el) return;
+      if (el._hdcChart) el._hdcChart.destroy();
+
+      const datasets = [];
+      if (t.speedtest_download) { const d = pts(t.speedtest_download); if (d.length) datasets.push({ label: 'Pobieranie (Mbit/s)', data: d, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,.08)', fill: true, pointRadius: 0, borderWidth: 1.5, tension: 0.3, yAxisID: 'y' }); }
+      if (t.speedtest_upload)   { const d = pts(t.speedtest_upload);   if (d.length) datasets.push({ label: 'Wysyłanie (Mbit/s)',  data: d, borderColor: '#fb923c', backgroundColor: 'transparent', fill: false, pointRadius: 0, borderWidth: 1.5, tension: 0.3, yAxisID: 'y' }); }
+      if (t.speedtest_ping)     { const d = pts(t.speedtest_ping);     if (d.length) datasets.push({ label: 'Ping (ms)',           data: d, borderColor: '#f87171', backgroundColor: 'transparent', fill: false, pointRadius: 0, borderWidth: 1,   tension: 0.3, yAxisID: 'y2' }); }
+
+      if (!datasets.length) return;
+      el._hdcChart = new Chart(el, {
+        type: 'line',
+        data: { datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: false,
+          plugins: {
+            legend: { display: true, position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 10, padding: 8 } },
+            tooltip: { mode: 'index', intersect: false, backgroundColor: '#1e293b', titleColor: '#94a3b8', bodyColor: '#f1f5f9' }
+          },
+          scales: {
+            x: { type: 'time', time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
+              ticks: { color: '#475569', maxTicksLimit: 8, font: { size: 9 } },
+              grid: { color: 'rgba(255,255,255,.05)' } },
+            y:  { position: 'left',  ticks: { color: '#475569', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,.05)' } },
+            y2: { position: 'right', ticks: { color: '#f87171', font: { size: 9 } }, grid: { display: false } }
+          }
+        }
+      });
+    };
+
+    const loadScript = (id, src, cb) => {
+      if (document.getElementById(id)) { cb(); return; }
+      const sc = document.createElement('script'); sc.id = id; sc.src = src;
+      sc.onload = cb; document.head.appendChild(sc);
+    };
+    loadScript('hdc-chartjs', 'https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js', () => {
+      loadScript('hdc-chartjs-adapter', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js', draw);
     });
   }
 
