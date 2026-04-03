@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.14.0] - 2026-04-03
 
 ### Added
 - Zakładka **📶 TP-Link** · sekcja **📡 Status** — monitorowanie binary_sensorów (Google, Router, Node itp.) z kolorowym wskaźnikiem on/off i paskiem historii; konfiguracja przez `tplink.status_monitors` (lista `{entity, name, history:[...]}`)

@@ -17,7 +17,7 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 | ⚡ **Energia** | Moc całkowita live, napięcia L1/L2/L3, taryfy G13s (dziennie/miesięcznie), top odbiorniki; kliknięcie w kafelek → modal z wykresem historii |
 | 🔥 **Vaillant** | Termostaty CO + CWU ze sterowaniem (tryby, presety), wykresy temperatur 24h, wykresy zużycia gazu 30-dniowe i 12-miesięczne, ustawienia `input_number`; kliknięcie w temperaturę CO/CWU → modal z wykresem historii |
 | 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), myORLEN gaz (taryfa w nagłówku, data i typ odczytu licznika, saldo + ostatnia faktura), licznik wody, EcoWater, zmywarka Haier hOn; kliknięcie w kafelek → modal z wykresem historii |
-| 📶 **TP-Link** | Omada AP/SW porty PoE (klikalne — włącz/wyłącz), odkurzacz Zosia, aktualizacje firmware, drukarka HP |
+| 📶 **TP-Link** | Sekcja **Status** — binary_sensory z kolorowym wskaźnikiem on/off i paskiem historii; sekcja **SpeedTest** — aktualne wartości pobierania/wysyłania/pingu + wykres 24h (Chart.js, dual Y-axis); porty PoE (klikalne — włącz/wyłącz), odkurzacz Zosia, aktualizacje firmware, drukarka HP |
 | 📹 **Kamery** | Grid HIKVISION NVR, focus view (max-height 600px), status dysku, live refresh co 10s |
 | 🚗 **Auta** | Paliwo + litry, zasięg, przebieg, bateria 12V, blokada (klikalna lock/unlock), status połączenia, lokalizacja GPS, mapa `ha-map`; kliknięcie w kafelek sensora → modal z wykresem historii |
 | 🖧 **Proxmox** | Node stats (CPU, RAM%, wolna RAM w GB, Disk), LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
@@ -198,6 +198,17 @@ tplink:
   ink_cyan: sensor.hp_officejet_pro_8020_series_mir_p002_local_cyan_ink_poziom
   ink_magenta: sensor.hp_officejet_pro_8020_series_mir_p002_local_magenta_ink_poziom
   ink_yellow: sensor.hp_officejet_pro_8020_series_mir_p002_local_yellow_ink_poziom
+  speedtest_download: sensor.myspeed_download
+  speedtest_upload: sensor.myspeed_upload
+  speedtest_ping: sensor.myspeed_ping
+  speedtest_label: MySpeed Prędkość Internetu (24h)
+  status_monitors:
+    - entity: binary_sensor.google
+      name: Google
+    - entity: binary_sensor.router
+      name: Router
+    - entity: binary_sensor.node_pve2
+      name: Node pve2
 
 cameras:
   nvr_disk_total_gb: 4000
