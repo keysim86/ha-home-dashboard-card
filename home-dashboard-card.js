@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.14.4
+//  home-dashboard-card.js  v1.14.5
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -1745,7 +1745,9 @@ class HomeDashboardCard extends HTMLElement {
         ]);
       } catch(e) { console.error('[hdc] gas stats', e); return; }
 
-      const toVal = (d) => Math.max(0, Math.round((d.change || 0) * 10) / 10);
+      // Filtr anomalii — spike przy restarcie HA (utility_meter wraca z unavailable→0→wartość)
+      const maxDaily = typeof v.gas_daily_max_m3 === 'number' ? v.gas_daily_max_m3 : 30;
+      const toVal    = (d) => Math.max(0, Math.min(maxDaily, Math.round((d.change || 0) * 10) / 10));
       // start może być sekundami (number) lub ISO stringiem (string)
       const toMs = d => typeof d.start === 'string' ? new Date(d.start).getTime()
         : (d.start > 1e12 ? d.start : d.start * 1000);

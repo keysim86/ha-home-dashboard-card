@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.14.5] - 2026-04-05
+
+### Fixed
+- Zakładka **🔥 Vaillant** · wykres dziennego zużycia gazu: restart HA powodował spike (~50 m³) wynikający z zachowania `utility_meter` przy przejściu `unavailable→0→wartość`. Dodano filtr anomalii — wartości powyżej `gas_daily_max_m3` (domyślnie 30 m³/dzień) są obcinane. Wartość można skonfigurować: `vaillant.gas_daily_max_m3: 50`.
+
 ## [1.14.4] - 2026-04-05
 
 ### Fixed
