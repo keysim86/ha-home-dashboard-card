@@ -132,16 +132,22 @@ vaillant:
   cwu_current: sensor.ciepla_woda_aktualnie
   cwu_target: sensor.ciepla_woda_docelowo
   # Wykresy zużycia gazu (30 dni + 12 miesięcy)
-  gas_heating: sensor.my_home_device_gas_heating
-  gas_cwu: sensor.my_home_device_gas_cwu
+  gas_heating: sensor.dzienne_zuzycie_gazu_ogrzewanie
+  gas_cwu: sensor.dzienne_zuzycie_gazu_cwu
+  # Filtr anomalii — wartości dzienne powyżej progu (m³) są obcinane.
+  # Zabezpiecza przed spike'ami utility_meter po restarcie HA. Domyślnie: 30.
+  gas_daily_max_m3: 30
   el_co: sensor.my_home_device_0_vc_20cs_1_5_n_pl_ecotec_plus_consumed_electrical_energy_heating_2
   el_cwu: sensor.my_home_device_0_vc_20cs_1_5_n_pl_ecotec_plus_consumed_electrical_energy_domestic_hot_water_2
-  # Ustawienia input_number (edycja przyciskami +/−)
+  # Ustawienia input_number (edycja przyciskami +/−, z debouncingiem 350 ms)
   settings:
     - entity: input_number.krzywa_grzewcza
       name: Krzywa grzewcza
     - entity: input_number.temperatura_co_min
       name: Min. temp. CO
+      decimals: 1
+    - entity: input_number.temperatura_wylaczenia_ogrzewania
+      name: Temp. zew. wyłączenie ogrzewania
       decimals: 1
 
 metering:
