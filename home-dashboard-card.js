@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.14.3
+//  home-dashboard-card.js  v1.14.4
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -1351,6 +1351,7 @@ class HomeDashboardCard extends HTMLElement {
     this._camRefreshInterval = null;
     this._built = false;
     this._tabChanged = false;
+    this._pendingInputs = {};
   }
 
   setConfig(config) {
@@ -1622,6 +1623,7 @@ class HomeDashboardCard extends HTMLElement {
     setText('hdc-vl-elco',    `${elCO} kWh`);
     setText('hdc-vl-elcwu',   `${elCWU} kWh`);
     (v.settings || []).forEach(s => {
+      if (this._pendingInputs[s.entity] !== undefined) return; // debounce in progress — keep optimistic value
       const st = hass.states[s.entity];
       if (!st) return;
       const val = parseFloat(st.state);
@@ -2186,15 +2188,36 @@ class HomeDashboardCard extends HTMLElement {
       this._hass.callService('climate', 'set_temperature', params);
     }
     if (action === 'input_up' || action === 'input_down') {
-      const current = parseFloat(state.state);
-      if (isNaN(current)) return;
       const _n = (v, fb) => { const n = parseFloat(v); return isNaN(n) ? fb : n; };
       const min = _n(btn.dataset.min, -999);
       const max = _n(btn.dataset.max,  9999);
-      const newVal = action === 'input_up' ? current + step : current - step;
+      // Use pending (accumulated) value if mid-debounce, otherwise current state
+      const base = this._pendingInputs[entity] !== undefined
+        ? this._pendingInputs[entity].value
+        : parseFloat(state.state);
+      if (isNaN(base)) return;
+      const newVal = action === 'input_up' ? base + step : base - step;
       const clamped = Math.min(max, Math.max(min, Math.round(newVal * 1000) / 1000));
-      const domain = entity.split('.')[0];
-      this._hass.callService(domain, 'set_value', { entity_id: entity, value: clamped });
+      // Optimistic display update
+      const elId = 'hdc-vl-set-' + entity.replace(/\./g, '-');
+      const elDisp = this.shadowRoot.getElementById(elId);
+      if (elDisp) {
+        const st2 = this._hass.states[entity];
+        const stepV = parseFloat(st2?.attributes?.step) || step;
+        const dec = _n(undefined, stepV < 0.01 ? 3 : stepV < 0.1 ? 2 : stepV < 1 ? 1 : 0);
+        const unit = st2?.attributes?.unit_of_measurement || '';
+        elDisp.textContent = clamped.toFixed(dec) + (unit ? ' ' + unit : '');
+      }
+      // Debounce: cancel previous timer, schedule single callService
+      if (this._pendingInputs[entity]?.timer) clearTimeout(this._pendingInputs[entity].timer);
+      this._pendingInputs[entity] = {
+        value: clamped,
+        timer: setTimeout(() => {
+          const domain = entity.split('.')[0];
+          this._hass.callService(domain, 'set_value', { entity_id: entity, value: clamped });
+          delete this._pendingInputs[entity];
+        }, 350),
+      };
     }
     if (action === 'person_map') {
       this._showPersonMap(entity);

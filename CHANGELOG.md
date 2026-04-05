@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.14.4] - 2026-04-05
+
+### Fixed
+- Zakładka **🔥 Vaillant** · sekcja Ustawienia: szybkie klikanie `+`/`−` powodowało kolejkowanie wielu wywołań `set_value` w HA — wartość zmieniała się samoczynnie po puszczeniu przycisku. Naprawiono przez debounce (350 ms) z akumulacją kroków i natychmiastowym optimistycznym odświeżeniem wyświetlanej wartości.
+
 ## [1.14.3] - 2026-04-03
 
 ### Fixed
