@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.15.1] - 2026-04-18
+
+### Fixed
+- Zakładka **📹 Kamery** · focus view: zamieniono polling snapshot co 1 s na natywny komponent `<ha-camera-stream>` (HLS/WebRTC/MJPEG) — prawdziwy live stream bez opóźnień; komponent inicjowany po wyrenderowaniu zakładki z fallbackiem na `customElements.whenDefined`
+
 ## [1.15.0] - 2026-04-18
 
 ### Added
