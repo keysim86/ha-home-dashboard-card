@@ -2123,14 +2123,13 @@ class HomeDashboardCard extends HTMLElement {
           type: 'map',
           entities: [{ entity: tracker }],
           dark_mode: true,
+          default_zoom: 15,
         };
         if (lat && lon) {
-          cardCfg.auto_fit = true;
-          cardCfg.default_zoom = 15;
+          cardCfg.auto_fit = false;
         } else {
           cardCfg.auto_fit = true;
           cardCfg.fit_zones = true;
-          cardCfg.default_zoom = 15;
         }
         const card = helpers.createCardElement(cardCfg);
         card.style.cssText = 'display:block;height:380px;width:100%';
