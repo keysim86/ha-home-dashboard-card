@@ -1748,6 +1748,7 @@ class HomeDashboardCard extends HTMLElement {
       // Filtr anomalii — spike przy restarcie HA (utility_meter wraca z unavailable→0→wartość)
       const maxDaily = typeof v.gas_daily_max_m3 === 'number' ? v.gas_daily_max_m3 : 30;
       const toVal    = (d) => Math.max(0, Math.min(maxDaily, Math.round((d.change || 0) * 10) / 10));
+      const toValMon = (d) => Math.max(0, Math.round((d.change || 0) * 10) / 10);
       // start może być sekundami (number) lub ISO stringiem (string)
       const toMs = d => typeof d.start === 'string' ? new Date(d.start).getTime()
         : (d.start > 1e12 ? d.start : d.start * 1000);
@@ -1823,12 +1824,12 @@ class HomeDashboardCard extends HTMLElement {
           const dt = new Date(toMs(d));
           const mk = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
           monMap[mk] = monMap[mk] || { label: MONTH_PL[dt.getMonth()] + ' ' + dt.getFullYear(), heat: 0, cwu: 0 };
-          monMap[mk].heat += toVal(d);
+          monMap[mk].heat += toValMon(d);
         });
         cwuMon.forEach(d => {
           const dt = new Date(toMs(d));
           const mk = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
-          if (monMap[mk]) monMap[mk].cwu += toVal(d);
+          if (monMap[mk]) monMap[mk].cwu += toValMon(d);
         });
         const monKeys = Object.keys(monMap).sort();
         const labels = monKeys.map(k => monMap[k].label);
