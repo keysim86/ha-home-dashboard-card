@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.15.0] - 2026-04-18
+
+### Added
+- Zakładka **📊 Metering** · nowa sekcja **🌐 Mój Tauron · AMIplus online** — zużycie dzienne i miesięczne z portalu Tauron AMIplus oraz należności (PLN) z automatycznym terminem płatności z atrybutu `due_date`/`paymentDate`; kolor należności: zielony = nadpłata, czerwony = do zapłaty; konfiguracja przez `metering.tauron_amiplus_daily`, `metering.tauron_amiplus_monthly`, `metering.tauron_amiplus_balance`; sekcja pojawia się tylko gdy przynajmniej jeden klucz jest skonfigurowany
+
+### Fixed
+- Zakładka **🔥 Vaillant** · wykres miesięcznego zużycia gazu: wszystkie słupki pokazywały tę samą wartość (ok. 30–50 m³) — filtr anomalii `toVal()` używał limitu dziennego (`gas_daily_max_m3`, domyślnie 30 m³) również dla danych miesięcznych, obcinając każdy miesiąc powyżej limitu. Dodano `toValMon()` bez górnego ograniczenia dla agregacji miesięcznej
+- Zakładka **📹 Kamery** · główny widok (focus) odświeżał się wyłącznie po kliknięciu miniatury — zmieniono źródło obrazu z `camera_proxy` (snapshot co 10 s) na `camera_proxy_stream` (MJPEG); przeglądarka dekoduje ciągły strumień bez pollingu. Odświeżanie miniatur skrócono z 10 s do 3 s
+
 ## [1.14.5] - 2026-04-05
 
 ### Fixed

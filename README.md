@@ -16,9 +16,9 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 | 🏠 **Home** | Lokalizacja, bateria, kroki; kliknięcie w kafelek osoby → modal z mapą `ha-map` GPS; bramy/garaże z kontrolą, wskaźnikiem światła i live timerem czasu otwarcia; widget skrzynki pocztowej z poziomem baterii; przycisk 🌤️ Pogoda → modal z zakładkami: 📅 Prognoza ECMWF 16 dni, 🌧️ Radar RainViewer (animacja opadów), 🗺️ Mapa Windy (opcjonalna); harmonogram odpadów komunalnych z badge |
 | ⚡ **Energia** | Moc całkowita live, napięcia L1/L2/L3, taryfy G13s (dziennie/miesięcznie), top odbiorniki; kliknięcie w kafelek → modal z wykresem historii |
 | 🔥 **Vaillant** | Termostaty CO + CWU ze sterowaniem (tryby, presety), wykresy temperatur 24h, wykresy zużycia gazu 30-dniowe i 12-miesięczne, ustawienia `input_number`; kliknięcie w temperaturę CO/CWU → modal z wykresem historii |
-| 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), myORLEN gaz (taryfa w nagłówku, data i typ odczytu licznika, saldo + ostatnia faktura), licznik wody, EcoWater, zmywarka Haier hOn; kliknięcie w kafelek → modal z wykresem historii |
+| 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), Mój Tauron AMIplus online (zużycie dzienne/miesięczne + należności z terminem płatności), myORLEN gaz (taryfa w nagłówku, data i typ odczytu licznika, saldo + ostatnia faktura), licznik wody, EcoWater, zmywarka Haier hOn; kliknięcie w kafelek → modal z wykresem historii |
 | 📶 **TP-Link** | Sekcja **Status** — binary_sensory z kolorowym wskaźnikiem on/off i paskiem historii; sekcja **SpeedTest** — aktualne wartości pobierania/wysyłania/pingu + wykres 24h (Chart.js, dual Y-axis); porty PoE (klikalne — włącz/wyłącz), odkurzacz Zosia, aktualizacje firmware, drukarka HP |
-| 📹 **Kamery** | Grid HIKVISION NVR, focus view (max-height 600px), status dysku, live refresh co 10s |
+| 📹 **Kamery** | Grid HIKVISION NVR, focus view MJPEG live stream (`camera_proxy_stream`), miniatury odświeżane co 3 s, status dysku |
 | 🚗 **Auta** | Paliwo + litry, zasięg, przebieg, bateria 12V, blokada (klikalna lock/unlock), status połączenia, lokalizacja GPS, mapa `ha-map`; kliknięcie w kafelek sensora → modal z wykresem historii |
 | 🖧 **Proxmox** | Node stats (CPU, RAM%, wolna RAM w GB, Disk), LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
 | 🔔 **Alerty** | Reguły definiowane w YAML, badge z licznikiem na zakładce |
@@ -157,6 +157,10 @@ metering:
   tauron_daily_night: sensor.zuzycie_dzienne_g13s_nocna_zaokr
   tauron_monthly: sensor.miesieczne_zuzycie_energii_kalendarzowe_zaokr
   tauron_price: sensor.tauron_aktualna_cena_g13s
+  # Mój Tauron · ha-Tauron-AMIplus (opcjonalne)
+  tauron_amiplus_daily: sensor.tauron_amiplus_dzienne_zuzycie_energii
+  tauron_amiplus_monthly: sensor.tauron_amiplus_miesieczne_zuzycie_energii
+  tauron_amiplus_balance: sensor.tauron_amiplus_naleznosci
   orlen_meter: sensor.myorlen_gas_sensor_8018590365500075144345_6067986
   orlen_invoice: sensor.myorlen_gas_invoice_sensor_8018590365500075144345_6067986
   orlen_cost: sensor.myorlen_gas_cost_tracking_sensor_8018590365500075144345_6067986
