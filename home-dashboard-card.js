@@ -928,13 +928,17 @@ function renderKamery(hass, cfg) {
     const token = sa(hass, entity, 'access_token');
     return `/api/camera_proxy/${entity}?token=${token}&t=${Date.now()}`;
   };
+  const camStreamUrl = (entity) => {
+    const token = sa(hass, entity, 'access_token');
+    return `/api/camera_proxy_stream/${entity}?token=${token}`;
+  };
 
   const focusCam = channels[0] || {};
   const focusHtml = `
     <div class="hdc-cam-focus">
       <div class="hdc-camfeed" style="aspect-ratio:16/9;max-height:480px">
         ${focusCam.entity
-          ? `<img id="hdc-focus-img" src="${camUrl(focusCam.entity)}" data-entity="${focusCam.entity}" alt="${focusCam.name}">`
+          ? `<img id="hdc-focus-img" src="${camStreamUrl(focusCam.entity)}" data-entity="${focusCam.entity}" alt="${focusCam.name}">`
           : `<div class="hdc-cam-placeholder">📹<span>${focusCam.name||'Brak kamery'}</span></div>`
         }
       </div>
@@ -2286,7 +2290,7 @@ class HomeDashboardCard extends HTMLElement {
 
     if (focusImg) {
       const token = this._hass.states[ch.entity]?.attributes?.access_token || '';
-      focusImg.src = `/api/camera_proxy/${ch.entity}?token=${token}&t=${Date.now()}`;
+      focusImg.src = `/api/camera_proxy_stream/${ch.entity}?token=${token}`;
       focusImg.dataset.entity = ch.entity;
     }
     if (focusName) focusName.textContent = `${ch.label} · ${ch.name}`;
@@ -2660,16 +2664,13 @@ class HomeDashboardCard extends HTMLElement {
   _startCamRefresh() {
     this._camRefreshInterval = setInterval(() => {
       if (this._activeTab !== 'kamery') return;
-      const refreshImg = (img) => {
+      this.shadowRoot.querySelectorAll('.hdc-cam-thumb').forEach(img => {
         const entity = img.dataset.entity;
         if (!entity) return;
         const token = this._hass?.states[entity]?.attributes?.access_token || '';
         img.src = `/api/camera_proxy/${entity}?token=${token}&t=${Date.now()}`;
-      };
-      this.shadowRoot.querySelectorAll('.hdc-cam-thumb').forEach(refreshImg);
-      const focus = this.shadowRoot.getElementById('hdc-focus-img');
-      if (focus) refreshImg(focus);
-    }, 10000);
+      });
+    }, 3000);
   }
 
   _startGateTimers() {
