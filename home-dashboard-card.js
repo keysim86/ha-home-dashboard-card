@@ -1510,10 +1510,15 @@ class HomeDashboardCard extends HTMLElement {
       const charging = bst.toLowerCase() === 'charging';
       const steps = sv(hass, p.steps, '—');
       const initials = p.name ? p.name[0] : '?';
+      const picture = p.entity ? hass.states[p.entity]?.attributes?.entity_picture : null;
+      const avatarInner = picture
+        ? `<img src="${picture}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+        : initials;
+      const avatarStyle = picture ? '' : `color:${p.color};background:${p.color}22`;
       return `
         <div class="hdc-pc ${isHome?'home':'away'}"${p.entity ? ` data-action="person_map" data-entity="${p.entity}" style="cursor:pointer"` : ''}>
           <div style="display:flex;gap:10px;margin-bottom:9px;align-items:flex-start">
-            <div class="hdc-pav" style="color:${p.color};background:${p.color}22">${initials}</div>
+            <div class="hdc-pav" style="${avatarStyle};overflow:hidden">${avatarInner}</div>
             <div>
               <div style="font-size:13px;font-weight:600;color:#f1f5f9">${p.name}</div>
               <div style="font-size:10px;color:#475569">${p.device_tracker ? sa(hass, p.device_tracker, 'friendly_name') || p.device_tracker : ''}</div>
