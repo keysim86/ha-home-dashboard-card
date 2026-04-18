@@ -1,15 +1,10 @@
 # Changelog
 
-## [Unreleased]
+## [1.15.2] - 2026-04-18
 
 ### Fixed
 - Zakładka **🚗 Auta** · mapa nie wyśrodkowywała się na samochodzie — `auto_fit: true` dopasowywał widok do wszystkich encji łącznie ze strefą „Dom", przez co samochód wypadał poza centrum. Gdy tracker ma współrzędne GPS, mapa używa teraz `auto_fit: false` i `default_zoom: 15` — wyśrodkowuje bezpośrednio na pojeździe
 - Modal historii · wykres dla encji `binary_sensor.*` był niewidoczny — wszystkie punkty miały wartość 0/1, a Chart.js autoskalował oś Y do wąskiego zakresu (0.94–1.06) przez co linia znikała. Dla danych binarnych ustawiono teraz stały zakres Y (`-0.1–1.5`), schodkowy styl linii (`stepped: before`), zielony kolor oraz etykiety tooltipa `on`/`off`
-- Zakładka **🔥 Vaillant** · modal historii dla encji `climate.*` (np. `climate.ogrzewanie`) wyświetlał pusty wykres — stany klimatu (`heat`, `off`) są nienumeryczne i były filtrowane. Dla encji `climate.*` historia jest teraz pobierana z atrybutami, a do wykresu używany jest atrybut `current_temperature`
-
-## [1.15.1] - 2026-04-18
-
-### Fixed
 - Zakładka **🔥 Vaillant** · modal historii dla encji `climate.*` (np. `climate.ogrzewanie`) wyświetlał pusty wykres — stany klimatu (`heat`, `off`) są nienumeryczne i były filtrowane. Dla encji `climate.*` historia jest teraz pobierana z atrybutami, a do wykresu używany jest atrybut `current_temperature`
 
 ## [1.15.1] - 2026-04-18
