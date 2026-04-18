@@ -2145,6 +2145,7 @@ class HomeDashboardCard extends HTMLElement {
         card.style.cssText = 'display:block;height:380px;width:100%';
         mapDiv.appendChild(card);
         card.hass = hass;
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
       });
     });
   }
