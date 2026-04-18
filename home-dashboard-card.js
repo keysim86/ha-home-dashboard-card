@@ -695,6 +695,12 @@ function renderMetering(hass, cfg) {
   const dailyNight= sn(hass, m.tauron_daily_night, 1);
   const monthly   = sn(hass, m.tauron_monthly, 0);
   const price     = sn(hass, m.tauron_price, 2);
+  const amiplusDaily   = sn(hass, m.tauron_amiplus_daily, 2);
+  const amiplusMonthly = sn(hass, m.tauron_amiplus_monthly, 2);
+  const amiplusBalance = sn(hass, m.tauron_amiplus_balance, 2);
+  const _amiplusBalRaw   = sa(hass, m.tauron_amiplus_balance, 'due_date') || sa(hass, m.tauron_amiplus_balance, 'paymentDate') || '';
+  const amiplusBalDue    = _amiplusBalRaw ? String(_amiplusBalRaw).substring(0, 10).split('-').reverse().join('.') : '';
+  const amiplusBalColor  = amiplusBalance > 0 ? '#f87171' : amiplusBalance < 0 ? '#4ade80' : '#94a3b8';
   const orlenMeter= sv(hass, m.orlen_meter, '—');
   const orlenInv  = sv(hass, m.orlen_invoice, '—');
   const orlenCost = sv(hass, m.orlen_cost, '—');
@@ -741,6 +747,13 @@ function renderMetering(hass, cfg) {
       ${m.tauron_daily_offpeak ? `<div class="hdc-box" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_daily_offpeak}" data-label="⚡ Pozaszczytowa"><div class="hdc-box-title" style="color:#a78bfa">⚡ Pozaszczytowa</div><div class="hdc-sc-val" style="color:#a78bfa;font-size:22px">${dailyOff} kWh</div></div>` : ''}
       ${m.tauron_daily_night   ? `<div class="hdc-box" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_daily_night}"   data-label="🌙 Nocna"><div class="hdc-box-title" style="color:#38bdf8">🌙 Nocna</div><div class="hdc-sc-val" style="color:#38bdf8;font-size:22px">${dailyNight} kWh</div></div>` : ''}
     </div>
+    ${(m.tauron_amiplus_daily || m.tauron_amiplus_monthly || m.tauron_amiplus_balance) ? `
+    <div class="hdc-st">🌐 Mój Tauron · AMIplus online</div>
+    <div class="hdc-g3" style="margin-bottom:12px">
+      ${m.tauron_amiplus_daily   ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_amiplus_daily}"   data-label="AMIplus · Dziś"><div class="hdc-sc-lbl">Dziś</div><div class="hdc-sc-val" style="color:#fbbf24">${amiplusDaily} kWh</div><div class="hdc-sc-sub">portal AMIplus</div></div>` : ''}
+      ${m.tauron_amiplus_monthly ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_amiplus_monthly}" data-label="AMIplus · Miesiąc"><div class="hdc-sc-lbl">Miesiąc</div><div class="hdc-sc-val" style="color:#4ade80">${amiplusMonthly} kWh</div><div class="hdc-sc-sub">portal AMIplus</div></div>` : ''}
+      ${m.tauron_amiplus_balance ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_amiplus_balance}" data-label="Należności Tauron"><div class="hdc-sc-lbl">Należności</div><div class="hdc-sc-val" style="color:${amiplusBalColor}">${amiplusBalance} PLN</div>${amiplusBalDue ? `<div class="hdc-sc-sub">termin: ${amiplusBalDue}</div>` : ''}</div>` : ''}
+    </div>` : ''}
     <div class="hdc-st">🔵 myORLEN · Gaz${orlenTariff ? ` · <span style="color:#94a3b8;font-size:11px">${orlenTariff}</span>` : ""}</div>
     <div class="hdc-g3" style="margin-bottom:6px">
       ${m.orlen_meter   ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.orlen_meter}"   data-label="Odczyt licznika"><div class="hdc-sc-lbl">Odczyt licznika</div><div class="hdc-sc-val" style="color:#a78bfa;font-size:15px">${orlenMeter} m³</div>${orlenReadDate ? `<div class="hdc-sc-sub">${orlenReadDate}${orlenReadType ? " · " + orlenReadType : ""}</div>` : ""}</div>` : ''}
