@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.1] - 2026-04-18
+
+### Fixed
+- Zakładka **🏠 Home** · avatar osoby znikał po chwili i wracała litera — `_updateOsobyLive` nie miała logiki `entity_picture` i nadpisywała kafelek przy każdej aktualizacji hass
+- Modal historii · wykres był pusty gdy encja nie zmieniała stanu przez cały okres (np. `binary_sensor` zawsze `on`) — history API zwracało 1 punkt, Chart.js nie rysował linii; dodano syntetyczny punkt `{x: teraz, y: ostatnia_wartość}`
+- Zakładka **🚗 Auta** · mapa Leaflet nie respektowała `default_zoom` w Shadow DOM — inicjowała się przed poznaniem rozmiaru kontenera; dodano `window.dispatchEvent(new Event('resize'))` po 300 ms
+
 ## [1.16.0] - 2026-04-18
 
 ### Changed
