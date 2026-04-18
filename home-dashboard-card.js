@@ -944,9 +944,9 @@ function renderKamery(hass, cfg) {
   const focusCam = channels[0] || {};
   const focusHtml = `
     <div class="hdc-cam-focus">
-      <div class="hdc-camfeed" style="aspect-ratio:16/9;max-height:480px">
+      <div class="hdc-camfeed" style="aspect-ratio:16/9;max-height:480px;position:relative;overflow:hidden">
         ${focusCam.entity
-          ? `<img id="hdc-focus-img" src="${camUrl(focusCam.entity)}" data-entity="${focusCam.entity}" alt="${focusCam.name}">`
+          ? `<ha-camera-stream id="hdc-focus-stream" data-entity="${focusCam.entity}" muted allow-exoplayer style="width:100%;height:100%;display:block"></ha-camera-stream>`
           : `<div class="hdc-cam-placeholder">📹<span>${focusCam.name||'Brak kamery'}</span></div>`
         }
       </div>
@@ -1361,7 +1361,6 @@ class HomeDashboardCard extends HTMLElement {
     this._activeTab = null;
     this._clockInterval = null;
     this._camRefreshInterval = null;
-    this._camFocusInterval = null;
     this._built = false;
     this._tabChanged = false;
     this._pendingInputs = {};
@@ -1485,6 +1484,7 @@ class HomeDashboardCard extends HTMLElement {
       if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
       if (this._activeTab === 'vaillant') setTimeout(() => this._initVaillantCharts(), 0);
       if (this._activeTab === 'tplink') setTimeout(() => this._initSpeedTestChart(), 0);
+      if (this._activeTab === 'kamery') setTimeout(() => this._initCameraStream(), 0);
     } catch(err) {
       pane.innerHTML = `<div style="color:#f87171;font-size:12px;padding:12px">Błąd renderowania: ${err.message}</div>`;
       console.error('[home-dashboard-card]', err);
@@ -2293,14 +2293,14 @@ class HomeDashboardCard extends HTMLElement {
     const ch = channels[idx];
     if (!ch) return;
 
-    const focusImg  = this.shadowRoot.getElementById('hdc-focus-img');
-    const focusName = this.shadowRoot.getElementById('hdc-focus-name');
-    const focusLbl  = this.shadowRoot.getElementById('hdc-focus-label');
+    const focusStream = this.shadowRoot.getElementById('hdc-focus-stream');
+    const focusName   = this.shadowRoot.getElementById('hdc-focus-name');
+    const focusLbl    = this.shadowRoot.getElementById('hdc-focus-label');
 
-    if (focusImg) {
-      const token = this._hass.states[ch.entity]?.attributes?.access_token || '';
-      focusImg.src = `/api/camera_proxy/${ch.entity}?token=${token}&t=${Date.now()}`;
-      focusImg.dataset.entity = ch.entity;
+    if (focusStream && this._hass.states[ch.entity]) {
+      focusStream.dataset.entity = ch.entity;
+      focusStream.hass    = this._hass;
+      focusStream.stateObj = this._hass.states[ch.entity];
     }
     if (focusName) focusName.textContent = `${ch.label} · ${ch.name}`;
     if (focusLbl)  focusLbl.textContent  = `${ch.label} · ${ch.name}`;
@@ -2670,16 +2670,24 @@ class HomeDashboardCard extends HTMLElement {
     this._clockInterval = setInterval(tick, 1000);
   }
 
+  _initCameraStream() {
+    const channels = (this._config.cameras || {}).channels || [];
+    const focusCam = channels[0];
+    if (!focusCam?.entity) return;
+    const streamEl = this.shadowRoot.getElementById('hdc-focus-stream');
+    if (!streamEl) return;
+    const init = () => {
+      streamEl.hass    = this._hass;
+      streamEl.stateObj = this._hass.states[focusCam.entity];
+    };
+    if (customElements.get('ha-camera-stream')) {
+      init();
+    } else {
+      customElements.whenDefined('ha-camera-stream').then(init);
+    }
+  }
+
   _startCamRefresh() {
-    this._camFocusInterval = setInterval(() => {
-      if (this._activeTab !== 'kamery') return;
-      const focus = this.shadowRoot.getElementById('hdc-focus-img');
-      if (!focus) return;
-      const entity = focus.dataset.entity;
-      if (!entity) return;
-      const token = this._hass?.states[entity]?.attributes?.access_token || '';
-      focus.src = `/api/camera_proxy/${entity}?token=${token}&t=${Date.now()}`;
-    }, 1000);
     this._camRefreshInterval = setInterval(() => {
       if (this._activeTab !== 'kamery') return;
       this.shadowRoot.querySelectorAll('.hdc-cam-thumb').forEach(img => {
@@ -2732,7 +2740,6 @@ class HomeDashboardCard extends HTMLElement {
 
   disconnectedCallback() {
     clearInterval(this._clockInterval);
-    clearInterval(this._camFocusInterval);
     clearInterval(this._camRefreshInterval);
     clearInterval(this._gateTimerInterval);
   }
