@@ -2630,21 +2630,30 @@ class HomeDashboardCard extends HTMLElement {
     if (loading) loading.style.display = 'none';
     if (!canvas) return;
 
+    const isBinary = points.length > 0 && points.every(p => p.y === 0 || p.y === 1);
     const drawChart = () => {
       if (canvas._hdcChart) canvas._hdcChart.destroy();
       canvas._hdcChart = new Chart(canvas, {
         type: 'line',
-        data: { datasets: [{ data: points, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,.08)',
-          borderWidth: 1.5, pointRadius: 0, tension: 0.3, fill: true }] },
+        data: { datasets: [{ data: points,
+          borderColor: isBinary ? '#4ade80' : '#38bdf8',
+          backgroundColor: isBinary ? 'rgba(74,222,128,.15)' : 'rgba(56,189,248,.08)',
+          borderWidth: isBinary ? 2 : 1.5,
+          pointRadius: 0,
+          stepped: isBinary ? 'before' : false,
+          tension: isBinary ? 0 : 0.3,
+          fill: true }] },
         options: {
           responsive: true, maintainAspectRatio: false, animation: false,
           plugins: { legend: { display: false }, tooltip: {
-            callbacks: { label: ctx => `${ctx.parsed.y}` }
+            callbacks: { label: ctx => isBinary ? (ctx.parsed.y === 1 ? 'on' : 'off') : `${ctx.parsed.y}` }
           }},
           scales: {
             x: { type: 'time', time: { unit: days <= 14 ? 'day' : 'week' },
               ticks: { color: '#475569', maxTicksLimit: 8 }, grid: { color: 'rgba(255,255,255,.04)' } },
-            y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,.04)' } }
+            y: isBinary
+              ? { min: -0.1, max: 1.5, ticks: { color: '#94a3b8', callback: v => v === 1 ? 'on' : v === 0 ? 'off' : '' }, grid: { color: 'rgba(255,255,255,.04)' } }
+              : { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,.04)' } }
           }
         }
       });
