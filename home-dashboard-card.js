@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.15.1
+//  home-dashboard-card.js  v1.15.2
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -2606,13 +2606,21 @@ class HomeDashboardCard extends HTMLElement {
     const start = new Date(end.getTime() - days * 24 * 3600 * 1000);
     let points = [];
     try {
-      const raw = await this._hass.callApi('GET',
-        `history/period/${start.toISOString()}?filter_entity_id=${entity}&end_time=${end.toISOString()}&minimal_response=true&no_attributes=true`);
+      const isClimate = entity.startsWith('climate.');
+      const url = isClimate
+        ? `history/period/${start.toISOString()}?filter_entity_id=${entity}&end_time=${end.toISOString()}`
+        : `history/period/${start.toISOString()}?filter_entity_id=${entity}&end_time=${end.toISOString()}&minimal_response=true&no_attributes=true`;
+      const raw = await this._hass.callApi('GET', url);
       if (raw && raw[0]) {
         points = raw[0]
           .map(p => {
-            const st = p.state;
-            const y = st === 'on' ? 1 : st === 'off' ? 0 : parseFloat(st);
+            let y;
+            if (isClimate) {
+              y = p.attributes?.current_temperature ?? NaN;
+            } else {
+              const st = p.state;
+              y = st === 'on' ? 1 : st === 'off' ? 0 : parseFloat(st);
+            }
             return { x: new Date(p.last_changed || p.last_updated), y };
           })
           .filter(p => !isNaN(p.y) && p.x instanceof Date && !isNaN(p.x));

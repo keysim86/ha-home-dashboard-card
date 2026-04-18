@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.15.2] - 2026-04-18
+
+### Fixed
+- Zakładka **🔥 Vaillant** · modal historii dla encji `climate.*` (np. `climate.ogrzewanie`) wyświetlał pusty wykres — stany klimatu (`heat`, `off`) są nienumeryczne i były filtrowane. Dla encji `climate.*` historia jest teraz pobierana z atrybutami, a do wykresu używany jest atrybut `current_temperature`
+
 ## [1.15.1] - 2026-04-18
 
 ### Fixed
