@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- Zakładka **🏠 Home** · kafelek osoby: jeśli encja `person.*` ma zdjęcie profilowe (`entity_picture`), wyświetla avatar zamiast litery inicjału; fallback na literę gdy brak zdjęcia
+
 ## [1.15.2] - 2026-04-18
 
 ### Fixed
