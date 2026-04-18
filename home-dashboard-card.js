@@ -2633,6 +2633,7 @@ class HomeDashboardCard extends HTMLElement {
             return { x: new Date(p.last_changed || p.last_updated), y };
           })
           .filter(p => !isNaN(p.y) && p.x instanceof Date && !isNaN(p.x));
+        if (points.length > 0) points.push({ x: end, y: points[points.length - 1].y });
       }
     } catch(e) { console.warn('[hdc] history fetch error', e); }
 
