@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.18.1] - 2026-04-19
+
+### Fixed
+- Zakładka **⚡ Metering** · sekcja AMIplus online — etykieta zużycia dziennego zmieniona z "Dziś" na "Wczoraj" (Tauron raportuje dane za poprzedni dzień)
+
 ## [1.18.0] - 2026-04-19
 
 ### Added
