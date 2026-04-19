@@ -1390,6 +1390,65 @@ function renderKomfort(hass, cfg) {
 }
 
 // ============================================================
+//  KOSIARKA
+// ============================================================
+
+const MOWER_STATE_LABEL = {
+  charging_completed: 'Naładowany', charging: 'Ładowanie', mowing: 'Koszenie',
+  docked: 'W stacji', paused: 'Pauza', returning: 'Powrót', idle: 'Gotowy',
+  standby: 'Czuwanie', error: 'Błąd', unknown: '—',
+};
+const MOWER_STATE_COLOR = {
+  charging_completed: '#38bdf8', charging: '#38bdf8', mowing: '#4ade80',
+  docked: '#38bdf8', paused: '#fbbf24', returning: '#a78bfa', error: '#f87171',
+};
+
+function renderKosiarka(hass, cfg) {
+  const m = cfg.mower || {};
+  const entity = m.entity || '';
+  const camEntity = m.camera || '';
+  const st = hass.states[entity] || {};
+  const state = st.state || 'unknown';
+  const attr = st.attributes || {};
+  const mowerState = attr.mower_state || state;
+  const stateLabel = MOWER_STATE_LABEL[mowerState] || mowerState.replace(/_/g, ' ');
+  const stateColor = MOWER_STATE_COLOR[mowerState] || '#94a3b8';
+  const isDocked = state === 'docked';
+  const isMowing = state === 'mowing';
+  const isPaused = state === 'paused';
+  const camToken = sa(hass, camEntity, 'access_token') || '';
+  const camSrc = camEntity && camToken ? `/api/camera_proxy/${camEntity}?token=${camToken}&t=${Date.now()}` : '';
+  const btnStyle = (active) => active
+    ? 'flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#f1f5f9;font-size:13px;padding:10px 6px;cursor:pointer;transition:background .15s'
+    : 'flex:1;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:10px;color:#334155;font-size:13px;padding:10px 6px;cursor:default';
+  const btnPrimary = 'flex:1;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);border-radius:10px;color:#4ade80;font-size:13px;padding:10px 6px;cursor:pointer;transition:background .15s';
+  return `
+    ${camSrc ? `
+    <div class="hdc-st">Mapa</div>
+    <div style="background:#0f172a;border-radius:12px;overflow:hidden;margin-bottom:12px;min-height:120px;display:flex;align-items:center;justify-content:center">
+      <img id="hdc-mower-map" src="${camSrc}" style="width:100%;display:block;max-height:420px;object-fit:contain" onerror="this.style.opacity='.15'">
+    </div>` : ''}
+    <div class="hdc-st">Status</div>
+    <div class="hdc-g3" style="margin-bottom:10px">
+      <div class="hdc-sc"><div class="hdc-sc-lbl">Stan</div><div class="hdc-sc-val" style="color:${stateColor};font-size:15px">${stateLabel}</div></div>
+      ${m.battery ? `<div class="hdc-sc"><div class="hdc-sc-lbl">Bateria</div><div class="hdc-sc-val" style="color:#4ade80">${sn(hass, m.battery, 0)} %</div></div>` : ''}
+      ${m.charging_status ? `<div class="hdc-sc"><div class="hdc-sc-lbl">Ładowanie</div><div class="hdc-sc-val" style="font-size:13px">${sv(hass, m.charging_status, '—')}</div></div>` : ''}
+    </div>
+    <div class="hdc-st">Sterowanie</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button style="${isDocked||isPaused ? btnPrimary : btnStyle(false)}" ${isDocked||isPaused ? `data-action="mower_start" data-entity="${entity}"` : ''}>▶ Start</button>
+      <button style="${isMowing ? btnStyle(true) : btnStyle(false)}" ${isMowing ? `data-action="mower_pause" data-entity="${entity}"` : ''}>⏸ Pauza</button>
+      <button style="${isMowing||isPaused ? btnStyle(true) : btnStyle(false)}" ${isMowing||isPaused ? `data-action="mower_dock" data-entity="${entity}"` : ''}>⏏ Do stacji</button>
+    </div>
+    <div class="hdc-st">Statystyki</div>
+    <div class="hdc-g3">
+      <div class="hdc-sc"><div class="hdc-sc-lbl">Sesje</div><div class="hdc-sc-val">${attr.cleaning_count ?? '—'} x</div></div>
+      <div class="hdc-sc"><div class="hdc-sc-lbl">Łączna pow.</div><div class="hdc-sc-val" style="font-size:14px">${attr.total_cleaned_area ?? '—'} m²</div></div>
+      <div class="hdc-sc"><div class="hdc-sc-lbl">Łączny czas</div><div class="hdc-sc-val" style="font-size:14px">${attr.total_cleaning_time ?? '—'} min</div></div>
+    </div>`;
+}
+
+// ============================================================
 //  MAIN ELEMENT CLASS
 // ============================================================
 
@@ -1405,6 +1464,7 @@ const ALL_TABS = [
   { id: 'alerty',    label: '🔔 Alerty',    render: renderAlerty, badge: true },
   { id: 'przelaczniki', label: '💡 Przełączniki', render: renderPrzelaczniki },
   { id: 'klimat',       label: '🌡️ Klimat',      render: renderKomfort },
+  { id: 'kosiarka',     label: '🌿 Kosiarka',    render: renderKosiarka },
 ];
 
 class HomeDashboardCard extends HTMLElement {
@@ -1505,6 +1565,10 @@ class HomeDashboardCard extends HTMLElement {
     // Auto-dodaj komfort jeśli comfort.rooms jest skonfigurowane
     if (cfg.tabs && (cfg.comfort || {}).rooms?.length && !allowed.includes('klimat')) {
       allowed.push('klimat');
+    }
+    // Auto-dodaj kosiarka jeśli mower.entity skonfigurowane
+    if (cfg.tabs && (cfg.mower || {}).entity && !allowed.includes('kosiarka')) {
+      allowed.push('kosiarka');
     }
     // Zachowaj kolejność z YAML
     const tabMap = Object.fromEntries(ALL_TABS.map(t => [t.id, t]));
@@ -2340,6 +2404,15 @@ class HomeDashboardCard extends HTMLElement {
         this._hass.callService('mqtt', 'publish', { topic: vCfg2.sf_mode_topic + '/set', payload: 'auto' });
       }
     }
+    if (action === 'mower_start') {
+      this._hass.callService('lawn_mower', 'start_mowing', { entity_id: entity });
+    }
+    if (action === 'mower_pause') {
+      this._hass.callService('lawn_mower', 'pause', { entity_id: entity });
+    }
+    if (action === 'mower_dock') {
+      this._hass.callService('lawn_mower', 'dock', { entity_id: entity });
+    }
     if (action === 'lock_toggle') {
       const lockState = this._hass.states[entity];
       if (!lockState) return;
@@ -2814,13 +2887,22 @@ class HomeDashboardCard extends HTMLElement {
 
   _startCamRefresh() {
     this._camRefreshInterval = setInterval(() => {
-      if (this._activeTab !== 'kamery') return;
-      this.shadowRoot.querySelectorAll('.hdc-cam-thumb').forEach(img => {
-        const entity = img.dataset.entity;
-        if (!entity) return;
-        const token = this._hass?.states[entity]?.attributes?.access_token || '';
-        img.src = `/api/camera_proxy/${entity}?token=${token}&t=${Date.now()}`;
-      });
+      if (this._activeTab === 'kamery') {
+        this.shadowRoot.querySelectorAll('.hdc-cam-thumb').forEach(img => {
+          const entity = img.dataset.entity;
+          if (!entity) return;
+          const token = this._hass?.states[entity]?.attributes?.access_token || '';
+          img.src = `/api/camera_proxy/${entity}?token=${token}&t=${Date.now()}`;
+        });
+      }
+      if (this._activeTab === 'kosiarka') {
+        const img = this.shadowRoot.getElementById('hdc-mower-map');
+        const camEntity = (this._config?.mower || {}).camera;
+        if (img && camEntity) {
+          const token = this._hass?.states[camEntity]?.attributes?.access_token || '';
+          if (token) img.src = `/api/camera_proxy/${camEntity}?token=${token}&t=${Date.now()}`;
+        }
+      }
     }, 3000);
   }
 
