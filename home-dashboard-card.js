@@ -163,6 +163,18 @@ const STYLES = `
 .hdc-sw-timer{font-size:9px;color:#475569;margin-top:2px;font-variant-numeric:tabular-nums;display:none}
 .hdc-sw-tile.on .hdc-sw-timer{display:block;color:#38bdf8}
 .hdc-sw-tile.on.light .hdc-sw-timer{color:#fbbf24}
+.hdc-lz4{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px 13px}
+.hdc-lz4-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.hdc-lz4-name{font-size:11px;font-weight:600;color:#94a3b8}
+.hdc-lz4-batt{font-size:10px;color:#64748b}
+.hdc-lz4-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:opacity .15s;user-select:none}
+.hdc-lz4-row:last-child{border-bottom:none}
+.hdc-lz4-row:hover{opacity:.75}
+.hdc-lz4-act{font-size:9px;font-weight:700;color:#475569;width:22px;flex-shrink:0;text-align:center;background:rgba(255,255,255,.06);border-radius:4px;padding:1px 0}
+.hdc-lz4-dev{font-size:11px;color:#94a3b8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdc-lz4-st{font-size:10px;font-weight:600;padding:1px 7px;border-radius:5px;flex-shrink:0}
+.hdc-lz4-st.on{background:rgba(74,222,128,.15);color:#4ade80}
+.hdc-lz4-st.off{background:rgba(100,116,139,.1);color:#64748b}
 .hdc-comfort-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
 .hdc-comfort-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:12px 14px;position:relative}
 .hdc-comfort-room{font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -1178,7 +1190,7 @@ function renderPrzelaczniki(hass, cfg) {
   const groups = (cfg.switches || {}).groups || [];
   if (!groups.length) return `<div style="color:#475569;font-size:12px;padding:12px">Brak konfiguracji przełączników.<br>Dodaj sekcję <code>switches.groups</code> w konfiguracji karty.</div>`;
 
-  const renderTiles = (group) => (group.entities || []).map(item => {
+  const renderSwTile = (item, group) => {
     const st = hass.states[item.entity];
     const isOn = st ? st.state === 'on' : false;
     const isLight = item.entity.startsWith('light.');
@@ -1186,7 +1198,6 @@ function renderPrzelaczniki(hass, cfg) {
     const defaultIco = isLight ? (isOn ? '💡' : '🔆') : domain === 'switch' ? '🔌' : domain === 'fan' ? '💨' : '⚙️';
     const ico = item.icon || defaultIco;
     const name = item.name || st?.attributes?.friendly_name || item.entity;
-    const stateLabel = isOn ? 'Włączone' : 'Wyłączone';
     const typeClass = isLight ? 'light' : '';
     const swId = `hdc-sw-${item.entity.replace('.', '-')}`;
     const timerHtml = group.show_timer ? `<div class="hdc-sw-timer">${isOn && st?.last_changed ? formatGateElapsed(st.last_changed) : ''}</div>` : '';
@@ -1194,33 +1205,68 @@ function renderPrzelaczniki(hass, cfg) {
       <div class="hdc-sw-tile-ico">${ico}</div>
       <div class="hdc-sw-tile-info">
         <div class="hdc-sw-tile-name">${name}</div>
-        <div class="hdc-sw-tile-state">${stateLabel}</div>
+        <div class="hdc-sw-tile-state">${isOn ? 'Włączone' : 'Wyłączone'}</div>
         ${timerHtml}
       </div>
       <div class="hdc-sw-dot"></div>
     </div>`;
-  }).join('');
+  };
+
+  const renderLZ4Tile = (item) => {
+    const battSt = item.battery ? hass.states[item.battery] : null;
+    const battVal = battSt ? Math.round(parseFloat(battSt.state)) : NaN;
+    const battColor = isNaN(battVal) ? '#475569' : battVal > 50 ? '#4ade80' : battVal > 20 ? '#fbbf24' : '#f87171';
+    const battHtml = !isNaN(battVal) ? `<span style="color:${battColor}">${battIcon(battVal)} ${battVal}%</span>` : '';
+    const battId = item.battery ? `hdc-lz4-batt-${item.battery.replace(/\./g, '-')}` : '';
+    const actions = [
+      { label: '1×', ...(item.single || {}) },
+      { label: '2×', ...(item.double || {}) },
+      { label: '⏸',  ...(item.hold   || {}) },
+    ].filter(a => a.entity);
+    const rows = actions.map(a => {
+      const st = hass.states[a.entity];
+      const isOn = st?.state === 'on';
+      const devName = a.name || st?.attributes?.friendly_name || a.entity;
+      return `<div class="hdc-lz4-row" data-action="toggle" data-entity="${a.entity}">
+        <span class="hdc-lz4-act">${a.label}</span>
+        <span class="hdc-lz4-dev">${devName}</span>
+        <span id="hdc-lz4-st-${a.entity.replace(/\./g, '-')}" class="hdc-lz4-st ${isOn ? 'on' : 'off'}">${isOn ? 'Wł.' : 'Wył.'}</span>
+      </div>`;
+    }).join('');
+    return `<div class="hdc-lz4">
+      <div class="hdc-lz4-head">
+        <span class="hdc-lz4-name">🔘 ${item.name || 'LZ4'}</span>
+        ${battId ? `<span id="${battId}" class="hdc-lz4-batt">${battHtml}</span>` : ''}
+      </div>
+      ${rows}
+    </div>`;
+  };
+
+  const renderGroupHtml = (group, marginBottom = '14px') => {
+    const regular = (group.entities || []).filter(e => e.type !== 'lz4');
+    const lz4s    = (group.entities || []).filter(e => e.type === 'lz4');
+    const regHtml = regular.map(e => renderSwTile(e, group)).join('');
+    const lz4Html = lz4s.map(e => renderLZ4Tile(e)).join('');
+    return (regHtml ? `<div class="hdc-gaa" style="margin-bottom:${lz4s.length ? '8px' : marginBottom}">${regHtml}</div>` : '')
+         + (lz4Html ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:${marginBottom}">${lz4Html}</div>` : '');
+  };
 
   // Detect room-based grouping (any group with 'room' field)
   const useRooms = groups.some(g => g.room);
 
   if (!useRooms) {
-    // Flat grouping by type (backward compatible)
     return groups.map(group =>
       `<div class="hdc-st">${group.icon ? group.icon + ' ' : ''}${group.name || 'Grupa'}</div>
-      <div class="hdc-gaa" style="margin-bottom:14px">${renderTiles(group)}</div>`
+      ${renderGroupHtml(group)}`
     ).join('');
   }
 
-  // Room-first grouping: collect unique rooms (preserve order of first appearance)
+  // Room-first grouping
   const roomOrder = [];
   const roomGroups = new Map();
   groups.forEach(group => {
     const room = group.room || '—';
-    if (!roomGroups.has(room)) {
-      roomOrder.push(room);
-      roomGroups.set(room, []);
-    }
+    if (!roomGroups.has(room)) { roomOrder.push(room); roomGroups.set(room, []); }
     roomGroups.get(room).push(group);
   });
 
@@ -1228,12 +1274,10 @@ function renderPrzelaczniki(hass, cfg) {
     const roomGroupList = roomGroups.get(room);
     const multiType = roomGroupList.length > 1;
     const innerHtml = roomGroupList.map(group => {
-      const tiles = renderTiles(group);
-      if (!tiles) return '';
-      const subHeader = multiType
-        ? `<div class="hdc-st-sub">${group.icon ? group.icon + ' ' : ''}${group.name || ''}</div>`
-        : '';
-      return subHeader + `<div class="hdc-gaa" style="margin-bottom:${multiType ? '10px' : '14px'}">${tiles}</div>`;
+      const html = renderGroupHtml(group, multiType ? '10px' : '14px');
+      if (!html) return '';
+      const subHeader = multiType ? `<div class="hdc-st-sub">${group.icon ? group.icon + ' ' : ''}${group.name || ''}</div>` : '';
+      return subHeader + html;
     }).join('');
     return `<div class="hdc-st">${room}</div>${innerHtml}`;
   }).join('');
@@ -2373,6 +2417,29 @@ class HomeDashboardCard extends HTMLElement {
     const groups = (this._config.switches || {}).groups || [];
     groups.forEach(group => {
       (group.entities || []).forEach(item => {
+        if (item.type === 'lz4') {
+          // Bateria
+          if (item.battery) {
+            const battEl = this.shadowRoot.getElementById(`hdc-lz4-batt-${item.battery.replace(/\./g, '-')}`);
+            if (battEl) {
+              const bst = hass.states[item.battery];
+              const val = bst ? Math.round(parseFloat(bst.state)) : NaN;
+              const color = isNaN(val) ? '#475569' : val > 50 ? '#4ade80' : val > 20 ? '#fbbf24' : '#f87171';
+              battEl.innerHTML = isNaN(val) ? '' : `<span style="color:${color}">${battIcon(val)} ${val}%</span>`;
+            }
+          }
+          // Stany urządzeń
+          ['single', 'double', 'hold'].forEach(key => {
+            const action = item[key];
+            if (!action?.entity) return;
+            const stEl = this.shadowRoot.getElementById(`hdc-lz4-st-${action.entity.replace(/\./g, '-')}`);
+            if (!stEl) return;
+            const isOn = hass.states[action.entity]?.state === 'on';
+            stEl.className = `hdc-lz4-st ${isOn ? 'on' : 'off'}`;
+            stEl.textContent = isOn ? 'Wł.' : 'Wył.';
+          });
+          return;
+        }
         const tile = this.shadowRoot.getElementById(`hdc-sw-${item.entity.replace('.', '-')}`);
         if (!tile) return;
         const st = hass.states[item.entity];
