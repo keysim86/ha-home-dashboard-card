@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.18.0] - 2026-04-19
+## [Unreleased]
 
 ### Added
 - Zakładka **🔥 Vaillant** · nowa sekcja **Roczne zużycie gazu** — wykres słupkowy z agregacją po roku (te same dane co wykres miesięczny), podsumowanie: ten rok (kolor pomarańczowy) vs poprzedni rok (kolor niebieski)
