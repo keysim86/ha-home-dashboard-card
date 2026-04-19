@@ -1,9 +1,9 @@
 # Changelog
 
-## [Unreleased]
+## [1.17.0] - 2026-04-19
 
 ### Added
-- Zakładka **💡 Przełączniki** · nowy typ kafelka `type: lz4` — pilot z baterią sterujący do 3 urządzeń; wyświetla poziom baterii pilota oraz stan (Wł./Wył.) każdego urządzenia; akcje `single`, `double`, `hold` są konfigurowalne i klikalne (toggle)
+- Zakładka **💡 Przełączniki** · nowy typ kafelka `type: lz4` — pilot z baterią sterujący do 3 urządzeń; wyświetla poziom baterii pilota oraz stan (Wł./Wył.) każdego urządzenia; akcje `single`, `double`, `hold` są konfigurowalne i klikalne (toggle); można mieszać z normalnymi encjami w tej samej grupie/pokoju
 
 ## [1.16.1] - 2026-04-18
 
