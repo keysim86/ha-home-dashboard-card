@@ -773,7 +773,7 @@ function renderMetering(hass, cfg) {
     ${(m.tauron_amiplus_daily || m.tauron_amiplus_monthly || m.tauron_amiplus_balance) ? `
     <div class="hdc-st">🌐 Mój Tauron · AMIplus online</div>
     <div class="hdc-g3" style="margin-bottom:12px">
-      ${m.tauron_amiplus_daily   ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_amiplus_daily}"   data-label="AMIplus · Dziś"><div class="hdc-sc-lbl">Dziś</div><div class="hdc-sc-val" style="color:#fbbf24">${amiplusDaily} kWh</div><div class="hdc-sc-sub">portal AMIplus</div></div>` : ''}
+      ${m.tauron_amiplus_daily   ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_amiplus_daily}"   data-label="AMIplus · Wczoraj"><div class="hdc-sc-lbl">Wczoraj</div><div class="hdc-sc-val" style="color:#fbbf24">${amiplusDaily} kWh</div><div class="hdc-sc-sub">portal AMIplus</div></div>` : ''}
       ${m.tauron_amiplus_monthly ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_amiplus_monthly}" data-label="AMIplus · Miesiąc"><div class="hdc-sc-lbl">Miesiąc</div><div class="hdc-sc-val" style="color:#4ade80">${amiplusMonthly} kWh</div><div class="hdc-sc-sub">portal AMIplus</div></div>` : ''}
       ${m.tauron_amiplus_balance ? `<div class="hdc-sc" style="cursor:pointer" data-action="sensor_history" data-entity="${m.tauron_amiplus_balance}" data-label="Należności Tauron"><div class="hdc-sc-lbl">Należności</div><div class="hdc-sc-val" style="color:${amiplusBalColor}">${amiplusBalance} PLN</div>${amiplusBalDue ? `<div class="hdc-sc-sub">termin: ${amiplusBalDue}</div>` : ''}</div>` : ''}
     </div>` : ''}
