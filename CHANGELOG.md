@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-04-19
+
+### Added
+- Nowa zakładka **🌿 Kosiarka** — mapa z kamery (odświeżana co 3s), status kosiarski z kolorami, przyciski sterowania (Start/Pauza/Do stacji aktywne zależnie od stanu), statystyki (sesje, powierzchnia, czas); konfiguracja przez sekcję `mower:` w YAML; zakładka dodawana automatycznie gdy `mower.entity` jest ustawione
+
 ## [1.18.1] - 2026-04-19
 
 ### Fixed
