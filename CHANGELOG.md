@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.19.1] - 2026-04-19
+
+### Fixed
+- Zakładka **🌿 Kosiarka** — usunięto mruganie całej zakładki przy aktualizacjach hass; stan/przyciski/bateria aktualizowane in-place przez `_updateMowerLive()`, obraz mapy odświeżany osobno
+- ID zakładki zmienione z `kosiarka` na `mower` — zgodne z konfiguracją YAML użytkownika; kolejność zakładek z `tabs:` respektowana poprawnie
+
 ## [1.19.0] - 2026-04-19
 
 ### Added
