@@ -1418,10 +1418,10 @@ function renderKosiarka(hass, cfg) {
   const isPaused = state === 'paused';
   const camToken = sa(hass, camEntity, 'access_token') || '';
   const camSrc = camEntity && camToken ? `/api/camera_proxy/${camEntity}?token=${camToken}&t=${Date.now()}` : '';
-  const btnStyle = (active) => active
-    ? 'flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#f1f5f9;font-size:13px;padding:10px 6px;cursor:pointer;transition:background .15s'
-    : 'flex:1;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:10px;color:#334155;font-size:13px;padding:10px 6px;cursor:default';
-  const btnPrimary = 'flex:1;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);border-radius:10px;color:#4ade80;font-size:13px;padding:10px 6px;cursor:pointer;transition:background .15s';
+  const btnBase = 'flex:1;border-radius:10px;font-size:13px;padding:10px 6px;transition:background .15s';
+  const btnActive  = `${btnBase};background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#f1f5f9;cursor:pointer`;
+  const btnInactive= `${btnBase};background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);color:#334155;cursor:default`;
+  const btnPrimary = `${btnBase};background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);color:#4ade80;cursor:pointer`;
   return `
     ${camSrc ? `
     <div class="hdc-st">Mapa</div>
@@ -1430,15 +1430,15 @@ function renderKosiarka(hass, cfg) {
     </div>` : ''}
     <div class="hdc-st">Status</div>
     <div class="hdc-g3" style="margin-bottom:10px">
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Stan</div><div class="hdc-sc-val" style="color:${stateColor};font-size:15px">${stateLabel}</div></div>
-      ${m.battery ? `<div class="hdc-sc"><div class="hdc-sc-lbl">Bateria</div><div class="hdc-sc-val" style="color:#4ade80">${sn(hass, m.battery, 0)} %</div></div>` : ''}
-      ${m.charging_status ? `<div class="hdc-sc"><div class="hdc-sc-lbl">Ładowanie</div><div class="hdc-sc-val" style="font-size:13px">${sv(hass, m.charging_status, '—')}</div></div>` : ''}
+      <div class="hdc-sc"><div class="hdc-sc-lbl">Stan</div><div id="hdc-mow-state" class="hdc-sc-val" style="color:${stateColor};font-size:15px">${stateLabel}</div></div>
+      ${m.battery ? `<div class="hdc-sc"><div class="hdc-sc-lbl">Bateria</div><div id="hdc-mow-bat" class="hdc-sc-val" style="color:#4ade80">${sn(hass, m.battery, 0)} %</div></div>` : ''}
+      ${m.charging_status ? `<div class="hdc-sc"><div class="hdc-sc-lbl">Ładowanie</div><div id="hdc-mow-chg" class="hdc-sc-val" style="font-size:13px">${sv(hass, m.charging_status, '—')}</div></div>` : ''}
     </div>
     <div class="hdc-st">Sterowanie</div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
-      <button style="${isDocked||isPaused ? btnPrimary : btnStyle(false)}" ${isDocked||isPaused ? `data-action="mower_start" data-entity="${entity}"` : ''}>▶ Start</button>
-      <button style="${isMowing ? btnStyle(true) : btnStyle(false)}" ${isMowing ? `data-action="mower_pause" data-entity="${entity}"` : ''}>⏸ Pauza</button>
-      <button style="${isMowing||isPaused ? btnStyle(true) : btnStyle(false)}" ${isMowing||isPaused ? `data-action="mower_dock" data-entity="${entity}"` : ''}>⏏ Do stacji</button>
+      <button id="hdc-mow-btn-start" style="${isDocked||isPaused ? btnPrimary : btnInactive}" ${isDocked||isPaused ? `data-action="mower_start" data-entity="${entity}"` : ''}>▶ Start</button>
+      <button id="hdc-mow-btn-pause" style="${isMowing ? btnActive : btnInactive}" ${isMowing ? `data-action="mower_pause" data-entity="${entity}"` : ''}>⏸ Pauza</button>
+      <button id="hdc-mow-btn-dock"  style="${isMowing||isPaused ? btnActive : btnInactive}" ${isMowing||isPaused ? `data-action="mower_dock" data-entity="${entity}"` : ''}>⏏ Do stacji</button>
     </div>
     <div class="hdc-st">Statystyki</div>
     <div class="hdc-g3">
@@ -1464,7 +1464,7 @@ const ALL_TABS = [
   { id: 'alerty',    label: '🔔 Alerty',    render: renderAlerty, badge: true },
   { id: 'przelaczniki', label: '💡 Przełączniki', render: renderPrzelaczniki },
   { id: 'klimat',       label: '🌡️ Klimat',      render: renderKomfort },
-  { id: 'kosiarka',     label: '🌿 Kosiarka',    render: renderKosiarka },
+  { id: 'mower',        label: '🌿 Kosiarka',    render: renderKosiarka },
 ];
 
 class HomeDashboardCard extends HTMLElement {
@@ -1567,8 +1567,8 @@ class HomeDashboardCard extends HTMLElement {
       allowed.push('klimat');
     }
     // Auto-dodaj kosiarka jeśli mower.entity skonfigurowane
-    if (cfg.tabs && (cfg.mower || {}).entity && !allowed.includes('kosiarka')) {
-      allowed.push('kosiarka');
+    if (cfg.tabs && (cfg.mower || {}).entity && !allowed.includes('mower')) {
+      allowed.push('mower');
     }
     // Zachowaj kolejność z YAML
     const tabMap = Object.fromEntries(ALL_TABS.map(t => [t.id, t]));
@@ -1598,6 +1598,7 @@ class HomeDashboardCard extends HTMLElement {
       if (this._activeTab === 'przelaczniki' && !tabChanged) { this._updateSwitchesLive(); return; }
       if (this._activeTab === 'tplink'       && !tabChanged) { this._updateTPLinkLive(); return; }
       if (this._activeTab === 'klimat'       && !tabChanged) { this._updateKomfortLive(); return; }
+      if (this._activeTab === 'mower'        && !tabChanged) { this._updateMowerLive(); return; }
       pane.innerHTML = tab.render(this._hass, this._config);
       // home tab — no post-render init needed (map shown on-demand via modal)
       if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
@@ -2883,6 +2884,47 @@ class HomeDashboardCard extends HTMLElement {
     } else {
       customElements.whenDefined('ha-camera-stream').then(init);
     }
+  }
+
+  _updateMowerLive() {
+    const hass = this._hass;
+    const m = this._config.mower || {};
+    const entity = m.entity || '';
+    const st = hass.states[entity] || {};
+    const state = st.state || 'unknown';
+    const attr = st.attributes || {};
+    const mowerState = attr.mower_state || state;
+    const stateLabel = MOWER_STATE_LABEL[mowerState] || mowerState.replace(/_/g, ' ');
+    const stateColor = MOWER_STATE_COLOR[mowerState] || '#94a3b8';
+    const isDocked = state === 'docked';
+    const isMowing = state === 'mowing';
+    const isPaused = state === 'paused';
+    const btnBase = 'flex:1;border-radius:10px;font-size:13px;padding:10px 6px;transition:background .15s';
+    const btnActive  = `${btnBase};background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#f1f5f9;cursor:pointer`;
+    const btnInactive= `${btnBase};background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);color:#334155;cursor:default`;
+    const btnPrimary = `${btnBase};background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);color:#4ade80;cursor:pointer`;
+    const sr = this.shadowRoot;
+    const set = (id, fn) => { const el = sr.getElementById(id); if (el) fn(el); };
+    set('hdc-mow-state', el => { el.textContent = stateLabel; el.style.color = stateColor; });
+    if (m.battery) set('hdc-mow-bat', el => { el.textContent = sn(hass, m.battery, 0) + ' %'; });
+    if (m.charging_status) set('hdc-mow-chg', el => { el.textContent = sv(hass, m.charging_status, '—'); });
+    set('hdc-mow-btn-start', el => {
+      const active = isDocked || isPaused;
+      el.style.cssText = active ? btnPrimary : btnInactive;
+      if (active) { el.dataset.action = 'mower_start'; el.dataset.entity = entity; }
+      else { delete el.dataset.action; delete el.dataset.entity; }
+    });
+    set('hdc-mow-btn-pause', el => {
+      el.style.cssText = isMowing ? btnActive : btnInactive;
+      if (isMowing) { el.dataset.action = 'mower_pause'; el.dataset.entity = entity; }
+      else { delete el.dataset.action; delete el.dataset.entity; }
+    });
+    set('hdc-mow-btn-dock', el => {
+      const active = isMowing || isPaused;
+      el.style.cssText = active ? btnActive : btnInactive;
+      if (active) { el.dataset.action = 'mower_dock'; el.dataset.entity = entity; }
+      else { delete el.dataset.action; delete el.dataset.entity; }
+    });
   }
 
   _startCamRefresh() {
