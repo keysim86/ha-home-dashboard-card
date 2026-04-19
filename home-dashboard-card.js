@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.17.0
+//  home-dashboard-card.js  v1.18.0
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -688,7 +688,13 @@ function renderVaillant(hass, cfg) {
       <div><div id="hdc-vg-mon" style="font-size:20px;font-weight:700;color:#fb923c">— m³</div><div style="font-size:10px;color:#475569">Zużycie gazu</div></div>
       <div style="text-align:right"><div id="hdc-vg-year" style="font-size:20px;font-weight:700;color:#38bdf8">— m³</div><div style="font-size:10px;color:#475569">Roczne zużycie gazu</div></div>
     </div>
-    <div style="position:relative;height:200px;margin-bottom:14px"><canvas id="hdc-vc4"></canvas></div>` : ''}
+    <div style="position:relative;height:200px;margin-bottom:14px"><canvas id="hdc-vc4"></canvas></div>
+    <div class="hdc-st">Roczne zużycie gazu</div>
+    <div class="hdc-g2" style="margin-bottom:6px">
+      <div><div id="hdc-vg-yr-cur" style="font-size:20px;font-weight:700;color:#fb923c">— m³</div><div style="font-size:10px;color:#475569">Ten rok</div></div>
+      <div style="text-align:right"><div id="hdc-vg-yr-prev" style="font-size:20px;font-weight:700;color:#38bdf8">— m³</div><div style="font-size:10px;color:#475569">Poprzedni rok</div></div>
+    </div>
+    <div style="position:relative;height:200px;margin-bottom:14px"><canvas id="hdc-vc5"></canvas></div>` : ''}
     <div class="hdc-st">Regulacja Centralnego Ogrzewania (24h)</div>
     <div class="hdc-g2" style="margin-bottom:6px">
       <div><div id="hdc-vl-tind" style="font-size:20px;font-weight:700;color:#4ade80">${tInd}°C</div><div style="font-size:10px;color:#475569">Temp. w domu</div></div>
@@ -1912,6 +1918,30 @@ class HomeDashboardCard extends HTMLElement {
             backgroundColor: '#fb923c', borderRadius: 3 }] },
           options: { ...barOpts }
         });
+
+        // Chart 5 — yearly bars
+        const c5 = this.shadowRoot.getElementById('hdc-vc5');
+        const yearMap = {};
+        monKeys.forEach(mk => {
+          const yr = mk.split('-')[0];
+          yearMap[yr] = (yearMap[yr] || 0) + monMap[mk].heat + monMap[mk].cwu;
+        });
+        const yrKeys = Object.keys(yearMap).sort();
+        const yrTotals = yrKeys.map(y => Math.round(yearMap[y] * 10) / 10);
+        const curYr = String(new Date().getFullYear());
+        const prevYr = String(new Date().getFullYear() - 1);
+        const elYrCur  = this.shadowRoot.getElementById('hdc-vg-yr-cur');
+        const elYrPrev = this.shadowRoot.getElementById('hdc-vg-yr-prev');
+        if (elYrCur)  elYrCur.textContent  = ((yearMap[curYr]  || 0).toFixed(1)) + ' m³';
+        if (elYrPrev) elYrPrev.textContent = ((yearMap[prevYr] || 0).toFixed(1)) + ' m³';
+        if (c5 && yrTotals.length) {
+          if (c5._hdcChart) c5._hdcChart.destroy();
+          c5._hdcChart = new Chart(c5, { type: 'bar',
+            data: { labels: yrKeys, datasets: [{ label: 'Zużycie gazu', data: yrTotals,
+              backgroundColor: '#fb923c', borderRadius: 3 }] },
+            options: { ...barOpts }
+          });
+        }
       }
     };
 
@@ -2863,7 +2893,7 @@ window.customCards.push({
 });
 
 console.info(
-  '%c HOME-DASHBOARD-CARD %c v1.15.1 ',
+  '%c HOME-DASHBOARD-CARD %c v1.18.0 ',
   'background:#38bdf8;color:#0d0f14;font-weight:700;padding:2px 6px;border-radius:4px 0 0 4px',
   'background:#0d0f14;color:#38bdf8;font-weight:700;padding:2px 6px;border-radius:0 4px 4px 0'
 );
