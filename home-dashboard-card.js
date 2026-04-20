@@ -1057,7 +1057,7 @@ function renderAuta(hass, cfg) {
         const zone = dtSt.state;
         const addr = dtSt.attributes.address || dtSt.attributes.location_name || null;
         const locLabel = addr || (zone === 'home' ? '🏠 Dom' : zone === 'not_home' ? '🚗 W trasie' : zone);
-        locLine = `<div style="font-size:11px;color:#64748b;margin:6px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📍 ${locLabel}</div>`;
+        locLine = `<div id="hdc-car-loc-${idx}" style="font-size:11px;color:#64748b;margin:6px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📍 ${locLabel}</div>`;
       }
     }
 
@@ -1077,20 +1077,20 @@ function renderAuta(hass, cfg) {
         </div>
         <div style="font-size:10px;color:#64748b;display:flex;justify-content:space-between;margin-bottom:3px">
           <span>⛽ Paliwo</span>
-          <span style="color:${fuelColor};font-weight:600">${fuel}%${fuelLt !== null ? ` · ${fuelLt} L` : ''}</span>
+          <span id="hdc-car-fuel-${idx}" style="color:${fuelColor};font-weight:600">${fuel}%${fuelLt !== null ? ` · ${fuelLt} L` : ''}</span>
         </div>
-        <div class="hdc-carbar"><div class="hdc-carbar-fill" style="width:${fuel}%;background:${fuelColor}"></div></div>
+        <div class="hdc-carbar"><div id="hdc-car-fbar-${idx}" class="hdc-carbar-fill" style="width:${fuel}%;background:${fuelColor}"></div></div>
         <div class="hdc-g3" style="gap:6px;margin-bottom:8px">
-          ${v.fuel_range ? `<div class="hdc-sc" style="padding:8px;cursor:pointer" data-action="sensor_history" data-entity="${v.fuel_range}" data-label="Zasięg"><div class="hdc-sc-lbl">Zasięg</div><div class="hdc-sc-val" style="color:${fuelColor};font-size:15px">${range}</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Zasięg</div><div class="hdc-sc-val" style="color:${fuelColor};font-size:15px">${range}</div></div>`}
-          ${v.odometer   ? `<div class="hdc-sc" style="padding:8px;cursor:pointer" data-action="sensor_history" data-entity="${v.odometer}"   data-label="Przebieg"><div class="hdc-sc-lbl">Przebieg</div><div class="hdc-sc-val" style="font-size:15px">${parseInt(odo).toLocaleString('pl')}</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Przebieg</div><div class="hdc-sc-val" style="font-size:15px">${parseInt(odo).toLocaleString('pl')}</div></div>`}
-          ${bat !== null ? `<div class="hdc-sc" style="padding:8px;cursor:pointer" data-action="sensor_history" data-entity="${v.battery}"    data-label="Bat. 12V"><div class="hdc-sc-lbl">Bat. 12V</div><div class="hdc-sc-val" style="color:${battColor(bat)};font-size:15px">${bat}%</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">&nbsp;</div><div class="hdc-sc-val">&nbsp;</div></div>`}
+          ${v.fuel_range ? `<div class="hdc-sc" style="padding:8px;cursor:pointer" data-action="sensor_history" data-entity="${v.fuel_range}" data-label="Zasięg"><div class="hdc-sc-lbl">Zasięg</div><div id="hdc-car-range-${idx}" class="hdc-sc-val" style="color:${fuelColor};font-size:15px">${range}</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Zasięg</div><div id="hdc-car-range-${idx}" class="hdc-sc-val" style="color:${fuelColor};font-size:15px">${range}</div></div>`}
+          ${v.odometer   ? `<div class="hdc-sc" style="padding:8px;cursor:pointer" data-action="sensor_history" data-entity="${v.odometer}"   data-label="Przebieg"><div class="hdc-sc-lbl">Przebieg</div><div id="hdc-car-odo-${idx}" class="hdc-sc-val" style="font-size:15px">${parseInt(odo).toLocaleString('pl')}</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">Przebieg</div><div id="hdc-car-odo-${idx}" class="hdc-sc-val" style="font-size:15px">${parseInt(odo).toLocaleString('pl')}</div></div>`}
+          ${bat !== null ? `<div class="hdc-sc" style="padding:8px;cursor:pointer" data-action="sensor_history" data-entity="${v.battery}"    data-label="Bat. 12V"><div class="hdc-sc-lbl">Bat. 12V</div><div id="hdc-car-bat-${idx}" class="hdc-sc-val" style="color:${battColor(bat)};font-size:15px">${bat}%</div></div>` : `<div class="hdc-sc" style="padding:8px"><div class="hdc-sc-lbl">&nbsp;</div><div id="hdc-car-bat-${idx}" class="hdc-sc-val">&nbsp;</div></div>`}
         </div>
-        ${lastUpd !== '—' ? `<div style="font-size:10px;color:#475569;margin-bottom:6px">🕐 ${lastUpd}</div>` : ''}
+        <div id="hdc-car-upd-${idx}" style="font-size:10px;color:#475569;margin-bottom:6px">${lastUpd !== '—' ? `🕐 ${lastUpd}` : ''}</div>
         <div class="hdc-chips">
           ${locked !== null ? `<button id="hdc-car-lock-${idx}" class="hdc-tbtn" style="font-size:11px;width:auto;height:24px;padding:0 10px;${locked?'background:rgba(74,222,128,.15);border-color:#4ade80;color:#4ade80':'background:rgba(248,113,113,.15);border-color:#f87171;color:#f87171'}" data-action="lock_toggle" data-entity="${v.lock}">${locked?'🔒 Zamknięty':'🔓 Otwarty'}</button>` : ''}
-          ${connChip}
+          <span id="hdc-car-conn-${idx}">${connChip}</span>
         </div>
-        ${locLine}
+        <div id="hdc-car-loc-wrap-${idx}">${locLine}</div>
         ${mapDiv}
       </div>`;
   }).join('');
@@ -2498,18 +2498,69 @@ class HomeDashboardCard extends HTMLElement {
 
   _updateAutaLive() {
     const hass = this._hass;
+    const sr = this.shadowRoot;
     const vehicles = this._config.vehicles || [];
     vehicles.forEach((v, idx) => {
-      if (!v.lock) return;
-      const btn = this.shadowRoot.getElementById(`hdc-car-lock-${idx}`);
-      if (!btn) return;
-      const lockState = hass.states[v.lock];
-      if (!lockState) return;
-      const locked = lockState.state === 'locked';
-      btn.textContent = locked ? '🔒 Zamknięty' : '🔓 Otwarty';
-      btn.style.cssText = `font-size:11px;width:auto;height:24px;padding:0 10px;${locked
-        ? 'background:rgba(74,222,128,.15);border-color:#4ade80;color:#4ade80'
-        : 'background:rgba(248,113,113,.15);border-color:#f87171;color:#f87171'}`;
+      const fuel     = sn(hass, v.fuel_level, 0);
+      const fuelLt   = v.fuel_amount ? sn(hass, v.fuel_amount, 1) : null;
+      const range    = sv(hass, v.fuel_range, '—');
+      const odo      = sv(hass, v.odometer, '—');
+      const bat      = v.battery ? sn(hass, v.battery, 0) : null;
+      const fuelColor = fuel < 15 ? '#f87171' : fuel < 30 ? '#fbbf24' : '#4ade80';
+      const lastUpdRaw = sv(hass, v.last_update, '');
+      const lastUpd = lastUpdRaw ? (() => { const d = new Date(lastUpdRaw); return isNaN(d) ? lastUpdRaw : `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`; })() : '—';
+
+      const fuelEl = sr.getElementById(`hdc-car-fuel-${idx}`);
+      if (fuelEl) { fuelEl.textContent = `${fuel}%${fuelLt !== null ? ` · ${fuelLt} L` : ''}`; fuelEl.style.color = fuelColor; }
+      const fbarEl = sr.getElementById(`hdc-car-fbar-${idx}`);
+      if (fbarEl) { fbarEl.style.width = `${fuel}%`; fbarEl.style.background = fuelColor; }
+      const rangeEl = sr.getElementById(`hdc-car-range-${idx}`);
+      if (rangeEl) { rangeEl.textContent = range; rangeEl.style.color = fuelColor; }
+      const odoEl = sr.getElementById(`hdc-car-odo-${idx}`);
+      if (odoEl) odoEl.textContent = isNaN(parseInt(odo)) ? odo : parseInt(odo).toLocaleString('pl');
+      if (bat !== null) {
+        const batEl = sr.getElementById(`hdc-car-bat-${idx}`);
+        if (batEl) { batEl.textContent = `${bat}%`; batEl.style.color = battColor(bat); }
+      }
+      const updEl = sr.getElementById(`hdc-car-upd-${idx}`);
+      if (updEl) updEl.textContent = lastUpd !== '—' ? `🕐 ${lastUpd}` : '';
+
+      if (v.connection) {
+        const connEl = sr.getElementById(`hdc-car-conn-${idx}`);
+        if (connEl) {
+          const connSt = hass.states[v.connection];
+          const online = connSt && (connSt.state === 'on' || connSt.state === 'online' || connSt.state === 'connected');
+          connEl.innerHTML = `<span class="hdc-ch ${online?'g':'r'}">${online?'🟢 Online':'🔴 Offline'}</span>`;
+        }
+      }
+
+      const tracker = v.location || v.device_tracker;
+      if (tracker) {
+        const locWrap = sr.getElementById(`hdc-car-loc-wrap-${idx}`);
+        if (locWrap) {
+          const dtSt = hass.states[tracker];
+          if (dtSt) {
+            const zone = dtSt.state;
+            const addr = dtSt.attributes.address || dtSt.attributes.location_name || null;
+            const locLabel = addr || (zone === 'home' ? '🏠 Dom' : zone === 'not_home' ? '🚗 W trasie' : zone);
+            locWrap.innerHTML = `<div style="font-size:11px;color:#64748b;margin:6px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📍 ${locLabel}</div>`;
+          }
+        }
+      }
+
+      if (v.lock) {
+        const btn = sr.getElementById(`hdc-car-lock-${idx}`);
+        if (btn) {
+          const lockState = hass.states[v.lock];
+          if (lockState) {
+            const locked = lockState.state === 'locked';
+            btn.textContent = locked ? '🔒 Zamknięty' : '🔓 Otwarty';
+            btn.style.cssText = `font-size:11px;width:auto;height:24px;padding:0 10px;${locked
+              ? 'background:rgba(74,222,128,.15);border-color:#4ade80;color:#4ade80'
+              : 'background:rgba(248,113,113,.15);border-color:#f87171;color:#f87171'}`;
+          }
+        }
+      }
     });
   }
 

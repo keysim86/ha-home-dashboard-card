@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Zakładka **🚗 Auta** — `_updateAutaLive()` teraz aktualizuje wszystkie dane: paliwo (%, litry, pasek, kolor), zasięg, przebieg, bateria 12V, ostatnia aktualizacja, status połączenia, lokalizacja (wcześniej aktualizowany był wyłącznie przycisk zamka)
 - Zakładka **🔥 Vaillant** — `_updateVaillantLive()` teraz aktualizuje wszystkie wyświetlane wartości: dodano brakujące pola **Śr. zewn. 24h** (`hdc-vl-toutavg`), **Wentylator** (`hdc-vl-fan`), **Krzywa grzewcza** (`hdc-vl-curve`) (wcześniej brak `id` powodował, że wartości nie były odświeżane bez przełączenia zakładki)
 - Zakładka **🔥 Vaillant** — dynamiczne klasy CSS koloru dla **Płomień**, **Pompa CO** i **Ciśnienie CO** są teraz aktualizowane in-place (wcześniej kolor pozostawał niezmieniony po zmianie stanu)
 - Zakładka **🔥 Vaillant** — przyciski trybu (Grzanie/Auto/Wył. dla CO i CWU) odświeżają podświetlenie aktywnego trybu bez przeładowania zakładki
