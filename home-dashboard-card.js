@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.19.1
+//  home-dashboard-card.js  v1.19.2
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -612,7 +612,7 @@ function renderVaillant(hass, cfg) {
           `}
         </div>
         <div id="hdc-vl-flame" class="hdc-th-mode heat" style="${isVeto?'color:#fb923c':''}">● ${coModeText || modeStatus(coHvac, coPmCur)}</div>
-        ${modeBtns(v.climate_co, coPmList, coPmCur, coHvac, coHvacModes)}
+        <div id="hdc-vl-co-btns">${modeBtns(v.climate_co, coPmList, coPmCur, coHvac, coHvacModes)}</div>
       </div>
       <div class="hdc-thcard">
         <div class="hdc-th-title">🚿 CWU</div>
@@ -623,7 +623,7 @@ function renderVaillant(hass, cfg) {
           <button class="hdc-tbtn" data-action="climate_up" data-entity="${v.climate_cwu}" data-step="1">+</button>
         </div>
         <div id="hdc-vl-cwumode" class="hdc-th-mode dhw">● ${modeStatus(cwuHvac, cwuPmCur)}</div>
-        ${modeBtns(v.climate_cwu, cwuPmList, cwuPmCur, cwuHvac, cwuHvacModes)}
+        <div id="hdc-vl-cwu-btns">${modeBtns(v.climate_cwu, cwuPmList, cwuPmCur, cwuHvac, cwuHvacModes)}</div>
       </div>
     </div>
     <div class="hdc-st">Kocioł Vaillant ecoTEC Plus</div>
@@ -634,14 +634,14 @@ function renderVaillant(hass, cfg) {
         <div class="hdc-ir"><span class="hdc-ir-lbl">Powrót</span><span id="hdc-vl-ret2" class="hdc-ir-val y">${tRet}°C</span></div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Cel zasilania</span><span id="hdc-vl-tgtSup" class="hdc-ir-val b">${tTgtSup}°C</span></div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Zewnętrzna</span><span id="hdc-vl-tout2" class="hdc-ir-val b">${tOut}°C</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Śr. zewn. 24h</span><span class="hdc-ir-val b">${tOutAvg}°C</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Śr. zewn. 24h</span><span id="hdc-vl-toutavg" class="hdc-ir-val b">${tOutAvg}°C</span></div>
       </div>
       <div class="hdc-box">
         <div class="hdc-box-title">⚙️ Praca palnika</div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Płomień</span><span id="hdc-vl-flameval" class="hdc-ir-val ${flame?'o':''}">🔥 ${flame?'Aktywny':'Nieaktywny'}</span></div>
         <div class="hdc-ir"><span class="hdc-ir-lbl">Moc</span><span id="hdc-vl-pwr" class="hdc-ir-val o">${pwr} kW</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Wentylator</span><span class="hdc-ir-val b">${parseInt(fanSpd).toLocaleString('pl')} rpm</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Krzywa grzewcza</span><span class="hdc-ir-val">${curve}</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Wentylator</span><span id="hdc-vl-fan" class="hdc-ir-val b">${parseInt(fanSpd).toLocaleString('pl')} rpm</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Krzywa grzewcza</span><span id="hdc-vl-curve" class="hdc-ir-val">${curve}</span></div>
       </div>
       <div class="hdc-box">
         <div class="hdc-box-title">💧 Obieg wodny</div>
@@ -1716,6 +1716,9 @@ class HomeDashboardCard extends HTMLElement {
     const pwr    = sn(hass, v.power,    1);
     const flame  = isOn(hass, v.flame);
     const pump   = isOn(hass, v.pump);
+    const fanSpd = sv(hass, v.fan_speed, '—');
+    const curve  = sv(hass, v.heat_curve, '—');
+    const tOutAvg = sn(hass, v.temp_outdoor_avg, 1);
     const elCO   = sn(hass, v.el_co,  2);
     const elCWU  = sn(hass, v.el_cwu, 2);
     const PM_LABEL   = { schedule:'Harmonogram', manual:'Ręczny', eco:'Eco', away:'Poza domem',
@@ -1728,20 +1731,41 @@ class HomeDashboardCard extends HTMLElement {
       : `${hvacLabel(hvac)}${pmCur && pmCur !== 'none' ? ' · ' + pmLabel(pmCur) : ''}`;
     const coHvac  = sv(hass, v.climate_co,  'off');
     const coPmCur = sa(hass, v.climate_co,  'preset_mode') || '';
+    const coPmList = (sa(hass, v.climate_co, 'preset_modes') || []).filter(p => p !== 'none');
+    const coHvacModes = sa(hass, v.climate_co, 'hvac_modes') || [];
     const cwuHvac  = sv(hass, v.climate_cwu, 'off');
     const cwuPmCur = sa(hass, v.climate_cwu, 'preset_mode') || '';
+    const cwuPmList = (sa(hass, v.climate_cwu, 'preset_modes') || []).filter(p => p !== 'none');
+    const cwuHvacModes = sa(hass, v.climate_cwu, 'hvac_modes') || [];
     const sfModeL  = v.sf_mode_entity ? sv(hass, v.sf_mode_entity, 'auto') : 'auto';
     const isVetoL  = sfModeL === 'veto';
     const vetoDateL = v.veto_end_date ? sv(hass, v.veto_end_date, '') : '';
     const vetoTimeL = v.veto_end_time ? sv(hass, v.veto_end_time, '').substring(0, 5) : '';
     const vetoUntilL = (vetoDateL || vetoTimeL) ? `do ${vetoDateL}${vetoDateL && vetoTimeL ? ' ' : ''}${vetoTimeL}` : '';
+    const pressColor = press < 1.0 ? 'r' : press > 2.5 ? 'r' : press < 1.4 ? 'y' : 'g';
+    const modeBtnsHtml = (entity, pmList, pmCur, hvac, hvacModes) => {
+      const seen = new Set();
+      const modes = hvacModes.filter(m => m !== 'none').filter(m => { const lbl = hvacLabel(m); if (seen.has(lbl)) return false; seen.add(lbl); return true; });
+      return `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;justify-content:center">
+        ${modes.map(m => { const isOff = m === 'off'; const active = hvac === m;
+          const style = active ? (isOff ? 'background:rgba(248,113,113,.2);border-color:#f87171;color:#f87171' : 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8') : '';
+          return `<button class="hdc-tbtn" style="font-size:10px;width:auto;height:22px;padding:0 8px;${style}" data-action="set_hvac_mode" data-entity="${entity}" data-mode="${m}">${isOff?'⏻ ':''}${hvacLabel(m)}</button>`;
+        }).join('')}
+        ${hvac !== 'off' ? pmList.map(p => `<button class="hdc-tbtn" style="font-size:10px;width:auto;height:22px;padding:0 8px;${pmCur===p?'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8':''}" data-action="set_preset" data-entity="${entity}" data-preset="${p}">${pmLabel(p)}</button>`).join('') : ''}
+      </div>`;
+    };
     const flameEl = this.shadowRoot.getElementById('hdc-vl-flame');
     if (flameEl) {
       flameEl.textContent = isVetoL ? `● 🔒 Veto${vetoUntilL ? ' ' + vetoUntilL : ''}` : `● ${modeStatus(coHvac, coPmCur)}`;
       flameEl.style.color = isVetoL ? '#fb923c' : '';
     }
+    const coBtnsEl = sr.getElementById('hdc-vl-co-btns');
+    if (coBtnsEl) coBtnsEl.innerHTML = modeBtnsHtml(v.climate_co, coPmList, coPmCur, coHvac, coHvacModes);
+    const cwuBtnsEl = sr.getElementById('hdc-vl-cwu-btns');
+    if (cwuBtnsEl) cwuBtnsEl.innerHTML = modeBtnsHtml(v.climate_cwu, cwuPmList, cwuPmCur, cwuHvac, cwuHvacModes);
     setText('hdc-vl-tind',    `${tInd}°C`);
     setText('hdc-vl-tout',    `${tOut}°C`);
+    setText('hdc-vl-toutavg', `${tOutAvg}°C`);
     setText('hdc-vl-tgtSup',  `${tTgtSup}°C`);
     setText('hdc-vl-tgtSup2', `${tTgtSup}°C`);
     setText('hdc-vl-sup',     `${tSup}°C`);
@@ -1754,10 +1778,15 @@ class HomeDashboardCard extends HTMLElement {
     setText('hdc-vl-sup2',    `${tSup}°C`);
     setText('hdc-vl-ret2',    `${tRet}°C`);
     setText('hdc-vl-tout2',   `${tOut}°C`);
-    setText('hdc-vl-press',   `${press} bar`);
-    setText('hdc-vl-pump',    pump ? 'Aktywna' : 'Nieaktywna');
+    setText('hdc-vl-fan',     `${isNaN(parseInt(fanSpd)) ? fanSpd : parseInt(fanSpd).toLocaleString('pl')} rpm`);
+    setText('hdc-vl-curve',   curve);
     setText('hdc-vl-pwr',     `${pwr} kW`);
-    setText('hdc-vl-flameval', `🔥 ${flame ? 'Aktywny' : 'Nieaktywny'}`);
+    const pressEl = sr.getElementById('hdc-vl-press');
+    if (pressEl) { pressEl.textContent = `${press} bar`; pressEl.className = `hdc-ir-val ${pressColor}`; }
+    const pumpEl = sr.getElementById('hdc-vl-pump');
+    if (pumpEl) { pumpEl.textContent = pump ? 'Aktywna' : 'Nieaktywna'; pumpEl.className = `hdc-ir-val ${pump ? 'g' : ''}`; }
+    const flameValEl = sr.getElementById('hdc-vl-flameval');
+    if (flameValEl) { flameValEl.textContent = `🔥 ${flame ? 'Aktywny' : 'Nieaktywny'}`; flameValEl.className = `hdc-ir-val ${flame ? 'o' : ''}`; }
     setText('hdc-vl-elco',    `${elCO} kWh`);
     setText('hdc-vl-elcwu',   `${elCWU} kWh`);
     (v.settings || []).forEach(s => {
@@ -3017,7 +3046,7 @@ window.customCards.push({
 });
 
 console.info(
-  '%c HOME-DASHBOARD-CARD %c v1.19.1 ',
+  '%c HOME-DASHBOARD-CARD %c v1.19.2 ',
   'background:#38bdf8;color:#0d0f14;font-weight:700;padding:2px 6px;border-radius:4px 0 0 4px',
   'background:#0d0f14;color:#38bdf8;font-weight:700;padding:2px 6px;border-radius:0 4px 4px 0'
 );
