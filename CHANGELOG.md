@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.19.2] - 2026-04-20
+
 ### Fixed
 - Zakładka **🚗 Auta** — `_updateAutaLive()` teraz aktualizuje wszystkie dane: paliwo (%, litry, pasek, kolor), zasięg, przebieg, bateria 12V, ostatnia aktualizacja, status połączenia, lokalizacja (wcześniej aktualizowany był wyłącznie przycisk zamka)
 - Zakładka **🔥 Vaillant** — `_updateVaillantLive()` teraz aktualizuje wszystkie wyświetlane wartości: dodano brakujące pola **Śr. zewn. 24h** (`hdc-vl-toutavg`), **Wentylator** (`hdc-vl-fan`), **Krzywa grzewcza** (`hdc-vl-curve`) (wcześniej brak `id` powodował, że wartości nie były odświeżane bez przełączenia zakładki)
