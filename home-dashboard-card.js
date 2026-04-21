@@ -650,8 +650,8 @@ function renderVaillant(hass, cfg) {
       </div>
       <div class="hdc-box">
         <div class="hdc-box-title">📊 Energia (MyVaillant)</div>
-        <div class="hdc-ir"${v.el_co?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.el_co+'" data-label="El. CO dziś"':''}><span class="hdc-ir-lbl">El. CO dziś</span><span id="hdc-vl-elco" class="hdc-ir-val y">${elCO.toFixed(2)} kWh</span></div>
-        <div class="hdc-ir"${v.el_cwu?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.el_cwu+'" data-label="El. CWU dziś"':''}><span class="hdc-ir-lbl">El. CWU dziś</span><span id="hdc-vl-elcwu" class="hdc-ir-val b">${elCWU.toFixed(2)} kWh</span></div>
+        <div class="hdc-ir"${v.el_co?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.el_co+'" data-label="El. CO dziś"':''}><span class="hdc-ir-lbl">El. CO dziś</span><span id="hdc-vl-elco" class="hdc-ir-val y">${elCO} kWh</span></div>
+        <div class="hdc-ir"${v.el_cwu?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.el_cwu+'" data-label="El. CWU dziś"':''}><span class="hdc-ir-lbl">El. CWU dziś</span><span id="hdc-vl-elcwu" class="hdc-ir-val b">${elCWU} kWh</span></div>
       </div>
     </div>
     ${(v.settings || []).length ? `
@@ -1787,8 +1787,8 @@ class HomeDashboardCard extends HTMLElement {
     if (pumpEl) { pumpEl.textContent = pump ? 'Aktywna' : 'Nieaktywna'; pumpEl.className = `hdc-ir-val ${pump ? 'g' : ''}`; }
     const flameValEl = sr.getElementById('hdc-vl-flameval');
     if (flameValEl) { flameValEl.textContent = `🔥 ${flame ? 'Aktywny' : 'Nieaktywny'}`; flameValEl.className = `hdc-ir-val ${flame ? 'o' : ''}`; }
-    setText('hdc-vl-elco',    `${elCO.toFixed(2)} kWh`);
-    setText('hdc-vl-elcwu',   `${elCWU.toFixed(2)} kWh`);
+    setText('hdc-vl-elco',    `${elCO} kWh`);
+    setText('hdc-vl-elcwu',   `${elCWU} kWh`);
     (v.settings || []).forEach(s => {
       if (this._pendingInputs[s.entity] !== undefined) return; // debounce in progress — keep optimistic value
       const st = hass.states[s.entity];
