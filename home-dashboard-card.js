@@ -630,28 +630,28 @@ function renderVaillant(hass, cfg) {
     <div class="hdc-g2">
       <div class="hdc-box">
         <div class="hdc-box-title">🌡 Temperatury CO</div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Zasilanie</span><span id="hdc-vl-sup2" class="hdc-ir-val o">${tSup}°C</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Powrót</span><span id="hdc-vl-ret2" class="hdc-ir-val y">${tRet}°C</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Cel zasilania</span><span id="hdc-vl-tgtSup" class="hdc-ir-val b">${tTgtSup}°C</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Zewnętrzna</span><span id="hdc-vl-tout2" class="hdc-ir-val b">${tOut}°C</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Śr. zewn. 24h</span><span id="hdc-vl-toutavg" class="hdc-ir-val b">${tOutAvg}°C</span></div>
+        <div class="hdc-ir"${v.temp_supply?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.temp_supply+'" data-label="Zasilanie"':''}><span class="hdc-ir-lbl">Zasilanie</span><span id="hdc-vl-sup2" class="hdc-ir-val o">${tSup}°C</span></div>
+        <div class="hdc-ir"${v.temp_return?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.temp_return+'" data-label="Powrót"':''}><span class="hdc-ir-lbl">Powrót</span><span id="hdc-vl-ret2" class="hdc-ir-val y">${tRet}°C</span></div>
+        <div class="hdc-ir"${v.temp_target_supply?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.temp_target_supply+'" data-label="Cel zasilania"':''}><span class="hdc-ir-lbl">Cel zasilania</span><span id="hdc-vl-tgtSup" class="hdc-ir-val b">${tTgtSup}°C</span></div>
+        <div class="hdc-ir"${v.temp_outdoor?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.temp_outdoor+'" data-label="Zewnętrzna"':''}><span class="hdc-ir-lbl">Zewnętrzna</span><span id="hdc-vl-tout2" class="hdc-ir-val b">${tOut}°C</span></div>
+        <div class="hdc-ir"${v.temp_outdoor_avg?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.temp_outdoor_avg+'" data-label="Śr. zewn. 24h"':''}><span class="hdc-ir-lbl">Śr. zewn. 24h</span><span id="hdc-vl-toutavg" class="hdc-ir-val b">${tOutAvg}°C</span></div>
       </div>
       <div class="hdc-box">
         <div class="hdc-box-title">⚙️ Praca palnika</div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Płomień</span><span id="hdc-vl-flameval" class="hdc-ir-val ${flame?'o':''}">🔥 ${flame?'Aktywny':'Nieaktywny'}</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Moc</span><span id="hdc-vl-pwr" class="hdc-ir-val o">${pwr} kW</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Wentylator</span><span id="hdc-vl-fan" class="hdc-ir-val b">${parseInt(fanSpd).toLocaleString('pl')} rpm</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Krzywa grzewcza</span><span id="hdc-vl-curve" class="hdc-ir-val">${curve}</span></div>
+        <div class="hdc-ir"${v.flame?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.flame+'" data-label="Płomień"':''}><span class="hdc-ir-lbl">Płomień</span><span id="hdc-vl-flameval" class="hdc-ir-val ${flame?'o':''}">🔥 ${flame?'Aktywny':'Nieaktywny'}</span></div>
+        <div class="hdc-ir"${v.power?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.power+'" data-label="Moc"':''}><span class="hdc-ir-lbl">Moc</span><span id="hdc-vl-pwr" class="hdc-ir-val o">${pwr} kW</span></div>
+        <div class="hdc-ir"${v.fan_speed?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.fan_speed+'" data-label="Wentylator"':''}><span class="hdc-ir-lbl">Wentylator</span><span id="hdc-vl-fan" class="hdc-ir-val b">${parseInt(fanSpd).toLocaleString('pl')} rpm</span></div>
+        <div class="hdc-ir"${v.heat_curve?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.heat_curve+'" data-label="Krzywa grzewcza"':''}><span class="hdc-ir-lbl">Krzywa grzewcza</span><span id="hdc-vl-curve" class="hdc-ir-val">${curve}</span></div>
       </div>
       <div class="hdc-box">
         <div class="hdc-box-title">💧 Obieg wodny</div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Ciśnienie CO</span><span id="hdc-vl-press" class="hdc-ir-val ${pressColor}">${press} bar</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Pompa CO</span><span id="hdc-vl-pump" class="hdc-ir-val ${pump?'g':''}">${pump?'Aktywna':'Nieaktywna'}</span></div>
+        <div class="hdc-ir"${v.pressure?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.pressure+'" data-label="Ciśnienie CO"':''}><span class="hdc-ir-lbl">Ciśnienie CO</span><span id="hdc-vl-press" class="hdc-ir-val ${pressColor}">${press} bar</span></div>
+        <div class="hdc-ir"${v.pump?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.pump+'" data-label="Pompa CO"':''}><span class="hdc-ir-lbl">Pompa CO</span><span id="hdc-vl-pump" class="hdc-ir-val ${pump?'g':''}">${pump?'Aktywna':'Nieaktywna'}</span></div>
       </div>
       <div class="hdc-box">
         <div class="hdc-box-title">📊 Energia (MyVaillant)</div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">El. CO dziś</span><span id="hdc-vl-elco" class="hdc-ir-val y">${elCO} kWh</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">El. CWU dziś</span><span id="hdc-vl-elcwu" class="hdc-ir-val b">${elCWU} kWh</span></div>
+        <div class="hdc-ir"${v.el_co?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.el_co+'" data-label="El. CO dziś"':''}><span class="hdc-ir-lbl">El. CO dziś</span><span id="hdc-vl-elco" class="hdc-ir-val y">${elCO} kWh</span></div>
+        <div class="hdc-ir"${v.el_cwu?' style="cursor:pointer" data-action="sensor_history" data-entity="'+v.el_cwu+'" data-label="El. CWU dziś"':''}><span class="hdc-ir-lbl">El. CWU dziś</span><span id="hdc-vl-elcwu" class="hdc-ir-val b">${elCWU} kWh</span></div>
       </div>
     </div>
     ${(v.settings || []).length ? `
