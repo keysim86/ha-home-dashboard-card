@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- Karta Przełączniki: pole wyszukiwania filtrujące przełączniki po nazwie lub nazwie pokoju
+
 ## [1.19.2] - 2026-04-20
 
 ### Fixed

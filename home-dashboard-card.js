@@ -163,6 +163,9 @@ const STYLES = `
 .hdc-sw-timer{font-size:9px;color:#475569;margin-top:2px;font-variant-numeric:tabular-nums;display:none}
 .hdc-sw-tile.on .hdc-sw-timer{display:block;color:#38bdf8}
 .hdc-sw-tile.on.light .hdc-sw-timer{color:#fbbf24}
+.hdc-sw-search{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#e2e8f0;font-size:12px;padding:5px 10px;width:100%;box-sizing:border-box;margin-bottom:12px;outline:none}
+.hdc-sw-search::placeholder{color:#475569}
+.hdc-sw-search:focus{border-color:rgba(148,163,184,.4);background:rgba(255,255,255,.08)}
 .hdc-lz4{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px 13px}
 .hdc-lz4-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .hdc-lz4-name{font-size:11px;font-weight:600;color:#94a3b8}
@@ -1195,6 +1198,7 @@ function renderAlerty(hass, cfg) {
 function renderPrzelaczniki(hass, cfg) {
   const groups = (cfg.switches || {}).groups || [];
   if (!groups.length) return `<div style="color:#475569;font-size:12px;padding:12px">Brak konfiguracji przełączników.<br>Dodaj sekcję <code>switches.groups</code> w konfiguracji karty.</div>`;
+  const searchHtml = `<input id="hdc-sw-search" class="hdc-sw-search" type="text" placeholder="🔍 Szukaj przełącznika lub pokoju…" autocomplete="off">`;
 
   const renderSwTile = (item, group) => {
     const st = hass.states[item.entity];
@@ -1207,7 +1211,7 @@ function renderPrzelaczniki(hass, cfg) {
     const typeClass = isLight ? 'light' : '';
     const swId = `hdc-sw-${item.entity.replace('.', '-')}`;
     const timerHtml = group.show_timer ? `<div class="hdc-sw-timer">${isOn && st?.last_changed ? formatGateElapsed(st.last_changed) : ''}</div>` : '';
-    return `<div id="${swId}" class="hdc-sw-tile${isOn ? ' on' : ''}${typeClass ? ' ' + typeClass : ''}" data-action="toggle" data-entity="${item.entity}">
+    return `<div id="${swId}" class="hdc-sw-tile${isOn ? ' on' : ''}${typeClass ? ' ' + typeClass : ''}" data-action="toggle" data-entity="${item.entity}" data-swname="${name}">
       <div class="hdc-sw-tile-ico">${ico}</div>
       <div class="hdc-sw-tile-info">
         <div class="hdc-sw-tile-name">${name}</div>
@@ -1239,7 +1243,7 @@ function renderPrzelaczniki(hass, cfg) {
         <span id="hdc-lz4-st-${a.entity.replace(/\./g, '-')}" class="hdc-lz4-st ${isOn ? 'on' : 'off'}">${isOn ? 'Wł.' : 'Wył.'}</span>
       </div>`;
     }).join('');
-    return `<div class="hdc-lz4">
+    return `<div class="hdc-lz4" data-swname="${item.name || 'LZ4'}">
       <div class="hdc-lz4-head">
         <span class="hdc-lz4-name">🔘 ${item.name || 'LZ4'}</span>
         ${battId ? `<span id="${battId}" class="hdc-lz4-batt">${battHtml}</span>` : ''}
@@ -1261,10 +1265,13 @@ function renderPrzelaczniki(hass, cfg) {
   const useRooms = groups.some(g => g.room);
 
   if (!useRooms) {
-    return groups.map(group =>
-      `<div class="hdc-st">${group.icon ? group.icon + ' ' : ''}${group.name || 'Grupa'}</div>
-      ${renderGroupHtml(group)}`
+    const sectionsHtml = groups.map(group =>
+      `<div class="hdc-sw-section" data-room="${group.name || ''}">
+        <div class="hdc-st">${group.icon ? group.icon + ' ' : ''}${group.name || 'Grupa'}</div>
+        ${renderGroupHtml(group)}
+      </div>`
     ).join('');
+    return searchHtml + sectionsHtml;
   }
 
   // Room-first grouping
@@ -1276,7 +1283,7 @@ function renderPrzelaczniki(hass, cfg) {
     roomGroups.get(room).push(group);
   });
 
-  return roomOrder.map(room => {
+  const sectionsHtml = roomOrder.map(room => {
     const roomGroupList = roomGroups.get(room);
     const multiType = roomGroupList.length > 1;
     const innerHtml = roomGroupList.map(group => {
@@ -1285,8 +1292,9 @@ function renderPrzelaczniki(hass, cfg) {
       const subHeader = multiType ? `<div class="hdc-st-sub">${group.icon ? group.icon + ' ' : ''}${group.name || ''}</div>` : '';
       return subHeader + html;
     }).join('');
-    return `<div class="hdc-st">${room}</div>${innerHtml}`;
+    return `<div class="hdc-sw-section" data-room="${room}"><div class="hdc-st">${room}</div>${innerHtml}</div>`;
   }).join('');
+  return searchHtml + sectionsHtml;
 }
 
 
@@ -1545,6 +1553,12 @@ class HomeDashboardCard extends HTMLElement {
       const card = e.target.closest('[data-cam-idx]');
       if (!card) return;
       this._focusCamera(card);
+    });
+
+    // Switches search filter
+    this.shadowRoot.getElementById('hdc-pane').addEventListener('input', e => {
+      if (e.target.id !== 'hdc-sw-search') return;
+      this._filterSwitches(e.target.value);
     });
 
     this._tabChanged = true;
@@ -2594,6 +2608,27 @@ class HomeDashboardCard extends HTMLElement {
       badge.textContent = count;
       badge.style.display = count > 0 ? 'inline' : 'none';
     }
+  }
+
+  _filterSwitches(query) {
+    const pane = this.shadowRoot.getElementById('hdc-pane');
+    if (!pane) return;
+    const q = query.toLowerCase().trim();
+    pane.querySelectorAll('.hdc-sw-section').forEach(sec => {
+      if (!q) {
+        sec.style.display = '';
+        sec.querySelectorAll('.hdc-sw-tile, .hdc-lz4').forEach(el => { el.style.display = ''; });
+        return;
+      }
+      const roomMatch = (sec.dataset.room || '').toLowerCase().includes(q);
+      let anyVisible = false;
+      sec.querySelectorAll('.hdc-sw-tile, .hdc-lz4').forEach(el => {
+        const show = roomMatch || (el.dataset.swname || '').toLowerCase().includes(q);
+        el.style.display = show ? '' : 'none';
+        if (show) anyVisible = true;
+      });
+      sec.style.display = anyVisible ? '' : 'none';
+    });
   }
 
   _updateSwitchesLive() {
