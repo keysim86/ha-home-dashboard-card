@@ -2940,6 +2940,7 @@ class HomeDashboardCard extends HTMLElement {
     const end = new Date();
     const start = new Date(end.getTime() - days * 24 * 3600 * 1000);
     let points = [];
+    let usedStatistics = false;
     try {
       const isClimate = entity.startsWith('climate.');
       const url = isClimate
@@ -2963,6 +2964,29 @@ class HomeDashboardCard extends HTMLElement {
       }
     } catch(e) { console.warn('[hdc] history fetch error', e); }
 
+    // Fallback: sensory statystyczne (state_class: total/total_increasing)
+    // nie mają historii stanów — próbujemy recorder/statistics_during_period
+    if (points.length === 0) {
+      try {
+        const period = days <= 7 ? 'hour' : 'day';
+        const raw = await this._hass.callWS({
+          type: 'recorder/statistics_during_period',
+          start_time: start.toISOString(),
+          end_time: end.toISOString(),
+          statistic_ids: [entity],
+          period,
+          types: ['mean', 'state'],
+          units: {},
+        });
+        if (raw && raw[entity] && raw[entity].length > 0) {
+          usedStatistics = true;
+          points = raw[entity]
+            .map(s => ({ x: new Date(s.start), y: s.mean ?? s.state ?? NaN }))
+            .filter(p => !isNaN(p.y));
+        }
+      } catch(e) { console.warn('[hdc] statistics fallback error', e); }
+    }
+
     if (loading) loading.style.display = 'none';
     if (!canvas) return;
 
@@ -2985,7 +3009,7 @@ class HomeDashboardCard extends HTMLElement {
             callbacks: { label: ctx => isBinary ? (ctx.parsed.y === 1 ? 'on' : 'off') : `${ctx.parsed.y}` }
           }},
           scales: {
-            x: { type: 'time', time: { unit: days <= 14 ? 'day' : 'week' },
+            x: { type: 'time', time: { unit: usedStatistics && days <= 7 ? 'hour' : days <= 14 ? 'day' : 'week' },
               ticks: { color: '#475569', maxTicksLimit: 8 }, grid: { color: 'rgba(255,255,255,.04)' } },
             y: isBinary
               ? { min: -0.1, max: 1.5, ticks: { color: '#94a3b8', callback: v => v === 1 ? 'on' : v === 0 ? 'off' : '' }, grid: { color: 'rgba(255,255,255,.04)' } }
