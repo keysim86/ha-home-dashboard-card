@@ -2975,13 +2975,13 @@ class HomeDashboardCard extends HTMLElement {
           end_time: end.toISOString(),
           statistic_ids: [entity],
           period,
-          types: ['mean', 'state'],
+          types: ['mean', 'sum', 'state'],
           units: {},
         });
         if (raw && raw[entity] && raw[entity].length > 0) {
           usedStatistics = true;
           points = raw[entity]
-            .map(s => ({ x: new Date(s.start), y: s.mean ?? s.state ?? NaN }))
+            .map(s => ({ x: new Date(s.start), y: s.mean ?? s.sum ?? s.state ?? NaN }))
             .filter(p => !isNaN(p.y));
         }
       } catch(e) { console.warn('[hdc] statistics fallback error', e); }
