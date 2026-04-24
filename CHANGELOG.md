@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.22.2] - 2026-04-24
+
+### Fixed
+- Wykres historii: fallback do statistics uwzględnia teraz typ `sum` (sensory `total_increasing` zapisują sumę, nie średnią)
+- Zakładka **🌿 Kosiarka** — kafelki Stan i Ładowanie nie otwierają już wykresu (stany tekstowe); kliknięcie pozostaje tylko na Bateria
+
 ## [1.22.1] - 2026-04-24
 
 ### Fixed
