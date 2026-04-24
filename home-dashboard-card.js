@@ -1476,9 +1476,9 @@ function renderKosiarka(hass, cfg) {
     </div>` : ''}
     <div class="hdc-st">Status</div>
     <div class="hdc-g3" style="margin-bottom:10px">
-      <div class="hdc-sc"${sh(entity, 'Stan kosiarki')}><div class="hdc-sc-lbl">Stan</div><div id="hdc-mow-state" class="hdc-sc-val" style="color:${stateColor};font-size:15px">${stateLabel}</div></div>
+      <div class="hdc-sc"><div class="hdc-sc-lbl">Stan</div><div id="hdc-mow-state" class="hdc-sc-val" style="color:${stateColor};font-size:15px">${stateLabel}</div></div>
       ${m.battery ? `<div class="hdc-sc"${sh(m.battery, 'Bateria')}><div class="hdc-sc-lbl">Bateria</div><div id="hdc-mow-bat" class="hdc-sc-val" style="color:#4ade80">${sn(hass, m.battery, 0)} %</div></div>` : ''}
-      ${m.charging_status ? `<div class="hdc-sc"${sh(m.charging_status, 'Ładowanie')}><div class="hdc-sc-lbl">Ładowanie</div><div id="hdc-mow-chg" class="hdc-sc-val" style="font-size:13px">${sv(hass, m.charging_status, '—')}</div></div>` : ''}
+      ${m.charging_status ? `<div class="hdc-sc"><div class="hdc-sc-lbl">Ładowanie</div><div id="hdc-mow-chg" class="hdc-sc-val" style="font-size:13px">${sv(hass, m.charging_status, '—')}</div></div>` : ''}
     </div>
     <div class="hdc-st">Sterowanie</div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
