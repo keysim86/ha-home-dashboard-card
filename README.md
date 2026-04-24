@@ -17,11 +17,11 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 | 🔥 **Vaillant** | Termostaty CO + CWU ze sterowaniem (tryby, presety), wykresy temperatur 24h, wykresy zużycia gazu 30-dniowe i 12-miesięczne, ustawienia `input_number`; kliknięcie w temperaturę CO/CWU → modal z wykresem historii |
 | 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), Mój Tauron AMIplus online (zużycie dzienne/miesięczne + należności z terminem płatności), myORLEN gaz (taryfa w nagłówku, data i typ odczytu licznika, saldo + ostatnia faktura), licznik wody, EcoWater, zmywarka Haier hOn; kliknięcie w kafelek → modal z wykresem historii |
 | 📶 **TP-Link** | Sekcja **Status** — binary_sensory z kolorowym wskaźnikiem on/off i paskiem historii; sekcja **SpeedTest** — aktualne wartości pobierania/wysyłania/pingu + wykres 24h (Chart.js, dual Y-axis); porty PoE (klikalne — włącz/wyłącz), odkurzacz Zosia, aktualizacje firmware, drukarka HP |
-| 📹 **Kamery** | Grid HIKVISION NVR, focus view MJPEG live stream (`camera_proxy_stream`), miniatury odświeżane co 3 s, status dysku |
+| 📹 **Kamery** | Grid HIKVISION NVR, focus view MJPEG live stream (`camera_proxy_stream`), miniatury odświeżane co 3 s, status dysku; opcja `thumbnails: right` — sidebar z podglądem po lewej i listą kamer po prawej (responsywny: na mobile układ kolumnowy) |
 | 🚗 **Auta** | Paliwo + litry, zasięg, przebieg, bateria 12V, blokada (klikalna lock/unlock), status połączenia, lokalizacja GPS, mapa `ha-map`; kliknięcie w kafelek sensora → modal z wykresem historii |
 | 🖧 **Proxmox** | Node stats (CPU, RAM%, wolna RAM w GB, Disk), LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
 | 🔔 **Alerty** | Reguły definiowane w YAML, badge z licznikiem na zakładce |
-| 💡 **Przełączniki** | Grupy kafelków `switch`/`light`/`fan` z live statusem; klik przełącza stan; opcjonalny timer czasu włączenia per grupa (`show_timer: true`); opcjonalne grupowanie po pokojach (`room:` w YAML) |
+| 💡 **Przełączniki** | Grupy kafelków `switch`/`light`/`fan` z live statusem; klik przełącza stan; opcjonalny timer czasu włączenia per grupa (`show_timer: true`); opcjonalne grupowanie po pokojach (`room:` w YAML); pole wyszukiwania filtrujące po nazwie przełącznika lub pokoju |
 | 🌡️ **Klimat** | Karty pomieszczeń z sensorami (temp, wilgotność, ciśnienie, nasłonecznienie, CO₂, AQI, PM2.5, PM10, VOC); kolory wartości wg norm; sterowanie humidifier; przyciski toggle: wentylator (`fan`), światło (`light`), osuszacz (`humidifier_switch`); poziom baterii czujnika; kliknięcie w sensor → modal z liniowym wykresem historii (7/14/30/60/90 dni) |
 
 ## Instalacja przez HACS
@@ -220,6 +220,7 @@ tplink:
       name: Node pve2
 
 cameras:
+  thumbnails: right   # opcjonalne: right = sidebar po prawej | bottom = grid poniżej (domyślnie)
   nvr_disk_total_gb: 4000
   nvr_disk_used_gb: 2800
   channels:
