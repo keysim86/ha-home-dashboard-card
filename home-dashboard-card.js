@@ -1186,13 +1186,14 @@ function renderProxmox(hass, cfg) {
     </div>`;
   }).join('');
 
+  const sh = (entity, label) => entity ? ` style="cursor:pointer" data-action="sensor_history" data-entity="${entity}" data-label="${label}"` : '';
   return `
     <div class="hdc-g3" style="margin-bottom:10px">
-      <div class="hdc-sc"><div class="hdc-sc-lbl">CPU node</div><div class="hdc-sc-val" style="color:${cpuColor}">${cpu}%</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">RAM</div><div class="hdc-sc-val" style="color:${ramColor}">${ramPct}%</div><div class="hdc-sc-sub">wolne: ${ramFree}</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Disk</div><div class="hdc-sc-val" style="color:#4ade80">${diskPct}%</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">LXC aktywne</div><div class="hdc-sc-val" style="color:#f472b6">${lxcRun}</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">QEMU aktywne</div><div class="hdc-sc-val" style="color:#2dd4bf">${vmRun}</div></div>
+      <div class="hdc-sc"${sh(p.node_cpu,         'CPU node')}><div class="hdc-sc-lbl">CPU node</div><div class="hdc-sc-val" style="color:${cpuColor}">${cpu}%</div></div>
+      <div class="hdc-sc"${sh(p.node_ram_pct,      'RAM')}><div class="hdc-sc-lbl">RAM</div><div class="hdc-sc-val" style="color:${ramColor}">${ramPct}%</div><div class="hdc-sc-sub">wolne: ${ramFree}</div></div>
+      <div class="hdc-sc"${sh(p.node_disk_pct,     'Disk')}><div class="hdc-sc-lbl">Disk</div><div class="hdc-sc-val" style="color:#4ade80">${diskPct}%</div></div>
+      <div class="hdc-sc"${sh(p.node_lxc_running,  'LXC aktywne')}><div class="hdc-sc-lbl">LXC aktywne</div><div class="hdc-sc-val" style="color:#f472b6">${lxcRun}</div></div>
+      <div class="hdc-sc"${sh(p.node_vm_running,   'QEMU aktywne')}><div class="hdc-sc-lbl">QEMU aktywne</div><div class="hdc-sc-val" style="color:#2dd4bf">${vmRun}</div></div>
     </div>
     <div class="hdc-st">LXC Kontenery</div>
     <div class="hdc-gaa" style="margin-bottom:10px">${lxcs}</div>
@@ -1466,6 +1467,7 @@ function renderKosiarka(hass, cfg) {
   const btnActive  = `${btnBase};background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#f1f5f9;cursor:pointer`;
   const btnInactive= `${btnBase};background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);color:#334155;cursor:default`;
   const btnPrimary = `${btnBase};background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);color:#4ade80;cursor:pointer`;
+  const sh = (ent, label) => ent ? ` style="cursor:pointer" data-action="sensor_history" data-entity="${ent}" data-label="${label}"` : '';
   return `
     ${camSrc ? `
     <div class="hdc-st">Mapa</div>
@@ -1474,9 +1476,9 @@ function renderKosiarka(hass, cfg) {
     </div>` : ''}
     <div class="hdc-st">Status</div>
     <div class="hdc-g3" style="margin-bottom:10px">
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Stan</div><div id="hdc-mow-state" class="hdc-sc-val" style="color:${stateColor};font-size:15px">${stateLabel}</div></div>
-      ${m.battery ? `<div class="hdc-sc"><div class="hdc-sc-lbl">Bateria</div><div id="hdc-mow-bat" class="hdc-sc-val" style="color:#4ade80">${sn(hass, m.battery, 0)} %</div></div>` : ''}
-      ${m.charging_status ? `<div class="hdc-sc"><div class="hdc-sc-lbl">Ładowanie</div><div id="hdc-mow-chg" class="hdc-sc-val" style="font-size:13px">${sv(hass, m.charging_status, '—')}</div></div>` : ''}
+      <div class="hdc-sc"${sh(entity, 'Stan kosiarki')}><div class="hdc-sc-lbl">Stan</div><div id="hdc-mow-state" class="hdc-sc-val" style="color:${stateColor};font-size:15px">${stateLabel}</div></div>
+      ${m.battery ? `<div class="hdc-sc"${sh(m.battery, 'Bateria')}><div class="hdc-sc-lbl">Bateria</div><div id="hdc-mow-bat" class="hdc-sc-val" style="color:#4ade80">${sn(hass, m.battery, 0)} %</div></div>` : ''}
+      ${m.charging_status ? `<div class="hdc-sc"${sh(m.charging_status, 'Ładowanie')}><div class="hdc-sc-lbl">Ładowanie</div><div id="hdc-mow-chg" class="hdc-sc-val" style="font-size:13px">${sv(hass, m.charging_status, '—')}</div></div>` : ''}
     </div>
     <div class="hdc-st">Sterowanie</div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
@@ -1486,9 +1488,9 @@ function renderKosiarka(hass, cfg) {
     </div>
     <div class="hdc-st">Statystyki</div>
     <div class="hdc-g3">
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Sesje</div><div class="hdc-sc-val">${attr.cleaning_count ?? '—'} x</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Łączna pow.</div><div class="hdc-sc-val" style="font-size:14px">${attr.total_cleaned_area ?? '—'} m²</div></div>
-      <div class="hdc-sc"><div class="hdc-sc-lbl">Łączny czas</div><div class="hdc-sc-val" style="font-size:14px">${attr.total_cleaning_time ?? '—'} min</div></div>
+      <div class="hdc-sc"${sh(m.sessions_entity, 'Sesje kosienia')}><div class="hdc-sc-lbl">Sesje</div><div class="hdc-sc-val">${attr.cleaning_count ?? '—'} x</div></div>
+      <div class="hdc-sc"${sh(m.area_entity, 'Łączna powierzchnia')}><div class="hdc-sc-lbl">Łączna pow.</div><div class="hdc-sc-val" style="font-size:14px">${attr.total_cleaned_area ?? '—'} m²</div></div>
+      <div class="hdc-sc"${sh(m.duration_entity, 'Łączny czas')}><div class="hdc-sc-lbl">Łączny czas</div><div class="hdc-sc-val" style="font-size:14px">${attr.total_cleaning_time ?? '—'} min</div></div>
     </div>`;
 }
 

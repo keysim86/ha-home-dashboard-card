@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+- Zakładka **🌿 Kosiarka** — boxy Status (Stan, Bateria, Ładowanie) i Statystyki (Sesje, Łączna pow., Łączny czas) są teraz klikalne i otwierają wykres historii; dla sekcji Statystyki wymagane są opcjonalne pola konfiguracji: `mower.sessions_entity`, `mower.area_entity`, `mower.duration_entity`
+- Zakładka **🖧 Proxmox** — boxy z danymi węzła (CPU, RAM, Disk, LXC aktywne, QEMU aktywne) są teraz klikalne i otwierają wykres historii sensora
+
 ## [1.21.1] - 2026-04-24
 
 ### Fixed
