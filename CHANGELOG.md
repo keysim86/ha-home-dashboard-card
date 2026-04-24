@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- Karta Kamery: opcja `cameras.thumbnails: right` — thumbnails po prawej stronie jako sidebar, podgląd główny zajmuje całą dostępną szerokość (domyślnie `bottom` — poprzedni układ)
+
 ## [1.20.0] - 2026-04-24
 
 ### Added

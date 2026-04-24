@@ -103,6 +103,14 @@ const STYLES = `
 .hdc-cam-focus{background:#000;border:1px solid rgba(56,189,248,.2);border-radius:14px;overflow:hidden;margin-bottom:12px;position:relative}
 .hdc-cam-focus img{width:100%;display:block;max-height:680px;object-fit:contain}
 .hdc-cam-focus .hdc-cam-placeholder{height:280px}
+.hdc-cam-sidebar-layout{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+.hdc-cam-main{flex:1;min-width:0}
+.hdc-cam-main .hdc-cam-focus{margin-bottom:0}
+.hdc-cam-thumbs-col{width:185px;flex-shrink:0}
+.hdc-cam-thumb-list{display:flex;flex-direction:column;gap:6px;max-height:65vh;overflow-y:auto;padding-right:2px}
+.hdc-camcard.sidebar-thumb{border-radius:9px}
+.hdc-camcard.sidebar-thumb .hdc-cam-name{font-size:10px}
+.hdc-camcard.sidebar-thumb .hdc-cam-ts{font-size:8px}
 .hdc-pxcard{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px}
 .hdc-pxbdg{font-size:9px;padding:2px 6px;border-radius:5px;font-weight:700}
 .hdc-pxbdg.run{background:rgba(34,197,94,.15);color:#4ade80}
@@ -957,6 +965,7 @@ function renderTPLink(hass, cfg) {
 function renderKamery(hass, cfg) {
   const c = cfg.cameras || {};
   const channels = c.channels || [];
+  const thumbPos  = c.thumbnails || 'bottom'; // 'bottom' | 'right'
   const diskTotal = c.nvr_disk_total_gb || 4000;
   const diskUsed  = c.nvr_disk_used_gb || 0;
   const diskPct   = Math.round(diskUsed / diskTotal * 100);
@@ -967,10 +976,12 @@ function renderKamery(hass, cfg) {
     const token = sa(hass, entity, 'access_token');
     return `/api/camera_proxy/${entity}?token=${token}&t=${Date.now()}`;
   };
+
   const focusCam = channels[0] || {};
+  const focusMaxH = thumbPos === 'right' ? 'none' : '640px';
   const focusHtml = `
     <div class="hdc-cam-focus">
-      <div class="hdc-camfeed" style="aspect-ratio:16/9;max-height:640px;position:relative;overflow:hidden">
+      <div class="hdc-camfeed" style="aspect-ratio:16/9;max-height:${focusMaxH};position:relative;overflow:hidden">
         ${focusCam.entity
           ? `<ha-camera-stream id="hdc-focus-stream" data-entity="${focusCam.entity}" muted allow-exoplayer style="width:100%;height:100%;display:block"></ha-camera-stream>`
           : `<div class="hdc-cam-placeholder">📹<span>${focusCam.name||'Brak kamery'}</span></div>`
@@ -988,8 +999,9 @@ function renderKamery(hass, cfg) {
       </div>
     </div>`;
 
-  const grid = channels.map((ch, i) => `
-    <div class="hdc-camcard${i===0?' focus':''}" data-cam-idx="${i}" data-cam-entity="${ch.entity||''}">
+  const sidebarClass = thumbPos === 'right' ? ' sidebar-thumb' : '';
+  const cards = channels.map((ch, i) => `
+    <div class="hdc-camcard${i===0?' focus':''}${sidebarClass}" data-cam-idx="${i}" data-cam-entity="${ch.entity||''}">
       <div class="hdc-camfeed">
         ${ch.entity
           ? `<img class="hdc-cam-thumb" src="${camUrl(ch.entity)}" data-entity="${ch.entity}" alt="${ch.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`
@@ -1008,11 +1020,7 @@ function renderKamery(hass, cfg) {
       </div>
     </div>`).join('');
 
-  return `
-    <div class="hdc-st">Aktywny podgląd · <span id="hdc-focus-label" style="color:#38bdf8">${focusCam.label} · ${focusCam.name}</span></div>
-    ${focusHtml}
-    <div class="hdc-st">Wszystkie kamery · HIKVISION DS-7608NXI-K2</div>
-    <div class="hdc-camgrid">${grid}</div>
+  const nvrHtml = `
     <div class="hdc-st">Rejestrator NVR</div>
     <div class="hdc-g2">
       <div class="hdc-box">
@@ -1028,6 +1036,28 @@ function renderKamery(hass, cfg) {
         <div class="hdc-ir"><span class="hdc-ir-lbl">Pojemność</span><span class="hdc-ir-val">${(diskTotal/1000).toFixed(0)} TB</span></div>
       </div>
     </div>`;
+
+  if (thumbPos === 'right') {
+    return `
+      <div class="hdc-cam-sidebar-layout">
+        <div class="hdc-cam-main">
+          <div class="hdc-st">Aktywny podgląd · <span id="hdc-focus-label" style="color:#38bdf8">${focusCam.label} · ${focusCam.name}</span></div>
+          ${focusHtml}
+        </div>
+        <div class="hdc-cam-thumbs-col">
+          <div class="hdc-st" style="margin-top:0">Kamery</div>
+          <div class="hdc-cam-thumb-list">${cards}</div>
+        </div>
+      </div>
+      ${nvrHtml}`;
+  }
+
+  return `
+    <div class="hdc-st">Aktywny podgląd · <span id="hdc-focus-label" style="color:#38bdf8">${focusCam.label} · ${focusCam.name}</span></div>
+    ${focusHtml}
+    <div class="hdc-st">Wszystkie kamery · HIKVISION DS-7608NXI-K2</div>
+    <div class="hdc-camgrid">${cards}</div>
+    ${nvrHtml}`;
 }
 
 function renderAuta(hass, cfg) {
