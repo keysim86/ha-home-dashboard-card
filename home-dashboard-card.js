@@ -111,6 +111,12 @@ const STYLES = `
 .hdc-camcard.sidebar-thumb{border-radius:9px}
 .hdc-camcard.sidebar-thumb .hdc-cam-name{font-size:10px}
 .hdc-camcard.sidebar-thumb .hdc-cam-ts{font-size:8px}
+@media(max-width:600px){
+  .hdc-cam-sidebar-layout{flex-direction:column}
+  .hdc-cam-thumbs-col{width:100%}
+  .hdc-cam-thumb-list{flex-direction:row;flex-wrap:wrap;max-height:none}
+  .hdc-cam-thumb-list .hdc-camcard{width:calc(50% - 3px)}
+}
 .hdc-pxcard{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px}
 .hdc-pxbdg{font-size:9px;padding:2px 6px;border-radius:5px;font-weight:700}
 .hdc-pxbdg.run{background:rgba(34,197,94,.15);color:#4ade80}

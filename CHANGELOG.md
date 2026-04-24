@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Karta Kamery (sidebar): na ekranach <600px sidebar przełącza się automatycznie w układ kolumnowy (podgląd + thumbnails 2×grid poniżej)
+
 ## [1.21.0] - 2026-04-24
 
 ### Added
