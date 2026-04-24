@@ -101,8 +101,8 @@ const STYLES = `
 .hdc-cam-ts{font-size:9px;color:rgba(255,255,255,.6);font-family:monospace}
 .hdc-cam-ch{font-size:9px;color:rgba(255,255,255,.35)}
 .hdc-cam-focus{background:#000;border:1px solid rgba(56,189,248,.2);border-radius:14px;overflow:hidden;margin-bottom:12px;position:relative}
-.hdc-cam-focus img{width:100%;display:block;max-height:600px;object-fit:contain}
-.hdc-cam-focus .hdc-cam-placeholder{height:220px}
+.hdc-cam-focus img{width:100%;display:block;max-height:680px;object-fit:contain}
+.hdc-cam-focus .hdc-cam-placeholder{height:280px}
 .hdc-pxcard{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px}
 .hdc-pxbdg{font-size:9px;padding:2px 6px;border-radius:5px;font-weight:700}
 .hdc-pxbdg.run{background:rgba(34,197,94,.15);color:#4ade80}
@@ -970,7 +970,7 @@ function renderKamery(hass, cfg) {
   const focusCam = channels[0] || {};
   const focusHtml = `
     <div class="hdc-cam-focus">
-      <div class="hdc-camfeed" style="aspect-ratio:16/9;max-height:480px;position:relative;overflow:hidden">
+      <div class="hdc-camfeed" style="aspect-ratio:16/9;max-height:640px;position:relative;overflow:hidden">
         ${focusCam.entity
           ? `<ha-camera-stream id="hdc-focus-stream" data-entity="${focusCam.entity}" muted allow-exoplayer style="width:100%;height:100%;display:block"></ha-camera-stream>`
           : `<div class="hdc-cam-placeholder">📹<span>${focusCam.name||'Brak kamery'}</span></div>`

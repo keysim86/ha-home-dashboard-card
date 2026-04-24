@@ -5,6 +5,9 @@
 ### Added
 - Karta Przełączniki: pole wyszukiwania filtrujące przełączniki po nazwie lub nazwie pokoju
 
+### Changed
+- Karta Kamery: powiększono okno aktywnego podglądu (max-height 480→640px dla streamu, 600→680px dla img)
+
 ## [1.19.2] - 2026-04-20
 
 ### Fixed
