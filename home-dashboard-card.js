@@ -2395,6 +2395,12 @@ class HomeDashboardCard extends HTMLElement {
       return;
     }
 
+    if (action === 'sensor_history') {
+      const label = btn.dataset.label || entity;
+      this._showSensorHistory(entity, label);
+      return;
+    }
+
     const state = this._hass.states[entity];
     if (!state) return;
 
@@ -2467,11 +2473,6 @@ class HomeDashboardCard extends HTMLElement {
     }
     if (action === 'person_map') {
       this._showPersonMap(entity);
-      return;
-    }
-    if (action === 'sensor_history') {
-      const label = btn.dataset.label || entity;
-      this._showSensorHistory(entity, label);
       return;
     }
     if (action === 'set_preset') {
