@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.22.1] - 2026-04-24
+
+### Fixed
+- Wykres historii: fallback do `recorder/statistics_during_period` gdy sensor nie ma historii stanów (np. `state_class: total_increasing`); oś X przełącza się na godziny dla zakresów ≤7 dni przy danych statystycznych
+
 ## [1.22.0] - 2026-04-24
 
 ### Added
