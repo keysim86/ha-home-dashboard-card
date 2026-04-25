@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.22.3] - 2026-04-25
+
+### Fixed
+- Wykresy zużycia gazu: dodano `gas_monthly_max_m3` (domyślnie 2000 m³) — analogicznie do `gas_daily_max_m3` dla dniówek; chroni przed wyświetlaniem milionowych wartości gdy baza statystyk zawiera spike po błędzie sensora konwersji
+
 ## [1.22.2] - 2026-04-24
 
 ### Fixed
