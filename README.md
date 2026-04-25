@@ -136,6 +136,8 @@ vaillant:
   # Filtr anomalii — wartości dzienne powyżej progu (m³) są obcinane.
   # Zabezpiecza przed spike'ami utility_meter po restarcie HA. Domyślnie: 30.
   gas_daily_max_m3: 30
+  # Filtr anomalii dla wartości miesięcznych. Domyślnie: 2000.
+  gas_monthly_max_m3: 2000
   el_co: sensor.my_home_device_0_vc_20cs_1_5_n_pl_ecotec_plus_consumed_electrical_energy_heating_2
   el_cwu: sensor.my_home_device_0_vc_20cs_1_5_n_pl_ecotec_plus_consumed_electrical_energy_domestic_hot_water_2
   # Ustawienia input_number (edycja przyciskami +/−, z debouncingiem 350 ms)
