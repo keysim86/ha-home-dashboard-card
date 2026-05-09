@@ -2406,6 +2406,7 @@ class HomeDashboardCard extends HTMLElement {
     if (!state) return;
 
     if (action === 'climate_up' || action === 'climate_down') {
+      if (!this._pendingClimate) this._pendingClimate = {};
       const rawTemp = parseFloat(state.attributes.temperature);
       const rawHigh = parseFloat(state.attributes.target_temp_high);
       const rawLow  = parseFloat(state.attributes.target_temp_low);
@@ -2413,32 +2414,45 @@ class HomeDashboardCard extends HTMLElement {
       const hasHigh = !isNaN(rawHigh);
       const hasLow  = !isNaN(rawLow);
       if (!hasTemp && !hasHigh && !hasLow) return;
-      const current = hasTemp ? rawTemp : hasHigh ? rawHigh : rawLow;
-      const newTemp = Math.round((action === 'climate_up' ? current + step : current - step) * 10) / 10;
+      const stateTemp = hasTemp ? rawTemp : hasHigh ? rawHigh : rawLow;
+      const current = this._pendingClimate[entity] !== undefined
+        ? this._pendingClimate[entity].value : stateTemp;
+      const minT = parseFloat(state.attributes.min_temp) || 7;
+      const maxT = parseFloat(state.attributes.max_temp) || 35;
+      const newTemp = Math.min(maxT, Math.max(minT,
+        Math.round((action === 'climate_up' ? current + step : current - step) * 10) / 10));
 
-      // Vaillant CO — sterowanie przez MQTT zamiast climate.set_temperature
-      const vCfg = this._config.vaillant || {};
-      if (entity === vCfg.climate_co && vCfg.sf_mode_topic) {
-        const minT = parseFloat(state.attributes.min_temp) || 7;
-        const maxT = parseFloat(state.attributes.max_temp) || 35;
-        const t = String(Math.min(maxT, Math.max(minT, newTemp)));
-        const hvacMode = state.state;
-        if (hvacMode === 'heat_cool') {
-          // Grzanie — tylko Z1ActualRoomTempDesired
-          this._hass.callService('mqtt', 'publish', { topic: vCfg.actual_temp_topic + '/set', payload: t });
-        } else {
-          // Auto — Quick Veto
-          this._hass.callService('mqtt', 'publish', { topic: vCfg.sf_mode_topic + '/set', payload: 'veto' });
-          this._hass.callService('mqtt', 'publish', { topic: vCfg.veto_temp_topic + '/set', payload: t });
-          this._hass.callService('mqtt', 'publish', { topic: vCfg.actual_temp_topic + '/set', payload: t });
-        }
-        return;
-      }
+      // Optymistyczny update wyświetlacza
+      const dispId = entity === (this._config.vaillant || {}).climate_co ? 'hdc-co-set' : 'hdc-cwu-set';
+      const dispEl = this.shadowRoot.getElementById(dispId);
+      if (dispEl) dispEl.textContent = newTemp;
 
-      const params = { entity_id: entity };
-      if (hasTemp) { params.temperature = newTemp; }
-      else { params.target_temp_high = newTemp; params.target_temp_low = newTemp; }
-      this._hass.callService('climate', 'set_temperature', params);
+      // Debounce — anuluj poprzedni timer, wyślij po 350ms
+      if (this._pendingClimate[entity]?.timer) clearTimeout(this._pendingClimate[entity].timer);
+      this._pendingClimate[entity] = {
+        value: newTemp,
+        timer: setTimeout(() => {
+          const vCfg = this._config.vaillant || {};
+          if (entity === vCfg.climate_co && vCfg.sf_mode_topic) {
+            const t = String(newTemp);
+            const hvacMode = state.state;
+            if (hvacMode === 'heat_cool') {
+              this._hass.callService('mqtt', 'publish', { topic: vCfg.actual_temp_topic + '/set', payload: t });
+            } else {
+              this._hass.callService('mqtt', 'publish', { topic: vCfg.sf_mode_topic + '/set', payload: 'veto' });
+              this._hass.callService('mqtt', 'publish', { topic: vCfg.veto_temp_topic + '/set', payload: t });
+              this._hass.callService('mqtt', 'publish', { topic: vCfg.actual_temp_topic + '/set', payload: t });
+            }
+          } else {
+            const params = { entity_id: entity };
+            if (hasTemp) { params.temperature = this._pendingClimate[entity]?.value ?? newTemp; }
+            else { params.target_temp_high = this._pendingClimate[entity]?.value ?? newTemp;
+                   params.target_temp_low  = this._pendingClimate[entity]?.value ?? newTemp; }
+            this._hass.callService('climate', 'set_temperature', params);
+          }
+          delete this._pendingClimate[entity];
+        }, 350),
+      };
     }
     if (action === 'input_up' || action === 'input_down') {
       const _n = (v, fb) => { const n = parseFloat(v); return isNaN(n) ? fb : n; };

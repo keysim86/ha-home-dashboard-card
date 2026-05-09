@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.22.4] - 2026-05-09
+
+### Naprawiono
+- Vaillant: przyciski +/− mają teraz debounce 350ms i optymistyczny update wyświetlacza — szybkie klikanie nie generuje już pętli zmian wartości
+
 ## [1.22.3] - 2026-04-25
 
 ### Fixed
