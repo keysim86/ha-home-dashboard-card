@@ -1494,6 +1494,11 @@ function renderKosiarka(hass, cfg) {
     </div>`;
 }
 
+function renderAgent(hass, cfg) {
+  const url = (cfg.agent || {}).url || 'http://mir-docker.lan:8088';
+  return `<iframe src="${url}" style="width:100%;height:calc(100vh - 140px);min-height:500px;border:none;border-radius:12px;background:#0f1117" allowfullscreen></iframe>`;
+}
+
 // ============================================================
 //  MAIN ELEMENT CLASS
 // ============================================================
@@ -1511,6 +1516,7 @@ const ALL_TABS = [
   { id: 'przelaczniki', label: '💡 Przełączniki', render: renderPrzelaczniki },
   { id: 'klimat',       label: '🌡️ Klimat',      render: renderKomfort },
   { id: 'mower',        label: '🌿 Kosiarka',    render: renderKosiarka },
+  { id: 'agent',        label: '🤖 Agent AI',    render: renderAgent },
 ];
 
 class HomeDashboardCard extends HTMLElement {
@@ -1646,6 +1652,7 @@ class HomeDashboardCard extends HTMLElement {
         return;
       }
       if (this._activeTab === 'kamery'       && !tabChanged) return;
+      if (this._activeTab === 'agent'        && !tabChanged) return;
       if (this._activeTab === 'auta'         && !tabChanged) { this._updateAutaLive(); return; }
       if (this._activeTab === 'przelaczniki' && !tabChanged) { this._updateSwitchesLive(); return; }
       if (this._activeTab === 'tplink'       && !tabChanged) { this._updateTPLinkLive(); return; }

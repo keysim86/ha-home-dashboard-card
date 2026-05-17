@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.22.5] - 2026-05-16
+### Added
+- Zakładka 🤖 Agent AI z iframe do Mirdom Agent (konfigurowalny URL przez `agent.url`)
+
 ## [1.22.4] - 2026-05-09
 
 ### Naprawiono
