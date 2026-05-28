@@ -378,24 +378,29 @@ function renderOsoby(hass, cfg) {
         ${lightHtml}
       </div>`;
     }).join('');
-    const mbCfg = cfg.mailbox;
-    let mailboxHtml = '';
-    if (mbCfg) {
-      const mbSt = hass.states[mbCfg.entity];
-      const hasMail = mbSt?.state === 'on';
-      const battSt = mbCfg.battery ? hass.states[mbCfg.battery] : null;
-      const battVal = battSt ? Math.round(parseFloat(battSt.state)) : null;
-      const battColor = battVal !== null ? (battVal > 50 ? '#4ade80' : battVal > 20 ? '#fbbf24' : '#f87171') : '#475569';
-      mailboxHtml = `<div id="hdc-mailbox" class="hdc-mailbox${hasMail ? ' mail' : ''}">
-        <div class="hdc-mailbox-ico">${hasMail ? '📬' : '📭'}</div>
-        <div class="hdc-mailbox-info">
-          <div class="hdc-mailbox-status">${mbCfg.name || 'Skrzynka pocztowa'} — ${hasMail ? 'Jest poczta!' : 'Pusta'}</div>
-          ${battVal !== null ? `<div class="hdc-mailbox-batt" style="color:${battColor}">🔋 ${battVal}%</div>` : ''}
-        </div>
-      </div>`;
-    }
     gatesHtml = `<div class="hdc-st" style="margin-top:14px">Bramy i garaże</div>
-      <div class="hdc-gate-grid">${tiles}</div>${mailboxHtml}`;
+      <div class="hdc-gate-grid">${tiles}</div>`;
+  }
+
+  // Mailbox — renderuje się niezależnie od bram
+  const mbCfg = cfg.mailbox;
+  let mailboxHtml = '';
+  if (mbCfg) {
+    const mbSt = hass.states[mbCfg.entity];
+    const hasMail = mbSt?.state === 'on';
+    const battSt = mbCfg.battery ? hass.states[mbCfg.battery] : null;
+    const battVal = battSt ? Math.round(parseFloat(battSt.state)) : null;
+    const battColor = battVal !== null ? (battVal > 50 ? '#4ade80' : battVal > 20 ? '#fbbf24' : '#f87171') : '#475569';
+    mailboxHtml = `<div id="hdc-mailbox" class="hdc-mailbox${hasMail ? ' mail' : ''}">
+      <div class="hdc-mailbox-ico">${hasMail ? '📬' : '📭'}</div>
+      <div class="hdc-mailbox-info">
+        <div class="hdc-mailbox-status">${mbCfg.name || 'Skrzynka pocztowa'} — ${hasMail ? 'Jest poczta!' : 'Pusta'}</div>
+        ${battVal !== null ? `<div class="hdc-mailbox-batt" style="color:${battColor}">🔋 ${battVal}%</div>` : ''}
+      </div>
+    </div>`;
+  }
+  if (gates.length || mailboxHtml) {
+    gatesHtml += mailboxHtml;
   }
 
   // Waste collection section
@@ -1671,10 +1676,9 @@ class HomeDashboardCard extends HTMLElement {
   }
 
   _updateOsobyLive() {
-    const listDiv = this.shadowRoot.getElementById('hdc-persons-list');
-    if (!listDiv) return;
     const hass = this._hass;
     const cfg = this._config;
+    const listDiv = this.shadowRoot.getElementById('hdc-persons-list');
     const persons = cfg.persons || [];
     const cards = persons.map((p) => {
       const loc = sv(hass, p.entity, 'unknown');
@@ -1706,7 +1710,7 @@ class HomeDashboardCard extends HTMLElement {
           </div>
         </div>`;
     }).join('');
-    listDiv.innerHTML = `<div class="hdc-ga">${cards}</div>`;
+    if (listDiv) listDiv.innerHTML = `<div class="hdc-ga">${cards}</div>`;
 
     // Aktualizacja bram in-place
     const stateLabel = st => ({ open: 'Otwarta', closed: 'Zamknięta', opening: 'Otwieranie…', closing: 'Zamykanie…', locked: 'Zamknięta', unlocked: 'Otwarta' }[st] || st || '—');
@@ -3217,7 +3221,7 @@ window.customCards.push({
 });
 
 console.info(
-  '%c HOME-DASHBOARD-CARD %c v1.22.2 ',
+  '%c HOME-DASHBOARD-CARD %c v1.22.3 ',
   'background:#38bdf8;color:#0d0f14;font-weight:700;padding:2px 6px;border-radius:4px 0 0 4px',
   'background:#0d0f14;color:#38bdf8;font-weight:700;padding:2px 6px;border-radius:0 4px 4px 0'
 );
