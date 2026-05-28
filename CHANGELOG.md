@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.22.6] - 2026-05-28
+
+### Fixed
+- Skrzynka pocztowa: status „pusta/jest poczta" nie odświeżał się poprawnie przy zmianie stanu sensora
+- Skrzynka pocztowa renderuje się teraz niezależnie od bram (poza blokiem `if gates.length`)
+- `_updateOsobyLive()` nie przerywa już wcześnie gdy brak `hdc-persons-list`, co blokowało aktualizację skrzynki
+
 ## [1.22.5] - 2026-05-16
 ### Added
 - Zakładka 🤖 Agent AI z iframe do Mirdom Agent (konfigurowalny URL przez `agent.url`)
