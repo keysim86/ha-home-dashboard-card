@@ -988,14 +988,15 @@ function renderKamery(hass, cfg) {
     return `/api/camera_proxy/${entity}?token=${token}&t=${Date.now()}`;
   };
 
-  const camAspect = (entity) => {
-    const w = sa(hass, entity, 'width');
-    const h = sa(hass, entity, 'height');
+  const camAspect = (ch) => {
+    if (ch.aspect_ratio) return ch.aspect_ratio;
+    const w = sa(hass, ch.entity, 'width');
+    const h = sa(hass, ch.entity, 'height');
     return (w && h) ? `${w}/${h}` : '16/9';
   };
   const focusCam = channels[0] || {};
   const focusMaxH = thumbPos === 'right' ? 'none' : '640px';
-  const focusAspect = focusCam.entity ? camAspect(focusCam.entity) : '16/9';
+  const focusAspect = focusCam.entity ? camAspect(focusCam) : '16/9';
   const focusHtml = `
     <div class="hdc-cam-focus">
       <div id="hdc-focus-wrap" style="width:100%;aspect-ratio:${focusAspect};max-height:${focusMaxH};position:relative;overflow:hidden;background:#060810">
@@ -2576,10 +2577,12 @@ class HomeDashboardCard extends HTMLElement {
       focusStream.stateObj = camState;
     }
     const wrap = this.shadowRoot.getElementById('hdc-focus-wrap');
-    if (wrap && camState) {
-      const w = camState.attributes?.width;
-      const h = camState.attributes?.height;
-      wrap.style.aspectRatio = (w && h) ? `${w}/${h}` : '16/9';
+    if (wrap) {
+      const ar = ch.aspect_ratio
+        || (camState?.attributes?.width && camState?.attributes?.height
+            ? `${camState.attributes.width}/${camState.attributes.height}` : null)
+        || '16/9';
+      wrap.style.aspectRatio = ar;
     }
     if (focusName) focusName.textContent = `${ch.label} · ${ch.name}`;
     if (focusLbl)  focusLbl.textContent  = `${ch.label} · ${ch.name}`;
