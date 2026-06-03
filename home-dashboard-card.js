@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.22.7
+//  home-dashboard-card.js  v1.22.8
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -3234,7 +3234,7 @@ window.customCards.push({
 });
 
 console.info(
-  '%c HOME-DASHBOARD-CARD %c v1.22.7 ',
+  '%c HOME-DASHBOARD-CARD %c v1.22.8 ',
   'background:#38bdf8;color:#0d0f14;font-weight:700;padding:2px 6px;border-radius:4px 0 0 4px',
   'background:#0d0f14;color:#38bdf8;font-weight:700;padding:2px 6px;border-radius:0 4px 4px 0'
 );

@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.22.8] - 2026-06-03
+
+### Fixed
+- Kamera H264/WebRTC: `aspect-ratio` kontenera focus ustawiany dynamicznie na podstawie `attributes.width/height` encji — każda kamera wyświetla się w swoich natywnych proporcjach bez rozciągania
+
 ## [1.22.7] - 2026-06-03
 
 ### Added
