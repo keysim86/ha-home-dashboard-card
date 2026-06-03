@@ -992,9 +992,9 @@ function renderKamery(hass, cfg) {
   const focusMaxH = thumbPos === 'right' ? 'none' : '640px';
   const focusHtml = `
     <div class="hdc-cam-focus">
-      <div class="hdc-camfeed" style="aspect-ratio:16/9;max-height:${focusMaxH};position:relative;overflow:hidden">
+      <div style="width:100%;max-height:${focusMaxH};position:relative;overflow:hidden;background:#060810;display:flex;align-items:flex-start;justify-content:center;border-radius:10px 10px 0 0">
         ${focusCam.entity
-          ? `<ha-camera-stream id="hdc-focus-stream" data-entity="${focusCam.entity}" muted allow-exoplayer style="width:100%;height:100%;display:block"></ha-camera-stream>`
+          ? `<ha-camera-stream id="hdc-focus-stream" data-entity="${focusCam.entity}" muted allow-exoplayer style="width:100%;display:block;max-height:${focusMaxH}"></ha-camera-stream>`
           : `<div class="hdc-cam-placeholder">📹<span>${focusCam.name||'Brak kamery'}</span></div>`
         }
       </div>
