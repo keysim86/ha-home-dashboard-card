@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [1.22.7] - 2026-06-03
+
+### Added
+- Zakładka **🌿 Kosiarka** — boxy Status (Bateria) i Statystyki (Sesje, Łączna pow., Łączny czas) klikalne z wykresem historii; opcjonalne pola: `mower.sessions_entity`, `mower.area_entity`, `mower.duration_entity`
+- Zakładka **🖧 Proxmox** — boxy węzła (CPU, RAM, Disk, LXC, QEMU) klikalne z wykresem historii
+
+### Fixed
+- Wykres historii: obsługa `sensor_history` przeniesiona przed `if (!state) return` — działało tylko dla encji z bieżącym stanem
+- Wykres historii: fallback do `recorder/statistics_during_period` dla sensorów bez historii stanów (np. `state_class: total_increasing`); typy `mean/sum/state`
+- Zakładka **🌿 Kosiarka** — kafelki Stan i Ładowanie bez wykresu (stany tekstowe)
+- Kamera H264 rozciągnięta w podglądzie głównym — usunięto wymuszony `aspect-ratio:16/9` z kontenera focus
+
 ## [1.22.6] - 2026-05-28
 
 ### Fixed
