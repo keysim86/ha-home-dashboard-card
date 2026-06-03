@@ -988,13 +988,19 @@ function renderKamery(hass, cfg) {
     return `/api/camera_proxy/${entity}?token=${token}&t=${Date.now()}`;
   };
 
+  const camAspect = (entity) => {
+    const w = sa(hass, entity, 'width');
+    const h = sa(hass, entity, 'height');
+    return (w && h) ? `${w}/${h}` : '16/9';
+  };
   const focusCam = channels[0] || {};
   const focusMaxH = thumbPos === 'right' ? 'none' : '640px';
+  const focusAspect = focusCam.entity ? camAspect(focusCam.entity) : '16/9';
   const focusHtml = `
     <div class="hdc-cam-focus">
-      <div style="width:100%;max-height:${focusMaxH};position:relative;overflow:hidden;background:#060810;display:flex;align-items:flex-start;justify-content:center;border-radius:10px 10px 0 0">
+      <div id="hdc-focus-wrap" style="width:100%;aspect-ratio:${focusAspect};max-height:${focusMaxH};position:relative;overflow:hidden;background:#060810">
         ${focusCam.entity
-          ? `<ha-camera-stream id="hdc-focus-stream" data-entity="${focusCam.entity}" muted allow-exoplayer style="width:100%;display:block;max-height:${focusMaxH}"></ha-camera-stream>`
+          ? `<ha-camera-stream id="hdc-focus-stream" data-entity="${focusCam.entity}" muted allow-exoplayer style="width:100%;height:100%;display:block"></ha-camera-stream>`
           : `<div class="hdc-cam-placeholder">📹<span>${focusCam.name||'Brak kamery'}</span></div>`
         }
       </div>
@@ -2563,10 +2569,17 @@ class HomeDashboardCard extends HTMLElement {
     const focusName   = this.shadowRoot.getElementById('hdc-focus-name');
     const focusLbl    = this.shadowRoot.getElementById('hdc-focus-label');
 
-    if (focusStream && this._hass.states[ch.entity]) {
+    const camState = this._hass.states[ch.entity];
+    if (focusStream && camState) {
       focusStream.dataset.entity = ch.entity;
       focusStream.hass    = this._hass;
-      focusStream.stateObj = this._hass.states[ch.entity];
+      focusStream.stateObj = camState;
+    }
+    const wrap = this.shadowRoot.getElementById('hdc-focus-wrap');
+    if (wrap && camState) {
+      const w = camState.attributes?.width;
+      const h = camState.attributes?.height;
+      wrap.style.aspectRatio = (w && h) ? `${w}/${h}` : '16/9';
     }
     if (focusName) focusName.textContent = `${ch.label} · ${ch.name}`;
     if (focusLbl)  focusLbl.textContent  = `${ch.label} · ${ch.name}`;
