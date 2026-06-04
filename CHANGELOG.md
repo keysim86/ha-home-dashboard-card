@@ -7,6 +7,11 @@
 ### Added
 - Obsługa jasnego/ciemnego motywu systemowego (`prefers-color-scheme`) — wszystkie kolory UI przeniesione na CSS custom properties (`--hdc-*`) z automatycznym przełączaniem między dark/light
 
+## [1.22.9] - 2026-06-03
+
+### Fixed
+- Odświeżanie miniatur kamer: interwał zwiększony z 3s na 15s, pomijanie aktualnie fokusowanej kamery — eliminuje artefakty śniegu spowodowane konkurującymi połączeniami RTSP
+
 ## [1.22.8] - 2026-06-03
 
 ### Fixed
