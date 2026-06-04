@@ -1418,7 +1418,7 @@ function _comfortSensorHtml(hass, room) {
     const st = hass.states[room[s.key]];
     const raw = st ? parseFloat(st.state) : NaN;
     const display = isNaN(raw) ? '—' : raw.toFixed(s.dec) + s.unit;
-    const color = !isNaN(raw) && s.colorFn ? s.colorFn(raw) : '#e2e8f0';
+    const color = !isNaN(raw) && s.colorFn ? s.colorFn(raw) : 'var(--hdc-text)';
     return `<div class="hdc-cs" id="hdc-cs-${room[s.key].replace('.', '-')}" data-action="sensor_history" data-entity="${room[s.key]}" data-label="${s.label}">
       <div class="hdc-cs-label">${s.label}</div>
       <div class="hdc-cs-val" style="color:${color}">${display}</div>
@@ -2821,7 +2821,7 @@ class HomeDashboardCard extends HTMLElement {
         const st = hass.states[room[s.key]];
         const raw = st ? parseFloat(st.state) : NaN;
         const display = isNaN(raw) ? '—' : raw.toFixed(s.dec) + s.unit;
-        const color = !isNaN(raw) && s.colorFn ? s.colorFn(raw) : '#e2e8f0';
+        const color = !isNaN(raw) && s.colorFn ? s.colorFn(raw) : 'var(--hdc-text)';
         const valEl = el.querySelector('.hdc-cs-val');
         if (valEl) { valEl.textContent = display; valEl.style.color = color; }
       });
