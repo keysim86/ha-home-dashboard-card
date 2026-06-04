@@ -3150,9 +3150,10 @@ class HomeDashboardCard extends HTMLElement {
   _startCamRefresh() {
     this._camRefreshInterval = setInterval(() => {
       if (this._activeTab === 'kamery') {
+        const focusEntity = this.shadowRoot.getElementById('hdc-focus-stream')?.dataset?.entity || '';
         this.shadowRoot.querySelectorAll('.hdc-cam-thumb').forEach(img => {
           const entity = img.dataset.entity;
-          if (!entity) return;
+          if (!entity || entity === focusEntity) return;
           const token = this._hass?.states[entity]?.attributes?.access_token || '';
           img.src = `/api/camera_proxy/${entity}?token=${token}&t=${Date.now()}`;
         });
@@ -3165,7 +3166,7 @@ class HomeDashboardCard extends HTMLElement {
           if (token) img.src = `/api/camera_proxy/${camEntity}?token=${token}&t=${Date.now()}`;
         }
       }
-    }, 3000);
+    }, 15000);
   }
 
   _startGateTimers() {
