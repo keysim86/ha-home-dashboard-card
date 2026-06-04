@@ -2,10 +2,16 @@
 
 ## [Unreleased]
 
-## [1.23.0-beta.1] - 2026-06-04
+## [1.23.0] - 2026-06-04
 
 ### Added
 - Obsługa jasnego/ciemnego motywu systemowego (`prefers-color-scheme`) — wszystkie kolory UI przeniesione na CSS custom properties (`--hdc-*`) z automatycznym przełączaniem między dark/light
+
+### Fixed
+- Wartości sensorów Klimat bez colorFn (ciśnienie, PM2.5, PM10) niewidoczne w jasnym motywie
+- Modalne okna dialogowe (pogoda, lokalizacja), tabela Metering, Agent AI iframe — hardkodowane ciemne tła zastąpione zmiennymi
+- Wykresy Chart.js (Vaillant, SpeedTest, historia sensorów) — kolory siatki i osi adaptowane do motywu
+- Kosiarka, kontrolki Klimat — inline style z rgba(255,255,255,…) zastąpione zmiennymi
 
 ## [1.22.9] - 2026-06-03
 
