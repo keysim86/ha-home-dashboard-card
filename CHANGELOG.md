@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.23.0-beta.1] - 2026-06-04
+
+### Added
+- Obsługa jasnego/ciemnego motywu systemowego (`prefers-color-scheme`) — wszystkie kolory UI przeniesione na CSS custom properties (`--hdc-*`) z automatycznym przełączaniem między dark/light
+
 ## [1.22.8] - 2026-06-03
 
 ### Fixed
