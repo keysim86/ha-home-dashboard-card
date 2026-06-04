@@ -472,7 +472,7 @@ function renderOsoby(hass, cfg) {
       else if (daysTo !== null && daysTo <= 3) { urgency = '#fbbf24'; daysLabel = `za ${daysTo} dni`; }
       else if (daysTo !== null)            { urgency = '#64748b'; daysLabel = `za ${daysTo} dni`; }
       const urgent = daysTo !== null && daysTo <= 1;
-      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:${urgent?'rgba(248,113,113,.12)':'rgba(255,255,255,.03)'};border-radius:8px;border:1px solid ${urgent?'rgba(248,113,113,.4)':'rgba(255,255,255,.06)'}">
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:${urgent?'rgba(248,113,113,.12)':'var(--hdc-bg-card)'};border-radius:8px;border:1px solid ${urgent?'rgba(248,113,113,.4)':'var(--hdc-border-card)'}">
         <span style="font-size:20px">${ws.icon || '🗑️'}</span>
         <div style="flex:1;min-width:0">
           <div style="font-size:12px;font-weight:600;color:${urgent?'#fca5a5':'#f1f5f9'}">${ws.name || ws.entity}</div>
@@ -581,7 +581,7 @@ function renderEnergia(hass, cfg) {
         <div class="hdc-ir"${sh(t.szczytowa_daily,     '☀ Szczytowa dziś')}><span class="hdc-ir-lbl">☀ Szczytowa</span><span class="hdc-ir-val o">${tSD} kWh</span></div>
         <div class="hdc-ir"${sh(t.pozaszczytowa_daily, '🌤 Pozaszczytowa dziś')}><span class="hdc-ir-lbl">🌤 Pozaszczytowa</span><span class="hdc-ir-val y">${tPD} kWh</span></div>
         <div class="hdc-ir"${sh(t.nocna_daily,         '🌙 Nocna dziś')}><span class="hdc-ir-lbl">🌙 Nocna</span><span class="hdc-ir-val b">${tND} kWh</span></div>
-        <div class="hdc-ir" style="border-top:1px solid rgba(255,255,255,.07);margin-top:4px;padding-top:4px"><span class="hdc-ir-lbl">Σ Razem</span><span class="hdc-ir-val">${tSumD} kWh</span></div>
+        <div class="hdc-ir" style="border-top:1px solid var(--hdc-border-card);margin-top:4px;padding-top:4px"><span class="hdc-ir-lbl">Σ Razem</span><span class="hdc-ir-val">${tSumD} kWh</span></div>
       </div>
       ${t.szczytowa_monthly ? `
       <div class="hdc-box">
@@ -589,7 +589,7 @@ function renderEnergia(hass, cfg) {
         <div class="hdc-ir"${sh(t.szczytowa_monthly,     '☀ Szczytowa miesiąc')}><span class="hdc-ir-lbl">☀ Szczytowa</span><span class="hdc-ir-val o">${tSM} kWh</span></div>
         <div class="hdc-ir"${sh(t.pozaszczytowa_monthly, '🌤 Pozaszczytowa miesiąc')}><span class="hdc-ir-lbl">🌤 Pozaszczytowa</span><span class="hdc-ir-val y">${tPM} kWh</span></div>
         <div class="hdc-ir"${sh(t.nocna_monthly,         '🌙 Nocna miesiąc')}><span class="hdc-ir-lbl">🌙 Nocna</span><span class="hdc-ir-val b">${tNM} kWh</span></div>
-        <div class="hdc-ir" style="border-top:1px solid rgba(255,255,255,.07);margin-top:4px;padding-top:4px"><span class="hdc-ir-lbl">Σ Razem</span><span class="hdc-ir-val">${tSumM} kWh</span></div>
+        <div class="hdc-ir" style="border-top:1px solid var(--hdc-border-card);margin-top:4px;padding-top:4px"><span class="hdc-ir-lbl">Σ Razem</span><span class="hdc-ir-val">${tSumM} kWh</span></div>
       </div>` : ''}
     </div>` : ''}
     ${consumers ? `<div class="hdc-st">Top odbiorniki</div>${consumers}` : ''}`;
@@ -1161,7 +1161,7 @@ function renderAuta(hass, cfg) {
 
     // Map placeholder
     const mapDiv = tracker
-      ? `<div id="hdc-car-map-${idx}" style="height:380px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.07);margin-top:8px"></div>`
+      ? `<div id="hdc-car-map-${idx}" style="height:380px;border-radius:10px;overflow:hidden;border:1px solid var(--hdc-border-card);margin-top:8px"></div>`
       : '';
 
     return `
@@ -1470,7 +1470,7 @@ function _comfortControlsHtml(hass, room) {
   const fanId   = room.fan              ? room.fan.replace('.', '-')              : '';
   const lightId = room.light            ? room.light.replace('.', '-')            : '';
   const humSwId = room.humidifier_switch? room.humidifier_switch.replace('.', '-'): '';
-  return `<div style="display:flex;gap:6px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.06);flex-wrap:wrap">
+  return `<div style="display:flex;gap:6px;margin-top:8px;padding-top:7px;border-top:1px solid var(--hdc-border-inner);flex-wrap:wrap">
     ${room.fan              ? `<button id="hdc-ctrl-fan-${fanId}"    class="hdc-tbtn" style="font-size:10px;height:26px;padding:0 10px;width:auto;${fanOn  ?'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8':''}"   data-action="toggle" data-entity="${room.fan}">💨 ${fanOn  ?'Wł.':'Wył.'}</button>` : ''}
     ${room.light            ? `<button id="hdc-ctrl-light-${lightId}" class="hdc-tbtn" style="font-size:10px;height:26px;padding:0 10px;width:auto;${lightOn?'background:rgba(251,191,36,.15);border-color:#fbbf24;color:#fbbf24':''}" data-action="toggle" data-entity="${room.light}">💡 ${lightOn?'Wł.':'Wył.'}</button>` : ''}
     ${room.humidifier_switch? `<button id="hdc-ctrl-humidsw-${humSwId}" class="hdc-tbtn" style="font-size:10px;height:26px;padding:0 10px;width:auto;${humSwOn?'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8':''}" data-action="toggle" data-entity="${room.humidifier_switch}">💧 ${humSwOn?'Wł.':'Wył.'}</button>` : ''}
@@ -1524,13 +1524,13 @@ function renderKosiarka(hass, cfg) {
   const camSrc = camEntity && camToken ? `/api/camera_proxy/${camEntity}?token=${camToken}&t=${Date.now()}` : '';
   const btnBase = 'flex:1;border-radius:10px;font-size:13px;padding:10px 6px;transition:background .15s';
   const btnActive  = `${btnBase};background:var(--hdc-bg-hover);border:1px solid var(--hdc-border-btn);color:var(--hdc-text-hi);cursor:pointer`;
-  const btnInactive= `${btnBase};background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);color:#334155;cursor:default`;
+  const btnInactive= `${btnBase};background:var(--hdc-bg-card);border:1px solid var(--hdc-border-inner);color:var(--hdc-text-faint);cursor:default`;
   const btnPrimary = `${btnBase};background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);color:#4ade80;cursor:pointer`;
   const sh = (ent, label) => ent ? ` style="cursor:pointer" data-action="sensor_history" data-entity="${ent}" data-label="${label}"` : '';
   return `
     ${camSrc ? `
     <div class="hdc-st">Mapa</div>
-    <div style="background:#0f172a;border-radius:12px;overflow:hidden;margin-bottom:12px;min-height:120px;display:flex;align-items:center;justify-content:center">
+    <div style="background:var(--hdc-map);border-radius:12px;overflow:hidden;margin-bottom:12px;min-height:120px;display:flex;align-items:center;justify-content:center">
       <img id="hdc-mower-map" src="${camSrc}" style="width:100%;display:block;max-height:420px;object-fit:contain" onerror="this.style.opacity='.15'">
     </div>` : ''}
     <div class="hdc-st">Status</div>
@@ -1555,7 +1555,7 @@ function renderKosiarka(hass, cfg) {
 
 function renderAgent(hass, cfg) {
   const url = (cfg.agent || {}).url || 'http://mir-docker.lan:8088';
-  return `<iframe src="${url}" style="width:100%;height:calc(100vh - 140px);min-height:500px;border:none;border-radius:12px;background:#0f1117" allowfullscreen></iframe>`;
+  return `<iframe src="${url}" style="width:100%;height:calc(100vh - 140px);min-height:500px;border:none;border-radius:12px;background:var(--hdc-overlay)" allowfullscreen></iframe>`;
 }
 
 // ============================================================
@@ -1920,6 +1920,14 @@ class HomeDashboardCard extends HTMLElement {
     });
   }
 
+  _chartColors() {
+    const dark = !window.matchMedia('(prefers-color-scheme: light)').matches;
+    return {
+      grid: dark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.07)',
+      tick: dark ? '#475569' : '#64748b',
+    };
+  }
+
   async _initVaillantCharts() {
     const v = this._config.vaillant || {};
     const hass = this._hass;
@@ -1928,6 +1936,7 @@ class HomeDashboardCard extends HTMLElement {
     if (!entities.length) return;
 
     const draw = async () => {
+      const { grid: chartGrid, tick: chartTick } = this._chartColors();
       const now = new Date();
       const start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       let hist;
@@ -1954,17 +1963,17 @@ class HomeDashboardCard extends HTMLElement {
           responsive: true, maintainAspectRatio: false, animation: false,
           plugins: {
             legend: { display: true, position: 'bottom',
-              labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 10, padding: 8 } },
+              labels: { color: chartTick, font: { size: 10 }, boxWidth: 10, padding: 8 } },
             tooltip: { mode: 'index', intersect: false,
               backgroundColor: '#1e293b', titleColor: '#94a3b8', bodyColor: '#f1f5f9',
               callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)} °C` } }
           },
           scales: {
             x: { type: 'time', time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
-              ticks: { color: '#475569', maxTicksLimit: 8, font: { size: 9 } },
-              grid: { color: 'rgba(255,255,255,.05)' } },
-            y: { ticks: { color: '#475569', font: { size: 9 } },
-              grid: { color: 'rgba(255,255,255,.05)' } }
+              ticks: { color: chartTick, maxTicksLimit: 8, font: { size: 9 } },
+              grid: { color: chartGrid } },
+            y: { ticks: { color: chartTick, font: { size: 9 } },
+              grid: { color: chartGrid } }
           }
         }
       });
@@ -2053,18 +2062,19 @@ class HomeDashboardCard extends HTMLElement {
       if (elH) elH.textContent = todayHeat.toFixed(1) + ' m³';
       if (elC && gasCwuId) elC.textContent = todayCwu.toFixed(1) + ' m³';
 
+      const { grid: chartGrid, tick: chartTick } = this._chartColors();
       const barOpts = {
         responsive: true, maintainAspectRatio: false, animation: false,
         plugins: {
           legend: { display: true, position: 'bottom',
-            labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 10, padding: 8 } },
+            labels: { color: chartTick, font: { size: 10 }, boxWidth: 10, padding: 8 } },
           tooltip: { mode: 'index', intersect: false,
             backgroundColor: '#1e293b', titleColor: '#94a3b8', bodyColor: '#f1f5f9',
             callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)} m³` } }
         },
         scales: {
-          x: { ticks: { color: '#475569', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,.05)' } },
-          y: { ticks: { color: '#475569', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,.05)' } }
+          x: { ticks: { color: chartTick, font: { size: 9 } }, grid: { color: chartGrid } },
+          y: { ticks: { color: chartTick, font: { size: 9 } }, grid: { color: chartGrid } }
         }
       };
 
@@ -2199,10 +2209,10 @@ class HomeDashboardCard extends HTMLElement {
     el.id = 'hdc-windy-overlay';
     el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:stretch;justify-content:stretch;padding:10px;box-sizing:border-box';
     el.innerHTML = `
-      <div style="background:#0a1120;border:1px solid rgba(255,255,255,.1);border-radius:14px;width:100%;display:flex;flex-direction:column;overflow:hidden">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0">
+      <div style="background:var(--hdc-overlay);border:1px solid var(--hdc-border-strong);border-radius:14px;width:100%;display:flex;flex-direction:column;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--hdc-border-card);flex-shrink:0">
           <div style="font-size:13px;font-weight:600;color:var(--hdc-text-hi)">🌤️ Pogoda</div>
-          <button id="hdc-windy-close" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#94a3b8;font-size:16px;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center">✕</button>
+          <button id="hdc-windy-close" style="background:var(--hdc-bg-btn);border:1px solid var(--hdc-border-btn);border-radius:8px;color:var(--hdc-text-sec);font-size:16px;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center">✕</button>
         </div>
         ${tabsHtml}
         <div id="hdc-wx-forecast" style="flex:1;display:${firstTab==='forecast'?'flex':'none'};flex-direction:column;overflow:hidden;min-height:0"></div>
@@ -2217,7 +2227,7 @@ class HomeDashboardCard extends HTMLElement {
       el.querySelectorAll('.hdc-wx-tab').forEach(btn => {
         btn.addEventListener('click', () => {
           el.querySelectorAll('.hdc-wx-tab').forEach(b => {
-            b.style.cssText = 'background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:#94a3b8;cursor:pointer;font-size:11px;padding:4px 12px';
+            b.style.cssText = 'background:var(--hdc-bg-btn);border:1px solid var(--hdc-border-btn);border-radius:7px;color:var(--hdc-text-sec);cursor:pointer;font-size:11px;padding:4px 12px';
           });
           btn.style.cssText = 'background:rgba(56,189,248,.15);border:1px solid #38bdf8;border-radius:7px;color:#38bdf8;cursor:pointer;font-size:11px;padding:4px 12px';
           const forecast = el.querySelector('#hdc-wx-forecast');
@@ -2281,10 +2291,10 @@ class HomeDashboardCard extends HTMLElement {
       const CELL = 46; const LBL = 112;
 
       const cell = (content, bg, extra='') =>
-        `<td style="text-align:center;padding:3px 2px;border-right:1px solid rgba(255,255,255,.04);min-width:${CELL}px;background:${bg};${extra}">${content}</td>`;
+        `<td style="text-align:center;padding:3px 2px;border-right:1px solid var(--hdc-border-inner);min-width:${CELL}px;background:${bg};${extra}">${content}</td>`;
 
       const lbl = (ico, txt, unit, bg) =>
-        `<td style="position:sticky;left:0;background:${bg};font-size:10px;color:#64748b;padding:4px 10px;white-space:nowrap;border-right:1px solid rgba(255,255,255,.1);z-index:1;min-width:${LBL}px">${ico} ${txt}${unit?`<span style='color:#334155;margin-left:3px;font-size:9px'>${unit}</span>`:''}</td>`;
+        `<td style="position:sticky;left:0;background:${bg};font-size:10px;color:var(--hdc-text-muted);padding:4px 10px;white-space:nowrap;border-right:1px solid var(--hdc-border-btn);z-index:1;min-width:${LBL}px">${ico} ${txt}${unit?`<span style='color:var(--hdc-text-faint);margin-left:3px;font-size:9px'>${unit}</span>`:''}</td>`;
 
       const allIdx = days.flatMap(([,a]) => a);
 
@@ -2320,7 +2330,7 @@ class HomeDashboardCard extends HTMLElement {
           <table style="border-collapse:collapse;width:max-content">
             <thead>
               <tr>
-                <th style="position:sticky;left:0;top:0;z-index:3;background:#0d1829;min-width:${LBL}px;border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.08)"></th>
+                <th style="position:sticky;left:0;top:0;z-index:3;background:var(--hdc-overlay);min-width:${LBL}px;border-right:1px solid var(--hdc-border-btn);border-bottom:1px solid var(--hdc-border)"></th>
                 ${dayHdrs}
               </tr>
             </thead>
@@ -2346,10 +2356,10 @@ class HomeDashboardCard extends HTMLElement {
     el.id = 'hdc-pm-overlay';
     el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
     el.innerHTML = `
-      <div style="background:#0f172a;border:1px solid rgba(255,255,255,.1);border-radius:16px;width:100%;max-width:600px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.07)">
+      <div style="background:var(--hdc-overlay);border:1px solid var(--hdc-border-strong);border-radius:16px;width:100%;max-width:600px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--hdc-border-card)">
           <div style="font-size:13px;font-weight:600;color:var(--hdc-text-hi)">📍 Lokalizacja — ${p.name}</div>
-          <button id="hdc-pm-close" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;padding:0 4px;line-height:1">✕</button>
+          <button id="hdc-pm-close" style="background:none;border:none;color:var(--hdc-text-sec);font-size:18px;cursor:pointer;padding:0 4px;line-height:1">✕</button>
         </div>
         <div id="hdc-pm-map" style="height:420px;width:100%;flex:1"></div>
       </div>`;
@@ -2886,6 +2896,7 @@ class HomeDashboardCard extends HTMLElement {
     if (!entities.length) return;
 
     const draw = async () => {
+      const { grid: chartGrid, tick: chartTick } = this._chartColors();
       const now = new Date();
       const start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       let hist;
@@ -2922,14 +2933,14 @@ class HomeDashboardCard extends HTMLElement {
         options: {
           responsive: true, maintainAspectRatio: false, animation: false,
           plugins: {
-            legend: { display: true, position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 10, padding: 8 } },
+            legend: { display: true, position: 'bottom', labels: { color: chartTick, font: { size: 10 }, boxWidth: 10, padding: 8 } },
             tooltip: { mode: 'index', intersect: false, backgroundColor: '#1e293b', titleColor: '#94a3b8', bodyColor: '#f1f5f9' }
           },
           scales: {
             x: { type: 'time', time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
-              ticks: { color: '#475569', maxTicksLimit: 8, font: { size: 9 } },
-              grid: { color: 'rgba(255,255,255,.05)' } },
-            y:  { position: 'left',  ticks: { color: '#475569', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,.05)' } },
+              ticks: { color: chartTick, maxTicksLimit: 8, font: { size: 9 } },
+              grid: { color: chartGrid } },
+            y:  { position: 'left',  ticks: { color: chartTick, font: { size: 9 } }, grid: { color: chartGrid } },
             y2: { position: 'right', ticks: { color: '#f87171', font: { size: 9 } }, grid: { display: false } }
           }
         }
@@ -3081,6 +3092,7 @@ class HomeDashboardCard extends HTMLElement {
 
     const isBinary = points.length > 0 && points.every(p => p.y === 0 || p.y === 1);
     const drawChart = () => {
+      const { grid: chartGrid, tick: chartTick } = this._chartColors();
       if (canvas._hdcChart) canvas._hdcChart.destroy();
       canvas._hdcChart = new Chart(canvas, {
         type: 'line',
@@ -3099,10 +3111,10 @@ class HomeDashboardCard extends HTMLElement {
           }},
           scales: {
             x: { type: 'time', time: { unit: usedStatistics && days <= 7 ? 'hour' : days <= 14 ? 'day' : 'week' },
-              ticks: { color: '#475569', maxTicksLimit: 8 }, grid: { color: 'rgba(255,255,255,.04)' } },
+              ticks: { color: chartTick, maxTicksLimit: 8 }, grid: { color: chartGrid } },
             y: isBinary
-              ? { min: -0.1, max: 1.5, ticks: { color: '#94a3b8', callback: v => v === 1 ? 'on' : v === 0 ? 'off' : '' }, grid: { color: 'rgba(255,255,255,.04)' } }
-              : { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,.04)' } }
+              ? { min: -0.1, max: 1.5, ticks: { color: chartTick, callback: v => v === 1 ? 'on' : v === 0 ? 'off' : '' }, grid: { color: chartGrid } }
+              : { ticks: { color: chartTick }, grid: { color: chartGrid } }
           }
         }
       });
@@ -3168,7 +3180,7 @@ class HomeDashboardCard extends HTMLElement {
     const isPaused = state === 'paused';
     const btnBase = 'flex:1;border-radius:10px;font-size:13px;padding:10px 6px;transition:background .15s';
     const btnActive  = `${btnBase};background:var(--hdc-bg-hover);border:1px solid var(--hdc-border-btn);color:var(--hdc-text-hi);cursor:pointer`;
-    const btnInactive= `${btnBase};background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);color:#334155;cursor:default`;
+    const btnInactive= `${btnBase};background:var(--hdc-bg-card);border:1px solid var(--hdc-border-inner);color:var(--hdc-text-faint);cursor:default`;
     const btnPrimary = `${btnBase};background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);color:#4ade80;cursor:pointer`;
     const sr = this.shadowRoot;
     const set = (id, fn) => { const el = sr.getElementById(id); if (el) fn(el); };
