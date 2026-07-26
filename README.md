@@ -218,8 +218,8 @@ tplink:
       name: Google
     - entity: binary_sensor.router
       name: Router
-    - entity: binary_sensor.node_pve2
-      name: Node pve2
+    - entity: binary_sensor.node_pve3
+      name: Node pve3
 
 cameras:
   thumbnails: right   # opcjonalne: right = sidebar po prawej | bottom = grid poniżej (domyślnie)
@@ -255,12 +255,12 @@ vehicles:
     last_update: sensor.captur_last_update
 
 proxmox:
-  node_cpu: sensor.node_pve2_cpu_used
-  node_ram_pct: sensor.node_pve2_memory_used_percentage
-  node_ram_free: sensor.node_pve2_memory_free
-  node_disk_pct: sensor.node_pve2_disk_used_percentage
-  node_lxc_running: sensor.node_pve2_containers_running
-  node_vm_running: sensor.node_pve2_virtual_machines_running
+  node_cpu: sensor.node_pve3_cpu_used
+  node_ram_pct: sensor.node_pve3_memory_used_percentage
+  node_ram_free: sensor.node_pve3_memory_free
+  node_disk_pct: sensor.node_pve3_disk_used_percentage
+  node_lxc_running: sensor.node_pve3_containers_running
+  node_vm_running: sensor.node_pve3_virtual_machines_running
   lxc:
     - id: 100
       name: mir-pbs
