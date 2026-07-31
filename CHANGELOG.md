@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Domyślny adres agenta AI w zakładce Agent — `mir-docker.lan` zastąpiony przez `mir-docker-2.lan` po migracji infrastruktury (stary host jest niedostępny)
+
 ## [1.23.0] - 2026-06-04
 
 ### Added

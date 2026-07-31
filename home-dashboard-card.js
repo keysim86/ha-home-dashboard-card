@@ -1554,7 +1554,7 @@ function renderKosiarka(hass, cfg) {
 }
 
 function renderAgent(hass, cfg) {
-  const url = (cfg.agent || {}).url || 'http://mir-docker.lan:8088';
+  const url = (cfg.agent || {}).url || 'http://mir-docker-2.lan:8088';
   return `<iframe src="${url}" style="width:100%;height:calc(100vh - 140px);min-height:500px;border:none;border-radius:12px;background:var(--hdc-overlay)" allowfullscreen></iframe>`;
 }
 
