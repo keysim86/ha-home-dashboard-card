@@ -1,5 +1,5 @@
 // ============================================================
-//  home-dashboard-card.js  v1.23.1
+//  home-dashboard-card.js  v1.24.0
 //  Instalacja: /config/www/home-dashboard-card.js
 //  Resource:   url: /local/home-dashboard-card.js
 //              type: module
@@ -77,6 +77,13 @@ const STYLES = `
 .hdc-g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .hdc-ga{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
 .hdc-gaa{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px}
+/* Siatka kafelkow Proxmoksa (LXC + QEMU) -- wspolna dla obu sekcji, zeby
+   nie rozjezdzaly sie wzgledem siebie. Wczesniej LXC uzywaly hdc-gaa
+   (auto-fill, min 130px), a maszyny hdc-ga (auto-fit, min 170px), przez co
+   te same dane renderowaly sie w innej szerokosci. 130px bylo za waskie na
+   nazwe w rodzaju "mir-postgresql" obok znacznika RUN, wiec tekst sie lamal
+   i kafelek rosl w pionie. auto-fill dokladal do tego puste kolumny. */
+.hdc-gpx{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;align-items:start}
 .hdc-sc{background:var(--hdc-bg-card);border:1px solid var(--hdc-border-card);border-radius:12px;padding:11px 13px}
 .hdc-sc-lbl{font-size:10px;color:var(--hdc-text-muted);margin-bottom:3px}
 .hdc-sc-val{font-size:19px;font-weight:700;line-height:1}
@@ -1224,43 +1231,37 @@ function renderProxmox(hass, cfg) {
   const cpuColor = cpu > 80 ? '#f87171' : cpu > 60 ? '#fbbf24' : '#38bdf8';
   const ramColor = ramPct > 85 ? '#f87171' : ramPct > 70 ? '#fbbf24' : '#a78bfa';
 
-  const lxcs = (p.lxc || []).map(l => {
-    const lcpu = sn(hass, l.cpu, 0);
-    const lram = sn(hass, l.ram, 0);
-    const running = isOn(hass, l.status);
+  // Kafelek LXC i kafelek maszyny wirtualnej roznily sie WYLACZNIE kolorem
+  // paska CPU, a poza tym byly kopia jeden drugiego. Trzymane osobno
+  // rozjezdzaly sie przy kazdej poprawce, wiec teraz jest jeden szablon.
+  //
+  // O nierownych kafelkach: winowajca byl brak min-width:0. Element flex ma
+  // domyslnie min-width:auto, czyli NIE kurczy sie ponizej szerokosci swojej
+  // tresci -- dlugie nazwy w rodzaju "mir-postgresql" rozpychaly kafelek
+  // albo lamaly sie na dwie linie, przez co rzad miał nierowne wysokosci.
+  // min-width:0 pozwala mu sie zwezic, a ellipsis przycina to, co zostaje.
+  const pxCard = (item, cpuBarColor) => {
+    const c = sn(hass, item.cpu, 0);
+    const r = sn(hass, item.ram, 0);
+    const running = isOn(hass, item.status);
+    const ell = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
     return `<div class="hdc-pxcard">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-        <span class="hdc-pxbdg ${running?'run':'stop'}">${running?'RUN':'STOP'}</span>
-        <div>
-          <div style="font-size:12px;font-weight:600;color:var(--hdc-text-hi)">${l.name}</div>
-          <div style="font-size:9px;color:#334155;font-family:monospace">#${l.id} · ${l.info||''}</div>
+        <span class="hdc-pxbdg ${running?'run':'stop'}" style="flex-shrink:0">${running?'RUN':'STOP'}</span>
+        <div style="min-width:0;flex:1">
+          <div style="font-size:12px;font-weight:600;color:var(--hdc-text-hi);${ell}" title="${item.name}">${item.name}</div>
+          <div style="font-size:9px;color:#334155;font-family:monospace;${ell}" title="#${item.id} · ${item.info||''}">#${item.id} · ${item.info||''}</div>
         </div>
       </div>
-      <div style="font-size:9px;color:#475569;display:flex;justify-content:space-between;margin-bottom:2px"><span>CPU</span><span>${lcpu}%</span></div>
-      <div class="hdc-pxbar-bg"><div class="hdc-pxbar-fill" style="width:${lcpu}%;background:#38bdf8"></div></div>
-      <div style="font-size:9px;color:#475569;display:flex;justify-content:space-between;margin:4px 0 2px"><span>RAM</span><span>${lram}%</span></div>
-      <div class="hdc-pxbar-bg"><div class="hdc-pxbar-fill" style="width:${lram}%;background:#a78bfa"></div></div>
+      <div style="font-size:9px;color:#475569;display:flex;justify-content:space-between;margin-bottom:2px"><span>CPU</span><span>${c}%</span></div>
+      <div class="hdc-pxbar-bg"><div class="hdc-pxbar-fill" style="width:${c}%;background:${cpuBarColor}"></div></div>
+      <div style="font-size:9px;color:#475569;display:flex;justify-content:space-between;margin:4px 0 2px"><span>RAM</span><span>${r}%</span></div>
+      <div class="hdc-pxbar-bg"><div class="hdc-pxbar-fill" style="width:${r}%;background:#a78bfa"></div></div>
     </div>`;
-  }).join('');
+  };
 
-  const vms = (p.vms || []).map(v => {
-    const vcpu = sn(hass, v.cpu, 0);
-    const vram = sn(hass, v.ram, 0);
-    const running = isOn(hass, v.status);
-    return `<div class="hdc-pxcard">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-        <span class="hdc-pxbdg ${running?'run':'stop'}">${running?'RUN':'STOP'}</span>
-        <div>
-          <div style="font-size:12px;font-weight:600;color:var(--hdc-text-hi)">${v.name}</div>
-          <div style="font-size:9px;color:#334155;font-family:monospace">#${v.id} · ${v.info||''}</div>
-        </div>
-      </div>
-      <div style="font-size:9px;color:#475569;display:flex;justify-content:space-between;margin-bottom:2px"><span>CPU</span><span>${vcpu}%</span></div>
-      <div class="hdc-pxbar-bg"><div class="hdc-pxbar-fill" style="width:${vcpu}%;background:#fb923c"></div></div>
-      <div style="font-size:9px;color:#475569;display:flex;justify-content:space-between;margin:4px 0 2px"><span>RAM</span><span>${vram}%</span></div>
-      <div class="hdc-pxbar-bg"><div class="hdc-pxbar-fill" style="width:${vram}%;background:#a78bfa"></div></div>
-    </div>`;
-  }).join('');
+  const lxcs = (p.lxc || []).map(l => pxCard(l, '#38bdf8')).join('');
+  const vms  = (p.vms || []).map(v => pxCard(v, '#fb923c')).join('');
 
   const sh = (entity, label) => entity ? ` style="cursor:pointer" data-action="sensor_history" data-entity="${entity}" data-label="${label}"` : '';
   return `
@@ -1272,9 +1273,9 @@ function renderProxmox(hass, cfg) {
       <div class="hdc-sc"${sh(p.node_vm_running,   'QEMU aktywne')}><div class="hdc-sc-lbl">QEMU aktywne</div><div class="hdc-sc-val" style="color:#2dd4bf">${vmRun}</div></div>
     </div>
     <div class="hdc-st">LXC Kontenery</div>
-    <div class="hdc-gaa" style="margin-bottom:10px">${lxcs}</div>
+    <div class="hdc-gpx" style="margin-bottom:10px">${lxcs}</div>
     <div class="hdc-st">QEMU Maszyny wirtualne</div>
-    <div class="hdc-ga">${vms}</div>`;
+    <div class="hdc-gpx">${vms}</div>`;
 }
 
 function renderAlerty(hass, cfg) {
@@ -3314,7 +3315,7 @@ window.customCards.push({
 });
 
 console.info(
-  '%c HOME-DASHBOARD-CARD %c v1.23.1 ',
+  '%c HOME-DASHBOARD-CARD %c v1.24.0 ',
   'background:#38bdf8;color:#0d0f14;font-weight:700;padding:2px 6px;border-radius:4px 0 0 4px',
   'background:#0d0f14;color:#38bdf8;font-weight:700;padding:2px 6px;border-radius:0 4px 4px 0'
 );

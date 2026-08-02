@@ -2,11 +2,17 @@
 
 ## [Unreleased]
 
+## [1.24.0] - 2026-08-02
+
 ### Fixed
 - Zakładka TP-Link ignorowała przełączniki PoE inne niż `sw01`/`sw02`/`sw03` — te trzy klucze były wpisane w kodzie na sztywno, więc dodanie `sw04_ports` w konfiguracji nie dawało żadnego efektu ani komunikatu o błędzie. Karta wykrywa teraz przełączniki dynamicznie po wzorcu `swNN_ports` i sortuje je po numerze (`sw10` po `sw09`, nie między `sw01` a `sw02`). Dotyczyło to również odświeżania na żywo — porty spoza tej trójki nie zmieniały stanu bez przeładowania widoku
+- Zakładka Proxmox — nierówne kafelki LXC. Sekcja kontenerów używała innej siatki niż sekcja maszyn wirtualnych (`auto-fill` z minimum 130 px zamiast `auto-fit` z 170 px), więc te same dane renderowały się w różnej szerokości, a `auto-fill` dokładał puste kolumny. Do tego kafelek nie miał `min-width: 0`, przez co dłuższe nazwy w rodzaju `mir-postgresql` rozpychały go albo łamały się na dwie linie i rząd miał nierówne wysokości. Obie sekcje korzystają teraz ze wspólnej siatki, a za długie nazwy są przycinane wielokropkiem z pełną wartością w tooltipie
 
 ### Added
 - Opcjonalny klucz `swNN_label` pozwala nadpisać nagłówek przełącznika. Bez niego nagłówek powstaje jako `MIR-SWNN · <liczba portów>-port PoE`, co odtwarza dotychczasowe nazwy — istniejące konfiguracje wyglądają bez zmian
+
+### Changed
+- Kafelki LXC i QEMU renderowane są jednym szablonem zamiast dwóch kopii różniących się wyłącznie kolorem paska CPU
 
 ## [1.23.1] - 2026-07-31
 
