@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Fixed
+- Zakładka TP-Link ignorowała przełączniki PoE inne niż `sw01`/`sw02`/`sw03` — te trzy klucze były wpisane w kodzie na sztywno, więc dodanie `sw04_ports` w konfiguracji nie dawało żadnego efektu ani komunikatu o błędzie. Karta wykrywa teraz przełączniki dynamicznie po wzorcu `swNN_ports` i sortuje je po numerze (`sw10` po `sw09`, nie między `sw01` a `sw02`). Dotyczyło to również odświeżania na żywo — porty spoza tej trójki nie zmieniały stanu bez przeładowania widoku
+
+### Added
+- Opcjonalny klucz `swNN_label` pozwala nadpisać nagłówek przełącznika. Bez niego nagłówek powstaje jako `MIR-SWNN · <liczba portów>-port PoE`, co odtwarza dotychczasowe nazwy — istniejące konfiguracje wyglądają bez zmian
+
 ## [1.23.1] - 2026-07-31
 
 ### Fixed

@@ -894,6 +894,30 @@ function renderMetering(hass, cfg) {
     </div>`;
 }
 
+// Wykrywa przelaczniki PoE z konfiguracji DYNAMICZNIE, po kluczach
+// pasujacych do swNN_ports. Wczesniej sw01/sw02/sw03 byly wpisane w kodzie
+// na sztywno, wiec dodanie czwartego przelacznika w konfiguracji nie dawalo
+// zadnego efektu -- karta po prostu go ignorowala, bez zadnego bledu.
+//
+// Etykieta: swNN_label z konfiguracji, a gdy jej nie ma -- generowana jako
+// "MIR-SWNN · <liczba portow>-port PoE". Fallback odtwarza dokladnie te
+// nazwy, ktore byly wpisane na sztywno, wiec istniejace konfiguracje
+// wygladaja tak samo jak dotad.
+function swPortGroups(t) {
+  return Object.keys(t || {})
+    .map(k => ({ k, m: /^sw(\d+)_ports$/.exec(k) }))
+    .filter(x => x.m)
+    .map(x => ({ num: x.m[1], ports: t[x.k] || [] }))
+    .filter(g => g.ports.length)
+    // Sortowanie po numerze, a nie po nazwie klucza -- zeby sw10 wypadl
+    // po sw09, a nie miedzy sw01 a sw02.
+    .sort((a, b) => Number(a.num) - Number(b.num))
+    .map(g => ({
+      ...g,
+      label: (t[`sw${g.num}_label`]) || `MIR-SW${g.num} · ${g.ports.length}-port PoE`,
+    }));
+}
+
 function renderTPLink(hass, cfg) {
   const t = cfg.tplink || {};
   const vacState  = sv(hass, t.vacuum, '—');
@@ -975,18 +999,11 @@ function renderTPLink(hass, cfg) {
     <div class="hdc-box" style="margin-bottom:10px">
       <div class="hdc-ports">${renderPorts(t.router_ports, false)}</div>
     </div>
-    <div class="hdc-st">🔌 MIR-SW01 · 16-port PoE</div>
+    ${swPortGroups(t).map(g => `
+    <div class="hdc-st">🔌 ${g.label}</div>
     <div class="hdc-box" style="margin-bottom:10px">
-      <div class="hdc-ports">${renderPorts(t.sw01_ports, true)}</div>
-    </div>
-    <div class="hdc-st">🔌 MIR-SW02 · 8-port PoE</div>
-    <div class="hdc-box" style="margin-bottom:10px">
-      <div class="hdc-ports">${renderPorts(t.sw02_ports, true)}</div>
-    </div>
-    <div class="hdc-st">🔌 MIR-SW03 · 8-port PoE</div>
-    <div class="hdc-box" style="margin-bottom:10px">
-      <div class="hdc-ports">${renderPorts(t.sw03_ports, true)}</div>
-    </div>
+      <div class="hdc-ports">${renderPorts(g.ports, true)}</div>
+    </div>`).join('')}
     <div class="hdc-st">🤖 Zosia (odkurzacz)</div>
     <div class="hdc-box" style="margin-bottom:10px">
       <div class="hdc-g3">
@@ -2960,11 +2977,11 @@ class HomeDashboardCard extends HTMLElement {
   _updateTPLinkLive() {
     const hass = this._hass;
     const t = this._config.tplink || {};
+    // Ta sama dynamiczna lista co przy renderowaniu -- inaczej porty
+    // przelacznikow spoza sw01..sw03 renderowalyby sie, ale nie odswiezaly.
     const allPorts = [
       ...(t.router_ports || []).map(p => ({ ...p, _poe: false })),
-      ...(t.sw01_ports  || []).map(p => ({ ...p, _poe: true })),
-      ...(t.sw02_ports  || []).map(p => ({ ...p, _poe: true })),
-      ...(t.sw03_ports  || []).map(p => ({ ...p, _poe: true })),
+      ...swPortGroups(t).flatMap(g => g.ports.map(p => ({ ...p, _poe: true }))),
     ];
     allPorts.forEach(p => {
       const el = this.shadowRoot.getElementById(`hdc-port-${p.entity.replace('.', '-')}`);

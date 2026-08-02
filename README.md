@@ -201,9 +201,17 @@ tplink:
       label: "1"
     - entity: binary_sensor.mir_r01_port_2_internet_link
       label: "WAN"
+  # Przełączniki PoE — dowolna liczba, klucze swNN_ports (sw01, sw02, … sw10…).
+  # Karta wykrywa je automatycznie i sortuje po numerze.
   sw01_ports:
     - entity: switch.mir_sw01_port_1_poe
       label: "1"
+  sw04_ports:
+    - entity: switch.mir_sw04_port_1_poe
+      label: "1"
+  # Opcjonalnie własny nagłówek. Bez tego karta generuje
+  # "MIR-SW04 · <liczba portów>-port PoE".
+  sw04_label: "MIR-SW04 · 4-port PoE"
   printer_status: sensor.hp_officejet_pro_8020_series_mir_p002_local_status
   ink_black: sensor.hp_officejet_pro_8020_series_mir_p002_local_black_ink_poziom
   ink_cyan: sensor.hp_officejet_pro_8020_series_mir_p002_local_cyan_ink_poziom
