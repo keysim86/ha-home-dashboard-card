@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Kafelek kroków w sekcji osób pokazywał napis `NaN`, gdy encja była chwilowo `unknown` lub `unavailable`. `sv()` oddaje stan encji bez interpretacji, a `parseInt('unknown')` daje `NaN`, które `toLocaleString()` grzecznie renderuje jako tekst. Widać to było po każdym restarcie HA — sensory szablonowe (`sensor.kroki_*`) przez kilka sekund nie mają jeszcze wartości. Nowy pomocnik `sint()` zwraca w takiej sytuacji kreskę, czyli to samo, co reszta karty pokazuje przy braku danych
+
 ## [1.24.0] - 2026-08-02
 
 ### Fixed

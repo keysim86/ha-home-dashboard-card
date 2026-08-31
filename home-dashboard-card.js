@@ -293,6 +293,18 @@ function sn(hass, entity, decimals = 1) {
   const v = parseFloat(sv(hass, entity, '0'));
   return isNaN(v) ? 0 : +v.toFixed(decimals);
 }
+// Liczba calkowita do wyswietlenia, odporna na stan nieliczbowy.
+//
+// DLACZEGO ISTNIEJE: sv() oddaje stan encji TAKI, JAKI JEST -- takze 'unknown'
+// i 'unavailable'. parseInt('unknown') to NaN, a NaN.toLocaleString('pl') daje
+// napis "NaN". Karta pokazywala wiec uzytkownikowi "NaN" zamiast kreski.
+// Widac to bylo po kazdym restarcie HA: sensory szablonowe (sensor.kroki_*)
+// przez kilka sekund nie maja jeszcze wartosci. Kreska mowi "nie wiem",
+// "NaN" mowi "cos jest zepsute" -- a nie bylo.
+function sint(hass, entity, fallback = '—') {
+  const v = parseFloat(sv(hass, entity, ''));
+  return isNaN(v) ? fallback : Math.round(v).toLocaleString('pl');
+}
 function sa(hass, entity, attr) {
   const st = s(hass, entity);
   return st ? st.attributes[attr] : null;
@@ -384,7 +396,6 @@ function renderOsoby(hass, cfg) {
     const bl = sn(hass, p.battery_level, 0);
     const bst = sv(hass, p.battery_state, '');
     const charging = bst.toLowerCase() === 'charging';
-    const steps = sv(hass, p.steps, '—');
     const initials = p.name ? p.name[0] : '?';
     const picture = p.entity ? hass.states[p.entity]?.attributes?.entity_picture : null;
     const avatarInner = picture
@@ -404,7 +415,7 @@ function renderOsoby(hass, cfg) {
         <div class="hdc-chips">
           ${p.battery_state ? `<span class="hdc-ch ${charging?'g':''}">${charging?'⚡ Ładuje':'Brak ładowania'}</span>` : ''}
           ${p.battery_level ? `<span class="hdc-ch ${battColor(bl)}">${battIcon(bl)} ${bl}%</span>` : ''}
-          ${p.steps ? `<span class="hdc-ch y">👟 ${parseInt(steps).toLocaleString('pl')}</span>` : ''}
+          ${p.steps ? `<span class="hdc-ch y">👟 ${sint(hass, p.steps)}</span>` : ''}
         </div>
       </div>`;
   }).join('');
@@ -1758,8 +1769,7 @@ class HomeDashboardCard extends HTMLElement {
       const bl = sn(hass, p.battery_level, 0);
       const bst = sv(hass, p.battery_state, '');
       const charging = bst.toLowerCase() === 'charging';
-      const steps = sv(hass, p.steps, '—');
-      const initials = p.name ? p.name[0] : '?';
+        const initials = p.name ? p.name[0] : '?';
       const picture = p.entity ? hass.states[p.entity]?.attributes?.entity_picture : null;
       const avatarInner = picture
         ? `<img src="${picture}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
@@ -1778,7 +1788,7 @@ class HomeDashboardCard extends HTMLElement {
           <div class="hdc-chips">
             ${p.battery_state ? `<span class="hdc-ch ${charging?'g':''}">${charging?'⚡ Ładuje':'Brak ładowania'}</span>` : ''}
             ${p.battery_level ? `<span class="hdc-ch ${battColor(bl)}">${battIcon(bl)} ${bl}%</span>` : ''}
-            ${p.steps ? `<span class="hdc-ch y">👟 ${parseInt(steps).toLocaleString('pl')}</span>` : ''}
+            ${p.steps ? `<span class="hdc-ch y">👟 ${sint(hass, p.steps)}</span>` : ''}
           </div>
         </div>`;
     }).join('');
