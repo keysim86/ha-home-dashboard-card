@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Osoba w stanie `unknown` renderowała się jako czerwone „Poza domem". To nie jest to samo — encja `person` siedzi na `unknown` po każdym restarcie HA, dopóki telefon się nie odezwie, a także wtedy, gdy jej tracker wskazuje encję, która przestała istnieć (typowo po przemianowaniu urządzenia, bo HA nie poprawia wtedy wpisu w `person`). Karta pokazuje teraz szare „Brak danych" i neutralną ramkę zamiast czerwonej — usterka przestaje udawać nieobecność
+
 ## [1.24.1] - 2026-08-31
 
 ### Fixed

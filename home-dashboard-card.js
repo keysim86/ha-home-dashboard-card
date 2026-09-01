@@ -369,12 +369,26 @@ function _comfortLastUpdated(hass, room) {
   return hass.states[entity]?.last_updated || null;
 }
 
+// Stan osoby na etykiete, kolor i klase ramki.
+//
+// "Nie wiem" TO NIE JEST "poza domem". Encja person siedzi na 'unknown' po
+// kazdym restarcie HA, dopoki telefon sie nie odezwie, a takze wtedy, gdy jej
+// tracker wskazuje na encje, ktora przestala istniec -- co zdarza sie po
+// przemianowaniu urzadzenia, bo HA nie poprawia wtedy wpisu w "person".
+// Malowanie tego na czerwono jako nieobecnosci to twierdzenie czegos, czego
+// karta nie wie: raz, ze klamie, dwa, ze ukrywa usterke pod wiarygodnie
+// wygladajacym stanem. Szare "Brak danych" mowi prawde i rzuca sie w oczy.
+//
+// Klasa ramki jest trzecia, nie 'away': .hdc-pc.away ma czerwonawa obwodke,
+// wiec sama etykieta nie wystarczylaby -- kafelek dalej krzyczalby "nie ma go".
+// Pusta klasa zostawia neutralna ramke z .hdc-pc.
 function personLocation(hass, loc) {
-  if (!loc || loc === 'unknown') return { label: 'Poza domem', color: '#f87171', isHome: false };
-  if (loc === 'home') return { label: 'W domu', color: '#4ade80', isHome: true };
-  if (loc === 'not_home') return { label: 'Poza domem', color: '#f87171', isHome: false };
+  if (!loc || loc === 'unknown' || loc === 'unavailable')
+    return { label: 'Brak danych', color: '#94a3b8', klasa: '' };
+  if (loc === 'home') return { label: 'W domu', color: '#4ade80', klasa: 'home' };
+  if (loc === 'not_home') return { label: 'Poza domem', color: '#f87171', klasa: 'away' };
   const zoneName = hass.states[`zone.${loc}`]?.attributes?.friendly_name || loc;
-  return { label: zoneName, color: '#fbbf24', isHome: false };
+  return { label: zoneName, color: '#fbbf24', klasa: 'away' };
 }
 
 function formatGateElapsed(lastChanged) {
@@ -392,7 +406,7 @@ function renderOsoby(hass, cfg) {
   const persons = cfg.persons || [];
   let cards = persons.map((p, i) => {
     const loc = sv(hass, p.entity, 'unknown');
-    const { label: locLabel, color: locColor, isHome } = personLocation(hass, loc);
+    const { label: locLabel, color: locColor, klasa: locKlasa } = personLocation(hass, loc);
     const bl = sn(hass, p.battery_level, 0);
     const bst = sv(hass, p.battery_state, '');
     const charging = bst.toLowerCase() === 'charging';
@@ -403,7 +417,7 @@ function renderOsoby(hass, cfg) {
       : initials;
     const avatarStyle = picture ? '' : `color:${p.color};background:${p.color}22`;
     return `
-      <div class="hdc-pc ${isHome?'home':'away'}"${p.entity ? ` data-action="person_map" data-entity="${p.entity}" style="cursor:pointer"` : ''}>
+      <div class="hdc-pc ${locKlasa}"${p.entity ? ` data-action="person_map" data-entity="${p.entity}" style="cursor:pointer"` : ''}>
         <div style="display:flex;gap:10px;margin-bottom:9px;align-items:flex-start">
           <div class="hdc-pav" style="${avatarStyle};overflow:hidden">${avatarInner}</div>
           <div>
@@ -1765,7 +1779,7 @@ class HomeDashboardCard extends HTMLElement {
     const persons = cfg.persons || [];
     const cards = persons.map((p) => {
       const loc = sv(hass, p.entity, 'unknown');
-      const { label: locLabel, color: locColor, isHome } = personLocation(hass, loc);
+      const { label: locLabel, color: locColor, klasa: locKlasa } = personLocation(hass, loc);
       const bl = sn(hass, p.battery_level, 0);
       const bst = sv(hass, p.battery_state, '');
       const charging = bst.toLowerCase() === 'charging';
@@ -1776,7 +1790,7 @@ class HomeDashboardCard extends HTMLElement {
         : initials;
       const avatarStyle = picture ? '' : `color:${p.color};background:${p.color}22`;
       return `
-        <div class="hdc-pc ${isHome?'home':'away'}"${p.entity ? ` data-action="person_map" data-entity="${p.entity}" style="cursor:pointer"` : ''}>
+        <div class="hdc-pc ${locKlasa}"${p.entity ? ` data-action="person_map" data-entity="${p.entity}" style="cursor:pointer"` : ''}>
           <div style="display:flex;gap:10px;margin-bottom:9px;align-items:flex-start">
             <div class="hdc-pav" style="${avatarStyle};overflow:hidden">${avatarInner}</div>
             <div>
