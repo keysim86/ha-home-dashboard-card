@@ -1094,8 +1094,15 @@ function renderKamery(hass, cfg) {
   const diskUnit  = eTotal ? (sa(hass, eTotal, 'unit_of_measurement') || 'GiB') : 'GB';
   const dziel     = diskUnit === 'GiB' ? 1024 : 1000;
   const jednDuza  = diskUnit === 'GiB' ? 'TiB' : 'TB';
-  const diskPct   = diskTotal > 0 ? Math.round(diskUsed / diskTotal * 100) : 0;
+  const diskPctRaw = diskTotal > 0 ? (diskUsed / diskTotal * 100) : 0;
+  // JEDNO MIEJSCE PO PRZECINKU PONIZEJ 10%. Swiezo zalozony magazyn ma zajete
+  // ulamek procenta -- Math.round() robil z 0,31% okragle "0%", czyli napis
+  // nieodrozialny od bledu odczytu. Przy dawnych zaszytych 2800/4000 zawsze
+  // wychodzilo 70% i problem sie nie ujawnial.
+  const diskPct   = diskPctRaw >= 10 ? Math.round(diskPctRaw) : Math.round(diskPctRaw * 10) / 10;
   const diskFree  = diskTotal - diskUsed;
+  // Skala dobierana do wartosci: 47,8 GiB czytelniej niz 0,0 TiB.
+  const skala = (v) => v >= dziel ? `${(v / dziel).toFixed(1)} ${jednDuza}` : `${v.toFixed(1)} ${diskUnit}`;
   const diskColor = diskPct > 85 ? '#f87171' : diskPct > 70 ? '#fbbf24' : '#4ade80';
 
   // Liczba kanalow z encji = tyle, ile rejestrator REALNIE wczytal. Rozjazd
@@ -1171,9 +1178,10 @@ function renderKamery(hass, cfg) {
       </div>
       <div class="hdc-box">
         <div class="hdc-box-title">💾 Magazyn</div>
-        <div class="hdc-br"><span class="hdc-br-lbl">Zajęte</span><div class="hdc-br-bg"><div class="hdc-br-fill" style="width:${diskPct}%;background:${diskColor}"></div></div><span class="hdc-br-val">${diskPct}%</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Wolne</span><span class="hdc-ir-val g">${(diskFree/dziel).toFixed(1)} ${jednDuza}</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Pojemność</span><span class="hdc-ir-val">${(diskTotal/dziel).toFixed(1)} ${jednDuza}</span></div>
+        <div class="hdc-br"><span class="hdc-br-lbl">Zajęte</span><div class="hdc-br-bg"><div class="hdc-br-fill" style="width:${Math.max(diskPctRaw, diskPctRaw > 0 ? 0.6 : 0)}%;background:${diskColor}"></div></div><span class="hdc-br-val">${diskPct}%</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Nagrania</span><span class="hdc-ir-val">${skala(diskUsed)}</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Wolne</span><span class="hdc-ir-val g">${skala(diskFree)}</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Pojemność</span><span class="hdc-ir-val">${skala(diskTotal)}</span></div>
       </div>
     </div>`;
 

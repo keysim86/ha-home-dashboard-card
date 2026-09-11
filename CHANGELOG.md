@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Fixed
+- Zajętość magazynu pokazywała `0%`, gdy realnie zajęte było 0,31% (47,8 GiB z 15 TiB). `Math.round()` robił z ułamka procenta okrągłe zero, nieodróżnialne od błędu odczytu. Poniżej 10% pokazywane jest teraz jedno miejsce po przecinku, a pasek dostaje minimalną widoczną szerokość, gdy zajętość jest niezerowa
+- Wiersze „Wolne" i „Pojemność" pokazywały `0.0 TiB` przy małych wartościach, bo skala była sztywno ustawiona na terabajty. Jednostka dobiera się teraz do wartości — `47,8 GiB` zamiast `0,0 TiB`
+
+### Added
+- Wiersz „Nagrania" z zajętością w wartościach bezwzględnych. Sam procent przy świeżo założonym magazynie nie niesie żadnej informacji przez pierwsze tygodnie
+
 ## [1.25.0] - 2026-09-11
 
 ### Changed
