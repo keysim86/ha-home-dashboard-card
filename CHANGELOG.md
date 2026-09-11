@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Changed
+- Sekcja stanu rejestratora w zakładce Kamery czyta teraz **encje zamiast liczb wpisanych na sztywno**. Dotąd „Kanały 6 / 8", „Retencja 30 dni" i „Status Online" były napisami w kodzie, a zajętość dysku dwiema liczbami w konfiguracji (`nvr_disk_total_gb`, `nvr_disk_used_gb`), których nikt nie aktualizował — wyglądało jak odczyt, było dekoracją. Nowe pola: `storage_used_entity`, `storage_total_entity`, `channels_entity`, `status_entity`, `version_entity`, `retention_days`. Każde opcjonalne; pominięte pole = wiersz się nie pokazuje, zamiast pokazywać wartość zmyśloną
+- Liczba kanałów pochodzi z encji, czyli mówi, ile kamer rejestrator **realnie wczytał**. Rozjazd z długością listy `channels` jest przez to widoczny od razu — a to jest informacja, nie usterka: znaczy, że ktoś dodał kamerę w jednym miejscu i zapomniał w drugim
+- Jednostka magazynu brana z atrybutu encji zamiast zakładana. Przy dzieleniu GiB przez 1000 zamiast 1024 błąd sięga 2,4% — przy 15 TiB to ponad 350 GiB różnicy w wyświetlanej wartości
+- Usunięte zaszyte w kodzie napisy `HIKVISION · DS-7608NXI` i `HIKVISION DS-7608NXI-K2`. Karta nie zakłada już marki ani modelu rejestratora — napis bierze się z opcjonalnego pola `model`, a bez niego znika
+
+### Fixed
+- Przykład w README podawał nieistniejące encje telefonów (`device_tracker.pixel_10_pro_xl`, `sensor.pixel_10_pro_xl_daily_steps`) — nazwy sprzed przemianowania urządzeń
+
+### Compatibility
+- Konfiguracje bez nowych pól działają bez zmian: przy braku `storage_*_entity` karta wraca do `nvr_disk_*_gb`, a liczba kanałów do długości listy `channels`. Zniknie natomiast wiersz „Status NVR", który wcześniej **zawsze** pokazywał „Online" niezależnie od stanu rejestratora
+
 ## [1.24.2] - 2026-09-01
 
 ### Fixed

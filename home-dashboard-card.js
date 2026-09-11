@@ -1073,11 +1073,36 @@ function renderKamery(hass, cfg) {
   const c = cfg.cameras || {};
   const channels = c.channels || [];
   const thumbPos  = c.thumbnails || 'bottom'; // 'bottom' | 'right'
-  const diskTotal = c.nvr_disk_total_gb || 4000;
-  const diskUsed  = c.nvr_disk_used_gb || 0;
-  const diskPct   = Math.round(diskUsed / diskTotal * 100);
+  // ---- REJESTRATOR: WARTOSCI Z ENCJI, NIE Z LICZB W YAML-u ----
+  //
+  // Do 2026-09-11 ta sekcja klamala. "Kanaly 6 / 8", "Retencja 30 dni"
+  // i "Status Online" byly napisami wpisanymi w kod, a zajetosc dysku dwiema
+  // liczbami w konfiguracji, ktorych nikt nigdy nie aktualizowal. Wygladalo
+  // jak odczyt, bylo dekoracja.
+  //
+  // ZGODNOSC WSTECZ: gdy nie podano encji, karta wraca do dawnych pol
+  // nvr_disk_*_gb, wiec istniejace konfiguracje dzialaja bez zmian.
+  const recModel = c.model || '';
+  const eUsed  = c.storage_used_entity;
+  const eTotal = c.storage_total_entity;
+  const diskTotal = eTotal ? sn(hass, eTotal, 1) : (c.nvr_disk_total_gb || 4000);
+  const diskUsed  = eUsed  ? sn(hass, eUsed, 1)  : (c.nvr_disk_used_gb || 0);
+  // Jednostke bierzemy z encji, zeby nie mieszac GB z GiB. Sensor REST oddaje
+  // GiB (Frigate liczy w MiB), a stara konfiguracja podawala GB -- 15360 GiB
+  // to 15 TiB, ale 15360 GB to 15,4 TB. Przy dzieleniu przez zla stala roznica
+  // siega 2,4%, czyli u nas ponad 350 GiB.
+  const diskUnit  = eTotal ? (sa(hass, eTotal, 'unit_of_measurement') || 'GiB') : 'GB';
+  const dziel     = diskUnit === 'GiB' ? 1024 : 1000;
+  const jednDuza  = diskUnit === 'GiB' ? 'TiB' : 'TB';
+  const diskPct   = diskTotal > 0 ? Math.round(diskUsed / diskTotal * 100) : 0;
   const diskFree  = diskTotal - diskUsed;
   const diskColor = diskPct > 85 ? '#f87171' : diskPct > 70 ? '#fbbf24' : '#4ade80';
+
+  // Liczba kanalow z encji = tyle, ile rejestrator REALNIE wczytal. Rozjazd
+  // z dlugoscia listy "channels" jest wtedy widoczny od razu i o to chodzi:
+  // znaczy, ze ktos dodal kamere w jednym miejscu i zapomnial w drugim.
+  const chCount = c.channels_entity ? sint(hass, c.channels_entity, channels.length) : channels.length;
+  const statusOn = c.status_entity ? sv(hass, c.status_entity, '') === 'on' : null;
 
   const camUrl = (entity) => {
     const token = sa(hass, entity, 'access_token');
@@ -1108,7 +1133,7 @@ function renderKamery(hass, cfg) {
         </div>
         <div class="hdc-cam-bot">
           <span class="hdc-cam-ts" id="hdc-focus-ts">${nowStr()}</span>
-          <span class="hdc-cam-ch">HIKVISION · DS-7608NXI</span>
+          <span class="hdc-cam-ch">${recModel}</span>
         </div>
       </div>
     </div>`;
@@ -1135,19 +1160,20 @@ function renderKamery(hass, cfg) {
     </div>`).join('');
 
   const nvrHtml = `
-    <div class="hdc-st">Rejestrator NVR</div>
+    <div class="hdc-st">Rejestrator${recModel ? ' · ' + recModel : ''}</div>
     <div class="hdc-g2">
       <div class="hdc-box">
         <div class="hdc-box-title">📼 Nagrywanie</div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Kanały</span><span class="hdc-ir-val b">${channels.length} / 8</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Retencja</span><span class="hdc-ir-val">30 dni</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Status NVR</span><span class="hdc-ir-val g">Online</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Kanały</span><span class="hdc-ir-val b">${chCount}</span></div>
+        ${c.retention_days ? `<div class="hdc-ir"><span class="hdc-ir-lbl">Retencja</span><span class="hdc-ir-val">${c.retention_days} dni</span></div>` : ''}
+        ${statusOn === null ? '' : `<div class="hdc-ir"><span class="hdc-ir-lbl">Status</span><span class="hdc-ir-val ${statusOn ? 'g' : 'r'}">${statusOn ? 'Online' : 'Offline'}</span></div>`}
+        ${c.version_entity ? `<div class="hdc-ir"><span class="hdc-ir-lbl">Wersja</span><span class="hdc-ir-val">${sv(hass, c.version_entity, '—')}</span></div>` : ''}
       </div>
       <div class="hdc-box">
-        <div class="hdc-box-title">💾 Dysk NVR</div>
+        <div class="hdc-box-title">💾 Magazyn</div>
         <div class="hdc-br"><span class="hdc-br-lbl">Zajęte</span><div class="hdc-br-bg"><div class="hdc-br-fill" style="width:${diskPct}%;background:${diskColor}"></div></div><span class="hdc-br-val">${diskPct}%</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Wolne</span><span class="hdc-ir-val g">${(diskFree/1000).toFixed(1)} TB</span></div>
-        <div class="hdc-ir"><span class="hdc-ir-lbl">Pojemność</span><span class="hdc-ir-val">${(diskTotal/1000).toFixed(0)} TB</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Wolne</span><span class="hdc-ir-val g">${(diskFree/dziel).toFixed(1)} ${jednDuza}</span></div>
+        <div class="hdc-ir"><span class="hdc-ir-lbl">Pojemność</span><span class="hdc-ir-val">${(diskTotal/dziel).toFixed(1)} ${jednDuza}</span></div>
       </div>
     </div>`;
 
@@ -1169,7 +1195,7 @@ function renderKamery(hass, cfg) {
   return `
     <div class="hdc-st">Aktywny podgląd · <span id="hdc-focus-label" style="color:#38bdf8">${focusCam.label} · ${focusCam.name}</span></div>
     ${focusHtml}
-    <div class="hdc-st">Wszystkie kamery · HIKVISION DS-7608NXI-K2</div>
+    <div class="hdc-st">Wszystkie kamery${recModel ? ' · ' + recModel : ''}</div>
     <div class="hdc-camgrid">${cards}</div>
     ${nvrHtml}`;
 }

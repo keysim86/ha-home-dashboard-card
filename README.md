@@ -17,7 +17,7 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 | 🔥 **Vaillant** | Termostaty CO + CWU ze sterowaniem (tryby, presety), wykresy temperatur 24h, wykresy zużycia gazu 30-dniowe i 12-miesięczne, ustawienia `input_number`; kliknięcie w temperaturę CO/CWU → modal z wykresem historii |
 | 📊 **Metering** | Tauron AMIplus (szczyt/poza/noc), Mój Tauron AMIplus online (zużycie dzienne/miesięczne + należności z terminem płatności), myORLEN gaz (taryfa w nagłówku, data i typ odczytu licznika, saldo + ostatnia faktura), licznik wody, EcoWater, zmywarka Haier hOn; kliknięcie w kafelek → modal z wykresem historii |
 | 📶 **TP-Link** | Sekcja **Status** — binary_sensory z kolorowym wskaźnikiem on/off i paskiem historii; sekcja **SpeedTest** — aktualne wartości pobierania/wysyłania/pingu + wykres 24h (Chart.js, dual Y-axis); porty PoE (klikalne — włącz/wyłącz), odkurzacz Zosia, aktualizacje firmware, drukarka HP |
-| 📹 **Kamery** | Grid HIKVISION NVR, focus view MJPEG live stream (`camera_proxy_stream`), miniatury odświeżane co 3 s, status dysku; opcja `thumbnails: right` — sidebar z podglądem po lewej i listą kamer po prawej (responsywny: na mobile układ kolumnowy) |
+| 📹 **Kamery** | Grid kamer, focus view live stream (`ha-camera-stream`), miniatury odświeżane co 3 s; sekcja stanu rejestratora (kanały, retencja, status, wersja, zajętość magazynu) czytana **z encji**, więc działa z dowolnym źródłem — NVR, Frigate, cokolwiek wystawia sensory; opcja `thumbnails: right` — sidebar z podglądem po lewej i listą kamer po prawej (responsywny: na mobile układ kolumnowy) |
 | 🚗 **Auta** | Paliwo + litry, zasięg, przebieg, bateria 12V, blokada (klikalna lock/unlock), status połączenia, lokalizacja GPS, mapa `ha-map`; kliknięcie w kafelek sensora → modal z wykresem historii |
 | 🖧 **Proxmox** | Node stats (CPU, RAM%, wolna RAM w GB, Disk), LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
 | 🔔 **Alerty** | Reguły definiowane w YAML, badge z licznikiem na zakładce |
@@ -73,10 +73,10 @@ persons:
   - name: Grzegorz
     entity: person.grzegorz
     color: "#38bdf8"
-    device_tracker: device_tracker.pixel_10_pro_xl
-    battery_level: sensor.pixel_10_pro_xl_battery_level
-    battery_state: sensor.pixel_10_pro_xl_battery_state
-    steps: sensor.pixel_10_pro_xl_daily_steps
+    device_tracker: device_tracker.phone_grzegorz
+    battery_level: sensor.phone_grzegorz_battery_level
+    battery_state: sensor.phone_grzegorz_battery_state
+    steps: sensor.kroki_grzegorz
 
 energy:
   total_power: sensor.miresphome05_calkowita_moc_czynna
@@ -231,14 +231,27 @@ tplink:
 
 cameras:
   thumbnails: right   # opcjonalne: right = sidebar po prawej | bottom = grid poniżej (domyślnie)
-  nvr_disk_total_gb: 4000
-  nvr_disk_used_gb: 2800
+  model: MIR-FRIGATE  # opcjonalne: napis na podglądzie i w nagłówkach sekcji
+
+  # Stan rejestratora — z ENCJI, nie z liczb wpisanych na sztywno.
+  # Każde pole jest opcjonalne; pominięte = wiersz się nie pokazuje.
+  storage_used_entity:  sensor.frigate_magazyn_zajete
+  storage_total_entity: sensor.frigate_magazyn_pojemnosc
+  channels_entity:      sensor.frigate_kanaly       # ile kamer rejestrator REALNIE wczytał
+  status_entity:        binary_sensor.frigate_dostepny
+  version_entity:       sensor.frigate_wersja
+  retention_days: 14    # brak odpowiednika w API — wartość z konfiguracji
+
+  # Zgodność wstecz: gdy nie podasz storage_*_entity, karta użyje tych pól.
+  # nvr_disk_total_gb: 4000
+  # nvr_disk_used_gb: 2800
+
   channels:
     - name: Brama wjazdowa
-      entity: camera.ds_7608nxi_k20820221219ccrrl07078026wcvu_101
+      entity: camera.ipcam001
       label: CH1
     - name: Wjazd garaże
-      entity: camera.ds_7608nxi_k20820221219ccrrl07078026wcvu_201
+      entity: camera.ipcam002
       label: CH2
 
 vehicles:
