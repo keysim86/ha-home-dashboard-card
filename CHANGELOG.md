@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.25.0] - 2026-09-11
+
 ### Changed
 - Sekcja stanu rejestratora w zakładce Kamery czyta teraz **encje zamiast liczb wpisanych na sztywno**. Dotąd „Kanały 6 / 8", „Retencja 30 dni" i „Status Online" były napisami w kodzie, a zajętość dysku dwiema liczbami w konfiguracji (`nvr_disk_total_gb`, `nvr_disk_used_gb`), których nikt nie aktualizował — wyglądało jak odczyt, było dekoracją. Nowe pola: `storage_used_entity`, `storage_total_entity`, `channels_entity`, `status_entity`, `version_entity`, `retention_days`. Każde opcjonalne; pominięte pole = wiersz się nie pokazuje, zamiast pokazywać wartość zmyśloną
 - Liczba kanałów pochodzi z encji, czyli mówi, ile kamer rejestrator **realnie wczytał**. Rozjazd z długością listy `channels` jest przez to widoczny od razu — a to jest informacja, nie usterka: znaczy, że ktoś dodał kamerę w jednym miejscu i zapomniał w drugim
