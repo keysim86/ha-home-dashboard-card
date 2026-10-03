@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.26.0] - 2026-10-03
+
 ### Added
 - **Termostaty (głowice) w zakładce Klimat.** Nowe pole `thermostat` w pokoju z `comfort.rooms` — encja `climate` albo obiekt z polami `climate`, `window`, `automation`, `comfort`, `eco`, `presence`. Kafelek pokazuje stan głowicy („🔥 Grzeje" / „Czeka" / „Wyłączona" / „Brak połączenia"), temperaturę zadaną i zmierzoną przez głowicę, przycisk automatyki ogrzewania oraz ostrzeżenie „🪟 Okno otwarte — grzanie wstrzymane"
 - Z polami `comfort` i `eco` (suwaki `input_number`) kafelek ma dwa wiersze „🏠 W domu" i „🌙 Poza domem" z −/+, a aktywny profil (wg `presence`, przy zamkniętym oknie i włączonej automatyce) jest podświetlony. Przyciski zmieniają suwak profilu, nie temperaturę głowicy — temperaturę na głowicę przenosi automatyzacja w HA, więc karta i automatyzacja nie przestawiają sobie nawzajem wartości
