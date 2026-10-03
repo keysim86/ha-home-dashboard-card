@@ -421,6 +421,14 @@ comfort:
       battery: sensor.czujnik_salon_battery
       illuminance: sensor.salon_lux
       voc: sensor.czujnik_salon_voc
+      # Głowica termostatyczna -- encja climate albo obiekt jak niżej (wszystko poza climate opcjonalne)
+      thermostat:
+        climate: climate.termostat_salon
+        window: binary_sensor.czujnik_otwarcia_okna_salon_contact   # on = otwarte -> ostrzeżenie
+        automation: input_boolean.ogrzewanie_salon_automatyka      # przycisk Auto wł./wył.
+        comfort: input_number.ogrzewanie_salon_komfort              # temperatura "w domu"
+        eco: input_number.ogrzewanie_salon_eko                      # temperatura "poza domem"
+        presence: binary_sensor.domownicy_w_domu                    # który profil jest aktywny
     - name: Sypialnia
       icon: "🛏️"
       temperature: sensor.czujnik_sypialnia_temperature

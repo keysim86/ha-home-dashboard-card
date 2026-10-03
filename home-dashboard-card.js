@@ -263,6 +263,15 @@ const STYLES = `
 .hdc-cbatt{display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:7px;border-top:1px solid var(--hdc-border-inner);font-size:10px;color:var(--hdc-text-muted)}
 .hdc-cbatt-bar{flex:1;height:5px;border-radius:3px;background:var(--hdc-border);overflow:hidden}
 .hdc-cbatt-fill{height:100%;border-radius:3px;transition:width .3s}
+.hdc-thermo{margin-top:8px;padding-top:8px;border-top:1px solid var(--hdc-border-inner);display:flex;flex-direction:column;gap:5px}
+.hdc-thermo-head{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11px;font-weight:600;color:var(--hdc-text)}
+.hdc-thermo-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--hdc-border-btn);color:var(--hdc-text-sec);white-space:nowrap}
+.hdc-thermo-info{font-size:10px;color:var(--hdc-text-muted);font-variant-numeric:tabular-nums}
+.hdc-thermo-row{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11px;color:var(--hdc-text-sec);border-radius:8px;padding:3px 6px;border:1px solid transparent}
+.hdc-thermo-row.active{border-color:rgba(251,146,60,.6);background:rgba(251,146,60,.08);color:var(--hdc-text)}
+.hdc-thermo-set{display:flex;align-items:center;gap:6px}
+.hdc-thermo-val{font-size:14px;font-weight:600;min-width:46px;text-align:center;font-variant-numeric:tabular-nums}
+.hdc-thermo-warn{font-size:10px;color:#38bdf8}
 .hdc-cupdated{font-size:9px;color:var(--hdc-text-faint);font-variant-numeric:tabular-nums;text-align:right;margin-top:6px}.hdc-cs:hover{background:var(--hdc-bg-btn)}
 .hdc-hm-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center}
 .hdc-hm-box{background:var(--hdc-overlay);border:1px solid var(--hdc-border-strong);border-radius:16px;padding:20px;width:660px;max-width:95vw}
@@ -1554,6 +1563,95 @@ function _comfortControlsHtml(hass, room) {
   </div>`;
 }
 
+// Termostat (głowica) w kafelku pokoju. `thermostat` to encja climate albo obiekt:
+//   climate     -- encja głowicy (wymagana)
+//   window      -- czujnik okna (on = otwarte); otwarte = ostrzeżenie w kafelku
+//   automation  -- input_boolean automatyki ogrzewania (przycisk Auto)
+//   comfort/eco -- input_number temperatur "w domu" / "poza domem"
+//   presence    -- binary_sensor obecności; wybiera, który profil jest aktywny
+// Z suwakami comfort/eco przyciski −/+ zmieniają SUWAK profilu -- na głowicę
+// przenosi go automatyzacja w HA, więc karta nie walczy z nią o temperaturę.
+// Bez nich −/+ ustawia temperaturę głowicy wprost.
+function _thermoCfg(room) {
+  const t = room.thermostat;
+  if (!t) return null;
+  if (typeof t === 'string') return { climate: t };
+  return t.climate ? t : null;
+}
+
+function _comfortThermoInner(hass, room, pending) {
+  const t = _thermoCfg(room);
+  if (!t) return '';
+  const p = pending || {};
+  const st = hass.states[t.climate];
+  const num = e => {
+    if (!e) return NaN;
+    if (p[e] !== undefined) return p[e].value;
+    return parseFloat(hass.states[e]?.state);
+  };
+  const fmt = v => isNaN(v) ? '—' : (Math.round(v * 10) / 10).toFixed(1) + '°';
+  const mode = st?.state || 'unavailable';
+  const hvacAction = st?.attributes?.hvac_action;
+  const target = parseFloat(st?.attributes?.temperature);
+  const current = parseFloat(st?.attributes?.current_temperature);
+  const windowOpen = !!t.window && hass.states[t.window]?.state === 'on';
+  const autoOn = t.automation ? hass.states[t.automation]?.state === 'on' : null;
+  const home = t.presence ? hass.states[t.presence]?.state !== 'off' : true;
+
+  let badge;
+  if (mode === 'unavailable' || mode === 'unknown') badge = ['Brak połączenia', 'var(--hdc-text-faint)', ''];
+  else if (mode === 'off') badge = ['Wyłączona', 'var(--hdc-text-muted)', ''];
+  else if (hvacAction === 'heating') badge = ['🔥 Grzeje', '#fb923c', 'border-color:rgba(251,146,60,.6);background:rgba(251,146,60,.12)'];
+  else badge = ['Czeka', '#4ade80', 'border-color:rgba(74,222,128,.45)'];
+
+  const autoBtn = autoOn === null ? '' :
+    `<button class="hdc-tbtn" data-action="toggle" data-entity="${t.automation}" title="Automatyka ogrzewania"
+      style="font-size:10px;height:22px;padding:0 8px;width:auto;${autoOn ? 'background:rgba(251,146,60,.15);border-color:#fb923c;color:#fb923c' : ''}">
+      Auto ${autoOn ? 'wł.' : 'wył.'}</button>`;
+
+  const setRow = (label, ent, isActive) => {
+    const est = hass.states[ent];
+    const stp = parseFloat(est?.attributes?.step) || 0.5;
+    const mn = est?.attributes?.min ?? 5, mx = est?.attributes?.max ?? 30;
+    return `<div class="hdc-thermo-row${isActive ? ' active' : ''}">
+      <span>${label}</span>
+      <span class="hdc-thermo-set">
+        <button class="hdc-tbtn" data-action="input_down" data-entity="${ent}" data-step="${stp}" data-min="${mn}" data-max="${mx}">−</button>
+        <span class="hdc-thermo-val" id="hdc-vl-set-${ent.replace(/\./g, '-')}">${fmt(num(ent))}</span>
+        <button class="hdc-tbtn" data-action="input_up" data-entity="${ent}" data-step="${stp}" data-min="${mn}" data-max="${mx}">+</button>
+      </span>
+    </div>`;
+  };
+
+  let rows;
+  if (t.comfort && t.eco) {
+    const prowadzi = autoOn !== false && !windowOpen;
+    rows = setRow('🏠 W domu', t.comfort, prowadzi && home) + setRow('🌙 Poza domem', t.eco, prowadzi && !home);
+  } else {
+    const stp = parseFloat(st?.attributes?.target_temp_step) || 0.5;
+    const dispId = `hdc-thermo-set-${t.climate.replace(/\./g, '-')}`;
+    rows = `<div class="hdc-thermo-row active">
+      <span>Zadana</span>
+      <span class="hdc-thermo-set">
+        <button class="hdc-tbtn" data-action="climate_down" data-entity="${t.climate}" data-step="${stp}" data-disp="${dispId}">−</button>
+        <span class="hdc-thermo-val" id="${dispId}">${fmt(target)}</span>
+        <button class="hdc-tbtn" data-action="climate_up" data-entity="${t.climate}" data-step="${stp}" data-disp="${dispId}">+</button>
+      </span>
+    </div>`;
+  }
+
+  const info = mode === 'off' || isNaN(target) ? '' : `zadana ${fmt(target)}`;
+  const glowica = isNaN(current) ? '' : `głowica mierzy ${fmt(current)}`;
+  return `<div class="hdc-thermo-head">
+      <span style="display:flex;align-items:center;gap:6px;cursor:pointer" data-action="sensor_history" data-entity="${t.climate}" data-label="🌡️ Głowica">🌡️ Głowica
+        <span class="hdc-thermo-badge" style="color:${badge[1]};${badge[2]}">${badge[0]}</span></span>
+      ${autoBtn}
+    </div>
+    ${rows}
+    ${info || glowica ? `<div class="hdc-thermo-info">${[info, glowica].filter(Boolean).join(' · ')}</div>` : ''}
+    ${windowOpen ? '<div class="hdc-thermo-warn">🪟 Okno otwarte — grzanie wstrzymane</div>' : ''}`;
+}
+
 function renderKomfort(hass, cfg) {
   const rooms = (cfg.comfort || {}).rooms || [];
   if (!rooms.length) return `<div style="color:#475569;font-size:12px;padding:12px">Brak konfiguracji.<br>Dodaj sekcję <code>comfort.rooms</code> w konfiguracji karty.</div>`;
@@ -1565,6 +1663,7 @@ function renderKomfort(hass, cfg) {
       ${_comfortHumHtml(hass, room)}
       ${_comfortBattHtml(hass, room)}
       ${_comfortControlsHtml(hass, room)}
+      ${_thermoCfg(room) ? `<div class="hdc-thermo" id="hdc-thermo-${idx}">${_comfortThermoInner(hass, room)}</div>` : ''}
       <div class="hdc-cupdated" id="hdc-cupdated-${idx}">🕐 ${formatAgo(lastUpd)}</div>
     </div>`;
   }).join('')}</div>`;
@@ -2574,9 +2673,9 @@ class HomeDashboardCard extends HTMLElement {
         Math.round((action === 'climate_up' ? current + step : current - step) * 10) / 10));
 
       // Optymistyczny update wyświetlacza
-      const dispId = entity === (this._config.vaillant || {}).climate_co ? 'hdc-co-set' : 'hdc-cwu-set';
+      const dispId = btn.dataset.disp || (entity === (this._config.vaillant || {}).climate_co ? 'hdc-co-set' : 'hdc-cwu-set');
       const dispEl = this.shadowRoot.getElementById(dispId);
-      if (dispEl) dispEl.textContent = newTemp;
+      if (dispEl) dispEl.textContent = btn.dataset.disp ? newTemp.toFixed(1) + '°' : newTemp;
 
       // Debounce — anuluj poprzedni timer, wyślij po 350ms
       if (this._pendingClimate[entity]?.timer) clearTimeout(this._pendingClimate[entity].timer);
@@ -2624,7 +2723,9 @@ class HomeDashboardCard extends HTMLElement {
         const stepV = parseFloat(st2?.attributes?.step) || step;
         const dec = _n(undefined, stepV < 0.01 ? 3 : stepV < 0.1 ? 2 : stepV < 1 ? 1 : 0);
         const unit = st2?.attributes?.unit_of_measurement || '';
-        elDisp.textContent = clamped.toFixed(dec) + (unit ? ' ' + unit : '');
+        elDisp.textContent = elDisp.classList.contains('hdc-thermo-val')
+          ? clamped.toFixed(1) + '°'
+          : clamped.toFixed(dec) + (unit ? ' ' + unit : '');
       }
       // Debounce: cancel previous timer, schedule single callService
       if (this._pendingInputs[entity]?.timer) clearTimeout(this._pendingInputs[entity].timer);
@@ -2931,6 +3032,12 @@ class HomeDashboardCard extends HTMLElement {
           const fill = battEl.querySelector('.hdc-cbatt-fill');
           if (fill) { fill.style.width = (isNaN(val) ? 0 : val) + '%'; fill.style.background = color; }
         }
+      }
+      // Termostat -- przebudowa sekcji; wartości w trakcie klikania (debounce)
+      // bierzemy z _pendingInputs, żeby nie przeskakiwały wstecz.
+      if (_thermoCfg(room)) {
+        const thEl = this.shadowRoot.getElementById(`hdc-thermo-${idx}`);
+        if (thEl) thEl.innerHTML = _comfortThermoInner(hass, room, this._pendingInputs);
       }
       // Last updated
       const updEl = this.shadowRoot.getElementById(`hdc-cupdated-${idx}`);
