@@ -1256,7 +1256,7 @@ function renderAuta(hass, cfg) {
 
     // Map placeholder
     const mapDiv = tracker
-      ? `<div id="hdc-car-map-${idx}" style="height:380px;border-radius:10px;overflow:hidden;border:1px solid var(--hdc-border-card);margin-top:8px"></div>`
+      ? `<div id="hdc-car-map-${idx}" data-hdc-keep style="height:380px;border-radius:10px;overflow:hidden;border:1px solid var(--hdc-border-card);margin-top:8px"></div>`
       : '';
 
     return `
@@ -1710,7 +1710,7 @@ function renderKosiarka(hass, cfg) {
     ${camSrc ? `
     <div class="hdc-st">Mapa</div>
     <div style="background:var(--hdc-map);border-radius:12px;overflow:hidden;margin-bottom:12px;min-height:120px;display:flex;align-items:center;justify-content:center">
-      <img id="hdc-mower-map" src="${camSrc}" style="width:100%;display:block;max-height:420px;object-fit:contain" onerror="this.style.opacity='.15'">
+      <img id="hdc-mower-map" data-hdc-keep src="${camSrc}" style="width:100%;display:block;max-height:420px;object-fit:contain" onerror="this.style.opacity='.15'">
     </div>` : ''}
     <div class="hdc-st">Status</div>
     <div class="hdc-g3" style="margin-bottom:10px">
@@ -1735,6 +1735,51 @@ function renderKosiarka(hass, cfg) {
 function renderAgent(hass, cfg) {
   const url = (cfg.agent || {}).url || 'http://mir-docker-2.lan:8088';
   return `<iframe src="${url}" style="width:100%;height:calc(100vh - 140px);min-height:500px;border:none;border-radius:12px;background:var(--hdc-overlay)" allowfullscreen></iframe>`;
+}
+
+// ============================================================
+//  ODŚWIEŻANIE ZAKŁADKI BEZ PRZEBUDOWY DOM
+// ============================================================
+// Przy każdej zmianie stanu w HA zakładka jest renderowana od nowa do tekstu,
+// a hdcMorph przenosi do istniejącego DOM tylko różnice. Dzięki temu na karcie
+// jest zawsze to samo, co dałby świeży render -- wcześniej każda zakładka miała
+// własną funkcję "live" poprawiającą wybrane elementy, a wszystko, czego taka
+// funkcja nie znała, zostawało nieaktualne aż do przełączenia zakładki.
+//
+// Nietykane są elementy wypełniane z kodu po renderze: <canvas> (wykresy
+// Chart.js same ustawiają im atrybuty) i wszystko z data-hdc-keep (mapy, obraz
+// kosiarki odświeżany co 15 s). Przy <img> pomijamy styl -- onerror ukrywa
+// obrazek stylem i nie chcemy go co chwilę pokazywać od nowa.
+function hdcSyncAttrs(o, n) {
+  const skip = name => o.nodeName === 'IMG' && name === 'style';
+  for (const a of Array.from(o.attributes)) {
+    if (!n.hasAttribute(a.name) && !skip(a.name)) o.removeAttribute(a.name);
+  }
+  for (const a of Array.from(n.attributes)) {
+    if (o.getAttribute(a.name) !== a.value && !skip(a.name)) o.setAttribute(a.name, a.value);
+  }
+}
+
+function hdcMorph(from, to) {
+  const oldKids = Array.from(from.childNodes);
+  const newKids = Array.from(to.childNodes);
+  newKids.forEach((n, i) => {
+    const o = oldKids[i];
+    if (!o) { from.appendChild(n); return; }
+    if (o.nodeType !== n.nodeType || o.nodeName !== n.nodeName
+        || (o.nodeType === 1 && o.id !== n.id)) {
+      from.replaceChild(n, o);
+      return;
+    }
+    if (o.nodeType !== 1) {
+      if (o.nodeValue !== n.nodeValue) o.nodeValue = n.nodeValue;
+      return;
+    }
+    if (o.nodeName === 'CANVAS' || o.hasAttribute('data-hdc-keep')) return;
+    hdcSyncAttrs(o, n);
+    hdcMorph(o, n);
+  });
+  for (let i = oldKids.length - 1; i >= newKids.length; i--) from.removeChild(oldKids[i]);
 }
 
 // ============================================================
@@ -1781,11 +1826,16 @@ class HomeDashboardCard extends HTMLElement {
     if (!this._built) {
       this._build();
       this._built = true;
-    } else {
+      return;
+    }
+    // HA potrafi podać kilka zmian stanu w jednej klatce -- odświeżamy raz.
+    if (this._frame) return;
+    this._frame = requestAnimationFrame(() => {
+      this._frame = null;
       this._updatePane();
       this._updateAlertBadge();
       this._updateWasteBadge();
-    }
+    });
   }
 
   _build() {
@@ -1879,222 +1929,52 @@ class HomeDashboardCard extends HTMLElement {
     const tabChanged = this._tabChanged;
     this._tabChanged = false;
     try {
-      // Na aktualizacjach hass (nie zmiana zakładki) nie niszcz mapy/canvasów —
-      // odśwież tylko dane tekstowe in-place
-      if (this._activeTab === 'vaillant' && !tabChanged) {
-        this._updateVaillantLive();
+      if (!tabChanged) {
+        // Kamery: strumień i miniatury odświeżają się same (_startCamRefresh),
+        // ponowny render przeładowywałby obraz. Agent: iframe z czatem.
+        if (this._activeTab === 'kamery' || this._activeTab === 'agent') return;
+        const html = tab.render(this._hass, this._config);
+        if (html === this._paneHtml) return;
+        this._paneHtml = html;
+        const tpl = document.createElement('template');
+        tpl.innerHTML = html;
+        hdcMorph(pane, tpl.content);
+        this._afterPaneUpdate();
         return;
       }
-      if (this._activeTab === 'home' && !tabChanged) {
-        this._updateOsobyLive();
-        return;
-      }
-      if (this._activeTab === 'kamery'       && !tabChanged) return;
-      if (this._activeTab === 'agent'        && !tabChanged) return;
-      if (this._activeTab === 'auta'         && !tabChanged) { this._updateAutaLive(); return; }
-      if (this._activeTab === 'przelaczniki' && !tabChanged) { this._updateSwitchesLive(); return; }
-      if (this._activeTab === 'tplink'       && !tabChanged) { this._updateTPLinkLive(); return; }
-      if (this._activeTab === 'klimat'       && !tabChanged) { this._updateKomfortLive(); return; }
-      if (this._activeTab === 'mower'        && !tabChanged) { this._updateMowerLive(); return; }
-      pane.innerHTML = tab.render(this._hass, this._config);
+      const html = tab.render(this._hass, this._config);
+      this._paneHtml = html;
+      pane.innerHTML = html;
+      this._afterPaneUpdate();
       // home tab — no post-render init needed (map shown on-demand via modal)
       if (this._activeTab === 'auta') setTimeout(() => this._initCarMaps(), 0);
       if (this._activeTab === 'vaillant') setTimeout(() => this._initVaillantCharts(), 0);
       if (this._activeTab === 'tplink') setTimeout(() => this._initSpeedTestChart(), 0);
       if (this._activeTab === 'kamery') setTimeout(() => this._initCameraStream(), 0);
     } catch(err) {
+      this._paneHtml = null;
       pane.innerHTML = `<div style="color:#f87171;font-size:12px;padding:12px">Błąd renderowania: ${err.message}</div>`;
       console.error('[home-dashboard-card]', err);
     }
   }
 
-  _updateOsobyLive() {
-    const hass = this._hass;
-    const cfg = this._config;
-    const listDiv = this.shadowRoot.getElementById('hdc-persons-list');
-    const persons = cfg.persons || [];
-    const cards = persons.map((p) => {
-      const loc = sv(hass, p.entity, 'unknown');
-      const { label: locLabel, color: locColor, klasa: locKlasa } = personLocation(hass, loc);
-      const bl = sn(hass, p.battery_level, 0);
-      const bst = sv(hass, p.battery_state, '');
-      const charging = bst.toLowerCase() === 'charging';
-        const initials = p.name ? p.name[0] : '?';
-      const picture = p.entity ? hass.states[p.entity]?.attributes?.entity_picture : null;
-      const avatarInner = picture
-        ? `<img src="${picture}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
-        : initials;
-      const avatarStyle = picture ? '' : `color:${p.color};background:${p.color}22`;
-      return `
-        <div class="hdc-pc ${locKlasa}"${p.entity ? ` data-action="person_map" data-entity="${p.entity}" style="cursor:pointer"` : ''}>
-          <div style="display:flex;gap:10px;margin-bottom:9px;align-items:flex-start">
-            <div class="hdc-pav" style="${avatarStyle};overflow:hidden">${avatarInner}</div>
-            <div>
-              <div style="font-size:13px;font-weight:600;color:var(--hdc-text-hi)">${p.name}</div>
-              <div style="font-size:10px;color:#475569">${p.device_tracker ? sa(hass, p.device_tracker, 'friendly_name') || p.device_tracker : ''}</div>
-              <div style="font-size:10px;margin-top:2px;color:${locColor}">● ${locLabel}</div>
-            </div>
-          </div>
-          <div class="hdc-chips">
-            ${p.battery_state ? `<span class="hdc-ch ${charging?'g':''}">${charging?'⚡ Ładuje':'Brak ładowania'}</span>` : ''}
-            ${p.battery_level ? `<span class="hdc-ch ${battColor(bl)}">${battIcon(bl)} ${bl}%</span>` : ''}
-            ${p.steps ? `<span class="hdc-ch y">👟 ${sint(hass, p.steps)}</span>` : ''}
-          </div>
-        </div>`;
-    }).join('');
-    if (listDiv) listDiv.innerHTML = `<div class="hdc-ga">${cards}</div>`;
-
-    // Aktualizacja bram in-place
-    const stateLabel = st => ({ open: 'Otwarta', closed: 'Zamknięta', opening: 'Otwieranie…', closing: 'Zamykanie…', locked: 'Zamknięta', unlocked: 'Otwarta' }[st] || st || '—');
-    (cfg.gates || []).forEach(g => {
-      const tile = this.shadowRoot.getElementById(`hdc-gate-${g.entity.replace('.', '-')}`);
-      if (!tile) return;
-      const st = hass.states[g.entity];
-      const state = st?.state || 'unknown';
-      tile.className = `hdc-gate-tile ${state}`;
-      const stEl = tile.querySelector('.hdc-gate-state');
-      if (stEl) stEl.textContent = stateLabel(state);
-      const ltEl = tile.querySelector('.hdc-gate-light');
-      if (ltEl && g.light) {
-        const lightOn = hass.states[g.light]?.state === 'on';
-        ltEl.className = `hdc-gate-light${lightOn ? ' on' : ''}`;
-        ltEl.textContent = `💡 ${lightOn ? 'Włączone' : 'Wyłączone'}`;
-      }
-      const tmEl = tile.querySelector('.hdc-gate-timer');
-      if (tmEl) {
-        const isOpen = ['open', 'unlocked', 'opening', 'closing'].includes(state);
-        tmEl.textContent = isOpen && st?.last_changed ? formatGateElapsed(st.last_changed) : '';
-      }
-    });
-
-    // Aktualizacja skrzynki pocztowej in-place
-    const mbCfg = cfg.mailbox;
-    if (mbCfg) {
-      const mbEl = this.shadowRoot.getElementById('hdc-mailbox');
-      if (mbEl) {
-        const mbSt = hass.states[mbCfg.entity];
-        const hasMail = mbSt?.state === 'on';
-        mbEl.className = `hdc-mailbox${hasMail ? ' mail' : ''}`;
-        const icoEl = mbEl.querySelector('.hdc-mailbox-ico');
-        if (icoEl) icoEl.textContent = hasMail ? '📬' : '📭';
-        const stEl = mbEl.querySelector('.hdc-mailbox-status');
-        if (stEl) stEl.textContent = `${mbCfg.name || 'Skrzynka pocztowa'} — ${hasMail ? 'Jest poczta!' : 'Pusta'}`;
-        const battEl = mbEl.querySelector('.hdc-mailbox-batt');
-        if (battEl && mbCfg.battery) {
-          const battSt = hass.states[mbCfg.battery];
-          const battVal = battSt ? Math.round(parseFloat(battSt.state)) : null;
-          if (battVal !== null) {
-            battEl.style.color = battVal > 50 ? '#4ade80' : battVal > 20 ? '#fbbf24' : '#f87171';
-            battEl.textContent = `🔋 ${battVal}%`;
-          }
-        }
-      }
-    }
-  }
-
-  _updateVaillantLive() {
-    const hass = this._hass;
-    const v = this._config.vaillant || {};
+  // Po każdym renderze i odświeżeniu: rzeczy, których sam render nie wie.
+  _afterPaneUpdate() {
     const sr = this.shadowRoot;
-    const setText = (id, val) => { const el = sr.getElementById(id); if (el) el.textContent = val; };
-    const coAct  = sa(hass, v.climate_co,   'current_temperature') || '—';
-    const coSet  = v.co_temp_input ? sn(hass, v.co_temp_input, 1)
-      : sa(hass, v.climate_co, 'temperature') || sa(hass, v.climate_co, 'target_temp_high') || sa(hass, v.climate_co, 'target_temp_low') || '—';
-    const cwuCur = sn(hass, v.cwu_current, 1);
-    const cwuTgt = sn(hass, v.cwu_target,  1);
-    const tSup   = sn(hass, v.temp_supply,  1);
-    const tRet   = sn(hass, v.temp_return,  1);
-    const tTgtSup= sn(hass, v.temp_target_supply, 1);
-    const tOut   = sn(hass, v.temp_outdoor, 1);
-    const tInd   = v.temp_indoor ? sn(hass, v.temp_indoor, 1) : coAct;
-    const press  = sn(hass, v.pressure, 1);
-    const pwr    = sn(hass, v.power,    1);
-    const flame  = isOn(hass, v.flame);
-    const pump   = isOn(hass, v.pump);
-    const fanSpd = sv(hass, v.fan_speed, '—');
-    const curve  = sv(hass, v.heat_curve, '—');
-    const tOutAvg = sn(hass, v.temp_outdoor_avg, 1);
-    const elCO   = sn(hass, v.el_co,  2);
-    const elCWU  = sn(hass, v.el_cwu, 2);
-    const PM_LABEL   = { schedule:'Harmonogram', manual:'Ręczny', eco:'Eco', away:'Poza domem',
-      boost:'Turbo', sleep:'Sen', home:'Dom', comfort:'Komfort', off:'Wyłączony', none:'—' };
-    const HVAC_LABEL = { heat:'Grzanie', auto:'Auto', heat_cool:'Grzanie', cool:'Chłodzenie',
-      fan_only:'Wentylator', dry:'Osuszanie', off:'Wył.' };
-    const hvacLabel = m => HVAC_LABEL[m] || m;
-    const pmLabel   = p => PM_LABEL[p]   || p;
-    const modeStatus = (hvac, pmCur) => hvac === 'off' ? 'Wyłączone'
-      : `${hvacLabel(hvac)}${pmCur && pmCur !== 'none' ? ' · ' + pmLabel(pmCur) : ''}`;
-    const coHvac  = sv(hass, v.climate_co,  'off');
-    const coPmCur = sa(hass, v.climate_co,  'preset_mode') || '';
-    const coPmList = (sa(hass, v.climate_co, 'preset_modes') || []).filter(p => p !== 'none');
-    const coHvacModes = sa(hass, v.climate_co, 'hvac_modes') || [];
-    const cwuHvac  = sv(hass, v.climate_cwu, 'off');
-    const cwuPmCur = sa(hass, v.climate_cwu, 'preset_mode') || '';
-    const cwuPmList = (sa(hass, v.climate_cwu, 'preset_modes') || []).filter(p => p !== 'none');
-    const cwuHvacModes = sa(hass, v.climate_cwu, 'hvac_modes') || [];
-    const sfModeL  = v.sf_mode_entity ? sv(hass, v.sf_mode_entity, 'auto') : 'auto';
-    const isVetoL  = sfModeL === 'veto';
-    const vetoDateL = v.veto_end_date ? sv(hass, v.veto_end_date, '') : '';
-    const vetoTimeL = v.veto_end_time ? sv(hass, v.veto_end_time, '').substring(0, 5) : '';
-    const vetoUntilL = (vetoDateL || vetoTimeL) ? `do ${vetoDateL}${vetoDateL && vetoTimeL ? ' ' : ''}${vetoTimeL}` : '';
-    const pressColor = press < 1.0 ? 'r' : press > 2.5 ? 'r' : press < 1.4 ? 'y' : 'g';
-    const modeBtnsHtml = (entity, pmList, pmCur, hvac, hvacModes) => {
-      const seen = new Set();
-      const modes = hvacModes.filter(m => m !== 'none').filter(m => { const lbl = hvacLabel(m); if (seen.has(lbl)) return false; seen.add(lbl); return true; });
-      return `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;justify-content:center">
-        ${modes.map(m => { const isOff = m === 'off'; const active = hvac === m;
-          const style = active ? (isOff ? 'background:rgba(248,113,113,.2);border-color:#f87171;color:#f87171' : 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8') : '';
-          return `<button class="hdc-tbtn" style="font-size:10px;width:auto;height:22px;padding:0 8px;${style}" data-action="set_hvac_mode" data-entity="${entity}" data-mode="${m}">${isOff?'⏻ ':''}${hvacLabel(m)}</button>`;
-        }).join('')}
-        ${hvac !== 'off' ? pmList.map(p => `<button class="hdc-tbtn" style="font-size:10px;width:auto;height:22px;padding:0 8px;${pmCur===p?'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8':''}" data-action="set_preset" data-entity="${entity}" data-preset="${p}">${pmLabel(p)}</button>`).join('') : ''}
-      </div>`;
-    };
-    const flameEl = this.shadowRoot.getElementById('hdc-vl-flame');
-    if (flameEl) {
-      flameEl.textContent = isVetoL ? `● 🔒 Veto${vetoUntilL ? ' ' + vetoUntilL : ''}` : `● ${modeStatus(coHvac, coPmCur)}`;
-      flameEl.style.color = isVetoL ? '#fb923c' : '';
-    }
-    const coBtnsEl = sr.getElementById('hdc-vl-co-btns');
-    if (coBtnsEl) coBtnsEl.innerHTML = modeBtnsHtml(v.climate_co, coPmList, coPmCur, coHvac, coHvacModes);
-    const cwuBtnsEl = sr.getElementById('hdc-vl-cwu-btns');
-    if (cwuBtnsEl) cwuBtnsEl.innerHTML = modeBtnsHtml(v.climate_cwu, cwuPmList, cwuPmCur, cwuHvac, cwuHvacModes);
-    setText('hdc-vl-tind',    `${tInd}°C`);
-    setText('hdc-vl-tout',    `${tOut}°C`);
-    setText('hdc-vl-toutavg', `${tOutAvg}°C`);
-    setText('hdc-vl-tgtSup',  `${tTgtSup}°C`);
-    setText('hdc-vl-tgtSup2', `${tTgtSup}°C`);
-    setText('hdc-vl-sup',     `${tSup}°C`);
-    setText('hdc-vl-ret',     `${tRet}°C`);
-    setText('hdc-vl-coact',   `${coAct}°`);
-    setText('hdc-co-set',     coSet);
-    setText('hdc-vl-cwumode', `● ${modeStatus(cwuHvac, cwuPmCur)}`);
-    setText('hdc-vl-cwucur',  `${cwuCur}°`);
-    setText('hdc-cwu-set',    cwuTgt);
-    setText('hdc-vl-sup2',    `${tSup}°C`);
-    setText('hdc-vl-ret2',    `${tRet}°C`);
-    setText('hdc-vl-tout2',   `${tOut}°C`);
-    setText('hdc-vl-fan',     `${isNaN(parseInt(fanSpd)) ? fanSpd : parseInt(fanSpd).toLocaleString('pl')} rpm`);
-    setText('hdc-vl-curve',   curve);
-    setText('hdc-vl-pwr',     `${pwr} kW`);
-    const pressEl = sr.getElementById('hdc-vl-press');
-    if (pressEl) { pressEl.textContent = `${press} bar`; pressEl.className = `hdc-ir-val ${pressColor}`; }
-    const pumpEl = sr.getElementById('hdc-vl-pump');
-    if (pumpEl) { pumpEl.textContent = pump ? 'Aktywna' : 'Nieaktywna'; pumpEl.className = `hdc-ir-val ${pump ? 'g' : ''}`; }
-    const flameValEl = sr.getElementById('hdc-vl-flameval');
-    if (flameValEl) { flameValEl.textContent = `🔥 ${flame ? 'Aktywny' : 'Nieaktywny'}`; flameValEl.className = `hdc-ir-val ${flame ? 'o' : ''}`; }
-    setText('hdc-vl-elco',    `${elCO} kWh`);
-    setText('hdc-vl-elcwu',   `${elCWU} kWh`);
-    (v.settings || []).forEach(s => {
-      if (this._pendingInputs[s.entity] !== undefined) return; // debounce in progress — keep optimistic value
-      const st = hass.states[s.entity];
-      if (!st) return;
-      const val = parseFloat(st.state);
-      if (isNaN(val)) return;
-      const step = parseFloat(st.attributes.step) || 1;
-      const dec  = s.decimals !== undefined ? s.decimals : (step < 0.01 ? 3 : step < 0.1 ? 2 : step < 1 ? 1 : 0);
-      const unit = s.unit !== undefined ? s.unit : (st.attributes.unit_of_measurement || '');
-      const el = sr.getElementById('hdc-vl-set-' + s.entity.replace(/\./g, '-'));
-      if (el) el.textContent = val.toFixed(dec) + (unit ? ' ' + unit : '');
+    // Wartości w trakcie klikania −/+ (wysyłka po 350 ms) -- render zna tylko
+    // stan z HA, więc bez tego liczba skakałaby wstecz między kliknięciami.
+    [this._pendingInputs, this._pendingClimate || {}].forEach(pending => {
+      Object.values(pending).forEach(p => {
+        const el = p.elId && sr.getElementById(p.elId);
+        if (el) el.textContent = p.text;
+      });
+    });
+    // Filtr wyszukiwarki przełączników ukrywa kafelki stylem -- render go nie zna.
+    const search = sr.getElementById('hdc-sw-search');
+    if (search && search.value) this._filterSwitches(search.value);
+    // Mapy (karty HA w kontenerach data-hdc-keep) dostają świeży stan.
+    sr.querySelectorAll('[data-hdc-keep] > *').forEach(el => {
+      if ('hass' in el) el.hass = this._hass;
     });
   }
 
@@ -2678,12 +2558,15 @@ class HomeDashboardCard extends HTMLElement {
       // Optymistyczny update wyświetlacza
       const dispId = btn.dataset.disp || (entity === (this._config.vaillant || {}).climate_co ? 'hdc-co-set' : 'hdc-cwu-set');
       const dispEl = this.shadowRoot.getElementById(dispId);
-      if (dispEl) dispEl.textContent = btn.dataset.disp ? newTemp.toFixed(1) + '°' : newTemp;
+      const dispText = btn.dataset.disp ? newTemp.toFixed(1) + '°' : String(newTemp);
+      if (dispEl) dispEl.textContent = dispText;
 
       // Debounce — anuluj poprzedni timer, wyślij po 350ms
       if (this._pendingClimate[entity]?.timer) clearTimeout(this._pendingClimate[entity].timer);
       this._pendingClimate[entity] = {
         value: newTemp,
+        elId: dispId,
+        text: dispText,
         timer: setTimeout(() => {
           const vCfg = this._config.vaillant || {};
           if (entity === vCfg.climate_co && vCfg.sf_mode_topic) {
@@ -2721,19 +2604,23 @@ class HomeDashboardCard extends HTMLElement {
       // Optimistic display update
       const elId = 'hdc-vl-set-' + entity.replace(/\./g, '-');
       const elDisp = this.shadowRoot.getElementById(elId);
+      let elText = null;
       if (elDisp) {
         const st2 = this._hass.states[entity];
         const stepV = parseFloat(st2?.attributes?.step) || step;
         const dec = _n(undefined, stepV < 0.01 ? 3 : stepV < 0.1 ? 2 : stepV < 1 ? 1 : 0);
         const unit = st2?.attributes?.unit_of_measurement || '';
-        elDisp.textContent = elDisp.classList.contains('hdc-thermo-val')
+        elText = elDisp.classList.contains('hdc-thermo-val')
           ? clamped.toFixed(1) + '°'
           : clamped.toFixed(dec) + (unit ? ' ' + unit : '');
+        elDisp.textContent = elText;
       }
       // Debounce: cancel previous timer, schedule single callService
       if (this._pendingInputs[entity]?.timer) clearTimeout(this._pendingInputs[entity].timer);
       this._pendingInputs[entity] = {
         value: clamped,
+        elId: elText !== null ? elId : null,
+        text: elText,
         timer: setTimeout(() => {
           const domain = entity.split('.')[0];
           this._hass.callService(domain, 'set_value', { entity_id: entity, value: clamped });
@@ -2828,74 +2715,6 @@ class HomeDashboardCard extends HTMLElement {
     card.classList.add('focus');
   }
 
-  _updateAutaLive() {
-    const hass = this._hass;
-    const sr = this.shadowRoot;
-    const vehicles = this._config.vehicles || [];
-    vehicles.forEach((v, idx) => {
-      const fuel     = sn(hass, v.fuel_level, 0);
-      const fuelLt   = v.fuel_amount ? sn(hass, v.fuel_amount, 1) : null;
-      const range    = sv(hass, v.fuel_range, '—');
-      const odo      = sv(hass, v.odometer, '—');
-      const bat      = v.battery ? sn(hass, v.battery, 0) : null;
-      const fuelColor = fuel < 15 ? '#f87171' : fuel < 30 ? '#fbbf24' : '#4ade80';
-      const lastUpdRaw = sv(hass, v.last_update, '');
-      const lastUpd = lastUpdRaw ? (() => { const d = new Date(lastUpdRaw); return isNaN(d) ? lastUpdRaw : `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`; })() : '—';
-
-      const fuelEl = sr.getElementById(`hdc-car-fuel-${idx}`);
-      if (fuelEl) { fuelEl.textContent = `${fuel}%${fuelLt !== null ? ` · ${fuelLt} L` : ''}`; fuelEl.style.color = fuelColor; }
-      const fbarEl = sr.getElementById(`hdc-car-fbar-${idx}`);
-      if (fbarEl) { fbarEl.style.width = `${fuel}%`; fbarEl.style.background = fuelColor; }
-      const rangeEl = sr.getElementById(`hdc-car-range-${idx}`);
-      if (rangeEl) { rangeEl.textContent = range; rangeEl.style.color = fuelColor; }
-      const odoEl = sr.getElementById(`hdc-car-odo-${idx}`);
-      if (odoEl) odoEl.textContent = isNaN(parseInt(odo)) ? odo : parseInt(odo).toLocaleString('pl');
-      if (bat !== null) {
-        const batEl = sr.getElementById(`hdc-car-bat-${idx}`);
-        if (batEl) { batEl.textContent = `${bat}%`; batEl.style.color = battColor(bat); }
-      }
-      const updEl = sr.getElementById(`hdc-car-upd-${idx}`);
-      if (updEl) updEl.textContent = lastUpd !== '—' ? `🕐 ${lastUpd}` : '';
-
-      if (v.connection) {
-        const connEl = sr.getElementById(`hdc-car-conn-${idx}`);
-        if (connEl) {
-          const connSt = hass.states[v.connection];
-          const online = connSt && (connSt.state === 'on' || connSt.state === 'online' || connSt.state === 'connected');
-          connEl.innerHTML = `<span class="hdc-ch ${online?'g':'r'}">${online?'🟢 Online':'🔴 Offline'}</span>`;
-        }
-      }
-
-      const tracker = v.location || v.device_tracker;
-      if (tracker) {
-        const locWrap = sr.getElementById(`hdc-car-loc-wrap-${idx}`);
-        if (locWrap) {
-          const dtSt = hass.states[tracker];
-          if (dtSt) {
-            const zone = dtSt.state;
-            const addr = dtSt.attributes.address || dtSt.attributes.location_name || null;
-            const locLabel = addr || (zone === 'home' ? '🏠 Dom' : zone === 'not_home' ? '🚗 W trasie' : zone);
-            locWrap.innerHTML = `<div style="font-size:11px;color:#64748b;margin:6px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📍 ${locLabel}</div>`;
-          }
-        }
-      }
-
-      if (v.lock) {
-        const btn = sr.getElementById(`hdc-car-lock-${idx}`);
-        if (btn) {
-          const lockState = hass.states[v.lock];
-          if (lockState) {
-            const locked = lockState.state === 'locked';
-            btn.textContent = locked ? '🔒 Zamknięty' : '🔓 Otwarty';
-            btn.style.cssText = `font-size:11px;width:auto;height:24px;padding:0 10px;${locked
-              ? 'background:rgba(74,222,128,.15);border-color:#4ade80;color:#4ade80'
-              : 'background:rgba(248,113,113,.15);border-color:#f87171;color:#f87171'}`;
-          }
-        }
-      }
-    });
-  }
-
   _updateWasteBadge() {
     const sensors = ((this._config.waste || {}).sensors) || [];
     let count = 0;
@@ -2946,132 +2765,6 @@ class HomeDashboardCard extends HTMLElement {
         if (show) anyVisible = true;
       });
       sec.style.display = anyVisible ? '' : 'none';
-    });
-  }
-
-  _updateSwitchesLive() {
-    const hass = this._hass;
-    const groups = (this._config.switches || {}).groups || [];
-    groups.forEach(group => {
-      (group.entities || []).forEach(item => {
-        if (item.type === 'lz4') {
-          // Bateria
-          if (item.battery) {
-            const battEl = this.shadowRoot.getElementById(`hdc-lz4-batt-${item.battery.replace(/\./g, '-')}`);
-            if (battEl) {
-              const bst = hass.states[item.battery];
-              const val = bst ? Math.round(parseFloat(bst.state)) : NaN;
-              const color = isNaN(val) ? '#475569' : val > 50 ? '#4ade80' : val > 20 ? '#fbbf24' : '#f87171';
-              battEl.innerHTML = isNaN(val) ? '' : `<span style="color:${color}">${battIcon(val)} ${val}%</span>`;
-            }
-          }
-          // Stany urządzeń
-          ['single', 'double', 'hold'].forEach(key => {
-            const action = item[key];
-            if (!action?.entity) return;
-            const stEl = this.shadowRoot.getElementById(`hdc-lz4-st-${action.entity.replace(/\./g, '-')}`);
-            if (!stEl) return;
-            const isOn = hass.states[action.entity]?.state === 'on';
-            stEl.className = `hdc-lz4-st ${isOn ? 'on' : 'off'}`;
-            stEl.textContent = isOn ? 'Wł.' : 'Wył.';
-          });
-          return;
-        }
-        const tile = this.shadowRoot.getElementById(`hdc-sw-${item.entity.replace('.', '-')}`);
-        if (!tile) return;
-        const st = hass.states[item.entity];
-        const isOn = st ? st.state === 'on' : false;
-        const isLight = item.entity.startsWith('light.');
-        tile.classList.toggle('on', isOn);
-        tile.classList.toggle('light', isLight && isOn);
-        const stateEl = tile.querySelector('.hdc-sw-tile-state');
-        if (stateEl) stateEl.textContent = isOn ? 'Włączone' : 'Wyłączone';
-      });
-    });
-  }
-
-  _updateKomfortLive() {
-    const hass = this._hass;
-    const rooms = (this._config.comfort || {}).rooms || [];
-    rooms.forEach((room, idx) => {
-      // Sensory
-      COMFORT_SENSORS.filter(s => room[s.key]).forEach(s => {
-        const el = this.shadowRoot.getElementById(`hdc-cs-${room[s.key].replace('.', '-')}`);
-        if (!el) return;
-        const st = hass.states[room[s.key]];
-        const raw = st ? parseFloat(st.state) : NaN;
-        const display = isNaN(raw) ? '—' : raw.toFixed(s.dec) + s.unit;
-        const color = !isNaN(raw) && s.colorFn ? s.colorFn(raw) : 'var(--hdc-text)';
-        const valEl = el.querySelector('.hdc-cs-val');
-        if (valEl) { valEl.textContent = display; valEl.style.color = color; }
-      });
-      // Humidifier
-      // Humidifier
-      if (room.humidifier) {
-        const eid = room.humidifier.replace('.', '-');
-        const humEl = this.shadowRoot.getElementById(`hdc-chum-${eid}`);
-        if (humEl) {
-          const st = hass.states[room.humidifier];
-          const isOn = st?.state === 'on';
-          const target = st?.attributes?.humidity ?? null;
-          const toggleBtn = humEl.querySelector('.hdc-chum-toggle');
-          if (toggleBtn) {
-            toggleBtn.textContent = `💧 ${isOn ? 'Włączony' : 'Wyłączony'}`;
-            toggleBtn.style.cssText = `font-size:10px;height:26px;padding:0 10px;width:auto;${isOn ? 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8' : ''}`;
-          }
-          const valEl = this.shadowRoot.getElementById(`hdc-chumv-${eid}`);
-          if (valEl && target !== null) valEl.textContent = `${target}%`;
-        }
-      }
-      // Battery
-      if (room.battery) {
-        const battEl = this.shadowRoot.getElementById(`hdc-cbatt-${room.battery.replace('.', '-')}`);
-        if (battEl) {
-          const bst = hass.states[room.battery];
-          const val = bst ? Math.round(parseFloat(bst.state)) : NaN;
-          const color = isNaN(val) ? '#475569' : val > 50 ? '#4ade80' : val > 20 ? '#fbbf24' : '#f87171';
-          const span = battEl.querySelector('span');
-          if (span) { span.textContent = isNaN(val) ? '—' : val + '%'; span.style.color = color; }
-          const fill = battEl.querySelector('.hdc-cbatt-fill');
-          if (fill) { fill.style.width = (isNaN(val) ? 0 : val) + '%'; fill.style.background = color; }
-        }
-      }
-      // Termostat -- przebudowa sekcji; wartości w trakcie klikania (debounce)
-      // bierzemy z _pendingInputs, żeby nie przeskakiwały wstecz.
-      if (_thermoCfg(room)) {
-        const thEl = this.shadowRoot.getElementById(`hdc-thermo-${idx}`);
-        if (thEl) thEl.innerHTML = _comfortThermoInner(hass, room, this._pendingInputs);
-      }
-      // Last updated
-      const updEl = this.shadowRoot.getElementById(`hdc-cupdated-${idx}`);
-      if (updEl) updEl.textContent = `🕐 ${formatAgo(_comfortLastUpdated(hass, room))}`;
-    });
-    // Fan / light controls per room
-    rooms.forEach(room => {
-      if (room.fan) {
-        const fanOn = hass.states[room.fan]?.state === 'on';
-        const btn = this.shadowRoot.getElementById(`hdc-ctrl-fan-${room.fan.replace('.', '-')}`);
-        if (btn) {
-          btn.textContent = `💨 ${fanOn ? 'Wł.' : 'Wył.'}`;
-          btn.style.cssText = `font-size:10px;height:26px;padding:0 10px;width:auto;${fanOn ? 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8' : ''}`;
-        }
-      }
-      if (room.light) {
-        const lightOn = hass.states[room.light]?.state === 'on';
-        const btn = this.shadowRoot.getElementById(`hdc-ctrl-light-${room.light.replace('.', '-')}`);
-        if (btn) {
-          btn.textContent = `💡 ${lightOn ? 'Wł.' : 'Wył.'}`;
-          btn.style.cssText = `font-size:10px;height:26px;padding:0 10px;width:auto;${lightOn ? 'background:rgba(251,191,36,.15);border-color:#fbbf24;color:#fbbf24' : ''}`;
-        }
-      }
-      if (room.humidifier_switch) {
-        const humSwOn = hass.states[room.humidifier_switch]?.state === 'on';
-        const btn = this.shadowRoot.getElementById(`hdc-ctrl-humidsw-${room.humidifier_switch.replace('.', '-')}`);
-        if (btn) {
-          btn.textContent = `💧 ${humSwOn ? 'Wł.' : 'Wył.'}`;
-          btn.style.cssText = `font-size:10px;height:26px;padding:0 10px;width:auto;${humSwOn ? 'background:rgba(56,189,248,.15);border-color:#38bdf8;color:#38bdf8' : ''}`;
-        }
-      }
     });
   }
 
@@ -3140,25 +2833,6 @@ class HomeDashboardCard extends HTMLElement {
     };
     loadScript('hdc-chartjs', 'https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js', () => {
       loadScript('hdc-chartjs-adapter', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js', draw);
-    });
-  }
-
-  _updateTPLinkLive() {
-    const hass = this._hass;
-    const t = this._config.tplink || {};
-    // Ta sama dynamiczna lista co przy renderowaniu -- inaczej porty
-    // przelacznikow spoza sw01..sw03 renderowalyby sie, ale nie odswiezaly.
-    const allPorts = [
-      ...(t.router_ports || []).map(p => ({ ...p, _poe: false })),
-      ...swPortGroups(t).flatMap(g => g.ports.map(p => ({ ...p, _poe: true }))),
-    ];
-    allPorts.forEach(p => {
-      const el = this.shadowRoot.getElementById(`hdc-port-${p.entity.replace('.', '-')}`);
-      if (!el) return;
-      const on = isOn(hass, p.entity);
-      const canClick = p.entity && (p._poe || p.entity.startsWith('switch.'));
-      el.className = `hdc-port${canClick ? ' clickable' : ''} ${on ? (p._poe ? 'poe' : 'up') : 'down'}`;
-      el.title = `${p.label}${canClick ? (on ? ' — kliknij aby wyłączyć' : ' — kliknij aby włączyć') : ''}`;
     });
   }
 
@@ -3351,47 +3025,6 @@ class HomeDashboardCard extends HTMLElement {
     }
   }
 
-  _updateMowerLive() {
-    const hass = this._hass;
-    const m = this._config.mower || {};
-    const entity = m.entity || '';
-    const st = hass.states[entity] || {};
-    const state = st.state || 'unknown';
-    const attr = st.attributes || {};
-    const mowerState = attr.mower_state || state;
-    const stateLabel = MOWER_STATE_LABEL[mowerState] || mowerState.replace(/_/g, ' ');
-    const stateColor = MOWER_STATE_COLOR[mowerState] || '#94a3b8';
-    const isDocked = state === 'docked';
-    const isMowing = state === 'mowing';
-    const isPaused = state === 'paused';
-    const btnBase = 'flex:1;border-radius:10px;font-size:13px;padding:10px 6px;transition:background .15s';
-    const btnActive  = `${btnBase};background:var(--hdc-bg-hover);border:1px solid var(--hdc-border-btn);color:var(--hdc-text-hi);cursor:pointer`;
-    const btnInactive= `${btnBase};background:var(--hdc-bg-card);border:1px solid var(--hdc-border-inner);color:var(--hdc-text-faint);cursor:default`;
-    const btnPrimary = `${btnBase};background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);color:#4ade80;cursor:pointer`;
-    const sr = this.shadowRoot;
-    const set = (id, fn) => { const el = sr.getElementById(id); if (el) fn(el); };
-    set('hdc-mow-state', el => { el.textContent = stateLabel; el.style.color = stateColor; });
-    if (m.battery) set('hdc-mow-bat', el => { el.textContent = sn(hass, m.battery, 0) + ' %'; });
-    if (m.charging_status) set('hdc-mow-chg', el => { el.textContent = sv(hass, m.charging_status, '—'); });
-    set('hdc-mow-btn-start', el => {
-      const active = isDocked || isPaused;
-      el.style.cssText = active ? btnPrimary : btnInactive;
-      if (active) { el.dataset.action = 'mower_start'; el.dataset.entity = entity; }
-      else { delete el.dataset.action; delete el.dataset.entity; }
-    });
-    set('hdc-mow-btn-pause', el => {
-      el.style.cssText = isMowing ? btnActive : btnInactive;
-      if (isMowing) { el.dataset.action = 'mower_pause'; el.dataset.entity = entity; }
-      else { delete el.dataset.action; delete el.dataset.entity; }
-    });
-    set('hdc-mow-btn-dock', el => {
-      const active = isMowing || isPaused;
-      el.style.cssText = active ? btnActive : btnInactive;
-      if (active) { el.dataset.action = 'mower_dock'; el.dataset.entity = entity; }
-      else { delete el.dataset.action; delete el.dataset.entity; }
-    });
-  }
-
   _startCamRefresh() {
     this._camRefreshInterval = setInterval(() => {
       if (this._activeTab === 'kamery') {
@@ -3403,7 +3036,7 @@ class HomeDashboardCard extends HTMLElement {
           img.src = `/api/camera_proxy/${entity}?token=${token}&t=${Date.now()}`;
         });
       }
-      if (this._activeTab === 'kosiarka') {
+      if (this._activeTab === 'mower') {
         const img = this.shadowRoot.getElementById('hdc-mower-map');
         const camEntity = (this._config?.mower || {}).camera;
         if (img && camEntity) {
@@ -3453,10 +3086,22 @@ class HomeDashboardCard extends HTMLElement {
     }, 1000);
   }
 
+  // HA odpina kartę przy zmianie widoku i przypina tę samą przy powrocie --
+  // zegar i liczniki trzeba wtedy uruchomić od nowa, a zakładkę odświeżyć.
+  connectedCallback() {
+    if (!this._built || this._clockInterval) return;
+    this._startClock();
+    this._startCamRefresh();
+    this._startGateTimers();
+    this._updatePane();
+  }
+
   disconnectedCallback() {
     clearInterval(this._clockInterval);
     clearInterval(this._camRefreshInterval);
     clearInterval(this._gateTimerInterval);
+    this._clockInterval = this._camRefreshInterval = this._gateTimerInterval = null;
+    if (this._frame) { cancelAnimationFrame(this._frame); this._frame = null; }
   }
 
   getCardSize() { return 8; }
