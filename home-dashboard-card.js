@@ -271,6 +271,9 @@ const STYLES = `
 .hdc-thermo-row.active{border-color:rgba(251,146,60,.6);background:rgba(251,146,60,.08);color:var(--hdc-text)}
 .hdc-thermo-set{display:flex;align-items:center;gap:6px}
 .hdc-thermo-val{font-size:14px;font-weight:600;min-width:46px;text-align:center;font-variant-numeric:tabular-nums}
+.hdc-thermo-row.hdc-thermo-2l{flex-wrap:wrap;row-gap:2px}
+.hdc-thermo-lbl{flex:1 0 100%;line-height:1.2}
+.hdc-thermo-2l .hdc-thermo-set{margin-left:auto}
 .hdc-thermo-warn{font-size:10px;color:#38bdf8}
 .hdc-cupdated{font-size:9px;color:var(--hdc-text-faint);font-variant-numeric:tabular-nums;text-align:right;margin-top:6px}.hdc-cs:hover{background:var(--hdc-bg-btn)}
 .hdc-hm-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center}
@@ -1613,8 +1616,8 @@ function _comfortThermoInner(hass, room, pending) {
     const est = hass.states[ent];
     const stp = parseFloat(est?.attributes?.step) || 0.5;
     const mn = est?.attributes?.min ?? 5, mx = est?.attributes?.max ?? 30;
-    return `<div class="hdc-thermo-row${isActive ? ' active' : ''}">
-      <span>${label}</span>
+    return `<div class="hdc-thermo-row hdc-thermo-2l${isActive ? ' active' : ''}">
+      <span class="hdc-thermo-lbl">${label}</span>
       <span class="hdc-thermo-set">
         <button class="hdc-tbtn" data-action="input_down" data-entity="${ent}" data-step="${stp}" data-min="${mn}" data-max="${mx}">−</button>
         <span class="hdc-thermo-val" id="hdc-vl-set-${ent.replace(/\./g, '-')}">${fmt(num(ent))}</span>
