@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Termostat: wiersz temperatury obniżonej nazywa się „🌙 Noc / poza domem" zamiast „🌙 Poza domem". Automatyka salonu przechodzi na eko także w nocy, gdy wszyscy są w domu — stara nazwa sugerowała, że eko oznacza tylko pusty dom. Żeby podświetlenie wierszy uwzględniało noc, w `presence` podaj czujnik łączący obecność i porę doby (np. `binary_sensor.ogrzewanie_salon_komfort`)
+
 ## [1.26.0] - 2026-10-03
 
 ### Added

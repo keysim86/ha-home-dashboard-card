@@ -1626,7 +1626,7 @@ function _comfortThermoInner(hass, room, pending) {
   let rows;
   if (t.comfort && t.eco) {
     const prowadzi = autoOn !== false && !windowOpen;
-    rows = setRow('🏠 W domu', t.comfort, prowadzi && home) + setRow('🌙 Poza domem', t.eco, prowadzi && !home);
+    rows = setRow('🏠 W domu', t.comfort, prowadzi && home) + setRow('🌙 Noc / poza domem', t.eco, prowadzi && !home);
   } else {
     const stp = parseFloat(st?.attributes?.target_temp_step) || 0.5;
     const dispId = `hdc-thermo-set-${t.climate.replace(/\./g, '-')}`;
