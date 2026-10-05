@@ -1750,6 +1750,40 @@ function renderAgent(hass, cfg) {
 // Chart.js same ustawiają im atrybuty) i wszystko z data-hdc-keep (mapy, obraz
 // kosiarki odświeżany co 15 s). Przy <img> pomijamy styl -- onerror ukrywa
 // obrazek stylem i nie chcemy go co chwilę pokazywać od nowa.
+// ============================================================
+//  CHART.JS -- JEDNO ŁADOWANIE NA CAŁĄ STRONĘ
+// ============================================================
+// Wszystkie wykresy (Vaillant, speedtest, historia czujnika) czekają na tę samą
+// obietnicę: najpierw Chart.js, potem adapter dat (bez niego oś czasu się
+// wywraca i wykres zostaje pusty). Wcześniej każdy wykres ładował skrypty po
+// swojemu i (1) brał adapter za gotowy, gdy był dopiero w trakcie wczytywania,
+// (2) po jednym nieudanym pobraniu z CDN czekał na "load" znacznika <script>,
+// który już nigdy nie przyszedł -- pomagało dopiero przeładowanie strony.
+// Teraz nieudane pobranie usuwa znacznik i kasuje obietnicę: następny wykres
+// próbuje od nowa.
+function hdcLoadScript(id, src) {
+  return new Promise((resolve, reject) => {
+    const old = document.getElementById(id);
+    if (old && old.dataset.hdcLoaded) { resolve(); return; }
+    if (old) old.remove();
+    const s = document.createElement('script');
+    s.id = id;
+    s.src = src;
+    s.onload = () => { s.dataset.hdcLoaded = '1'; resolve(); };
+    s.onerror = () => { s.remove(); reject(new Error(`Nie udało się wczytać ${src}`)); };
+    document.head.appendChild(s);
+  });
+}
+
+function hdcChartJs() {
+  if (!window.__hdcChartJs) {
+    window.__hdcChartJs = hdcLoadScript('hdc-chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js')
+      .then(() => hdcLoadScript('hdc-chartjs-adapter', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js'))
+      .catch(err => { window.__hdcChartJs = null; throw err; });
+  }
+  return window.__hdcChartJs;
+}
+
 function hdcSyncAttrs(o, n) {
   const skip = name => o.nodeName === 'IMG' && name === 'style';
   for (const a of Array.from(o.attributes)) {
@@ -2066,11 +2100,6 @@ class HomeDashboardCard extends HTMLElement {
       ].filter(Boolean));
     };
 
-    const loadScript = (id, src, cb) => {
-      if (document.getElementById(id)) { if (window.Chart) cb(); else document.getElementById(id).addEventListener('load', cb); return; }
-      const s = document.createElement('script'); s.id = id; s.src = src; s.onload = cb;
-      document.head.appendChild(s);
-    };
     const drawGas = async () => {
       const gasHeatId = v.gas_heating;
       const gasCwuId  = v.gas_cwu;
@@ -2227,13 +2256,7 @@ class HomeDashboardCard extends HTMLElement {
 
     const allDraw = async () => { await draw(); await drawGas(); };
 
-    if (window.Chart && window.Chart.defaults) {
-      allDraw();
-    } else {
-      loadScript('hdc-chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js', () =>
-        loadScript('hdc-chartjs-adapter', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js', allDraw)
-      );
-    }
+    hdcChartJs().then(allDraw).catch(err => console.warn('[hdc] wykresy Vaillant:', err));
   }
 
   _showWindyModal() {
@@ -2826,14 +2849,7 @@ class HomeDashboardCard extends HTMLElement {
       });
     };
 
-    const loadScript = (id, src, cb) => {
-      if (document.getElementById(id)) { cb(); return; }
-      const sc = document.createElement('script'); sc.id = id; sc.src = src;
-      sc.onload = cb; document.head.appendChild(sc);
-    };
-    loadScript('hdc-chartjs', 'https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js', () => {
-      loadScript('hdc-chartjs-adapter', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js', draw);
-    });
+    hdcChartJs().then(draw).catch(err => console.warn('[hdc] wykres speedtest:', err));
   }
 
   _buildHistoryModal() {
@@ -2874,6 +2890,7 @@ class HomeDashboardCard extends HTMLElement {
   }
 
   _closeHistoryModal() {
+    this._hmReq = (this._hmReq || 0) + 1;
     const el = this.shadowRoot.getElementById('hdc-hm-overlay');
     if (el) el.style.display = 'none';
     const canvas = this.shadowRoot.getElementById('hdc-hm-chart');
@@ -2892,8 +2909,11 @@ class HomeDashboardCard extends HTMLElement {
   }
 
   async _loadHistoryChart(entity, days) {
+    // Szybkie przełączanie czujnika albo zakresu: rysuje tylko ostatnie żądanie,
+    // wolniejsza starsza odpowiedź nie nadpisze nowszego wykresu.
+    const req = this._hmReq = (this._hmReq || 0) + 1;
     const loading = this.shadowRoot.getElementById('hdc-hm-loading');
-    if (loading) loading.style.display = 'flex';
+    if (loading) { loading.textContent = 'Ładowanie…'; loading.style.display = 'flex'; }
     const canvas = this.shadowRoot.getElementById('hdc-hm-chart');
     if (canvas && canvas._hdcChart) { canvas._hdcChart.destroy(); canvas._hdcChart = null; }
 
@@ -2947,7 +2967,7 @@ class HomeDashboardCard extends HTMLElement {
       } catch(e) { console.warn('[hdc] statistics fallback error', e); }
     }
 
-    if (loading) loading.style.display = 'none';
+    if (req !== this._hmReq) return;
     if (!canvas) return;
 
     const isBinary = points.length > 0 && points.every(p => p.y === 0 || p.y === 1);
@@ -2980,17 +3000,16 @@ class HomeDashboardCard extends HTMLElement {
       });
     };
 
-    if (window.Chart?.defaults) {
-      drawChart();
-    } else {
-      const loadScript = (id, src, cb) => {
-        if (document.getElementById(id)) { if (window.Chart) cb(); else document.getElementById(id).addEventListener('load', cb); return; }
-        const s = document.createElement('script'); s.id = id; s.src = src; s.onload = cb;
-        document.head.appendChild(s);
-      };
-      loadScript('hdc-chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js', () =>
-        loadScript('hdc-chartjs-adapter', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js', drawChart));
+    try {
+      await hdcChartJs();
+    } catch (err) {
+      console.warn('[hdc] wykres historii:', err);
+      if (loading && req === this._hmReq) loading.textContent = 'Nie udało się wczytać wykresu — wybierz zakres ponownie';
+      return;
     }
+    if (req !== this._hmReq) return;
+    if (loading) loading.style.display = 'none';
+    drawChart();
   }
 
   _startClock() {
