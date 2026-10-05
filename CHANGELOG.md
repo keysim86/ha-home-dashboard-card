@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.27.1] - 2026-10-05
+
 ### Fixed
 - **Wykresy czasem się nie ładowały aż do przeładowania strony** (historia czujnika, np. nasłonecznienia, wykresy Vaillanta, speedtest). Każdy wykres ładował Chart.js i adapter dat z CDN po swojemu: brał adapter za gotowy, gdy był dopiero w trakcie wczytywania (oś czasu się wywracała, wykres zostawał pusty), a po jednym nieudanym pobraniu czekał w nieskończoność na znacznik `<script>`, który już się nie załadował. Teraz wszystkie wykresy czekają na jedno wspólne ładowanie (`hdcChartJs`), a nieudane pobranie jest ponawiane przy następnym wykresie
 - Okno historii czujnika: przy szybkim przełączaniu czujnika albo zakresu wolniejsza, starsza odpowiedź potrafiła nadpisać nowszy wykres — rysuje się tylko ostatnie żądanie. Gdy wykresu nie da się wczytać, okno mówi to wprost zamiast wiecznego „Ładowanie…”
