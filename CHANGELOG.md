@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## [1.27.0-beta.1] - 2026-10-04
+## [1.27.0] - 2026-10-05
 
 ### Fixed
 - **Stan na karcie nie nadążał za HA** — po kliknięciu urządzenie się włączało, a kafelek pokazywał stary stan aż do odświeżenia strony. Każda zakładka miała własną funkcję „live” poprawiającą tylko wybrane elementy; wszystko, czego taka funkcja nie obsługiwała, zostawało nieaktualne do przełączenia zakładki. Teraz przy każdej zmianie stanu zakładka jest renderowana od nowa do tekstu, a do strony trafiają tylko różnice (nowa funkcja `hdcMorph`) — na karcie jest zawsze to samo, co po odświeżeniu. Wykresy (`<canvas>`), mapy aut i obraz kosiarki (`data-hdc-keep`) zostają nietknięte, kamery i Agent AI jak dotąd nie są przerysowywane
