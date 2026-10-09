@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.28.0] - 2026-10-09
+
 ### Added
 - **Proxmox: pasek „Dysk” na kafelkach VM i LXC** — opcjonalne pola `disk` (zajęte) z `disk_max` (rozmiar), z których
   karta liczy procent i pokazuje „zajęte/rozmiar GiB · %”, albo `disk_pct` (gotowy procent). Kolor: zielony, od 80%
