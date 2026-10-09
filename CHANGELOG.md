@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.29.0] - 2026-10-09
+
 ### Added
 - **Proxmox: kilka pasków dysku na jednym kafelku** — lista `disks` (każdy wpis: `label` i pola jak dotąd: `disk` +
   `disk_max` albo `disk_pct`), np. dla TrueNAS boot-pool i pula danych. Pojedyncze `disk`/`disk_max` działa jak w 1.28.0
