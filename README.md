@@ -299,6 +299,19 @@ proxmox:
       ram: sensor.mir_ha_memory_usage_percentage
       status: binary_sensor.mir_ha_status
       disk_pct: sensor.mir_ha_dysk_procent        # opcjonalnie: gotowy procent zamiast disk/disk_max
+    - id: 204
+      name: Truenas
+      info: VM/Truenas
+      cpu: sensor.mir_truenas_cpu_usage
+      ram: sensor.mir_truenas_memory_usage_percentage
+      status: binary_sensor.mir_truenas_status
+      disks:                                      # kilka pasków z etykietami (np. pule TrueNAS)
+        - label: boot-pool
+          disk: sensor.truenas_pools_boot_pool_allocated
+          disk_max: sensor.truenas_pools_boot_pool_size
+        - label: truenas_pool
+          disk: sensor.truenas_pools_truenas_pool_allocated
+          disk_max: sensor.truenas_pools_truenas_pool_size
 
 waste:
   sensors:

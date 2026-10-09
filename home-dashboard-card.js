@@ -1294,6 +1294,13 @@ function renderAuta(hass, cfg) {
 // (rozmiar) — procent liczony tutaj. Bez danych (encja niedostępna, VM bez agenta QEMU) kreska zamiast 0%:
 // Proxmox dla VM podaje zajętość 0, więc samo `disk` bez rozsądnego źródła wprowadzałoby w błąd.
 function pxDisk(hass, item) {
+  // Kilka dysków na jednym kafelku (np. TrueNAS: boot-pool i pula danych) — lista `disks`
+  // z polami jak wyżej i `label`; bez listy jeden pasek z pól samego kafelka.
+  const lista = Array.isArray(item.disks) ? item.disks : [item];
+  return lista.map((d) => pxDiskBar(hass, d, d.label || 'Dysk')).join('');
+}
+
+function pxDiskBar(hass, item, label) {
   if (!item.disk_pct && !item.disk) return '';
   const num = (e) => { const v = parseFloat(sv(hass, e, '')); return isNaN(v) ? null : v; };
   const used = item.disk ? num(item.disk) : null;
@@ -1303,7 +1310,7 @@ function pxDisk(hass, item) {
   const opis = pct === null ? '—'
     : (used !== null && max ? `${used.toFixed(1)}/${max.toFixed(0)} ${unit} · ` : '') + `${Math.round(pct)}%`;
   const kolor = pct > 90 ? '#f87171' : pct > 80 ? '#fbbf24' : '#4ade80';
-  return `<div style="font-size:9px;color:#475569;display:flex;justify-content:space-between;margin:4px 0 2px"><span>Dysk</span><span>${opis}</span></div>
+  return `<div style="font-size:9px;color:#475569;display:flex;justify-content:space-between;gap:6px;margin:4px 0 2px"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</span><span style="white-space:nowrap">${opis}</span></div>
       <div class="hdc-pxbar-bg"><div class="hdc-pxbar-fill" style="width:${pct === null ? 0 : Math.min(pct, 100)}%;background:${kolor}"></div></div>`;
 }
 
