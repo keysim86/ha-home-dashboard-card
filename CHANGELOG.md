@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Added
+- **Proxmox: pasek „Dysk” na kafelkach VM i LXC** — opcjonalne pola `disk` (zajęte) z `disk_max` (rozmiar), z których
+  karta liczy procent i pokazuje „zajęte/rozmiar GiB · %”, albo `disk_pct` (gotowy procent). Kolor: zielony, od 80%
+  żółty, od 90% czerwony. Brak danych (encja niedostępna) — kreska zamiast mylącego 0%. Kafelki bez tych pól bez zmian
+
+### Fixed
+- Proxmox: „wolne” przy RAM węzła miało na sztywno dopisane „GB” — teraz jednostka z encji (wbudowana integracja
+  Proxmox VE i pomocniki podają GiB)
+
+### Changed
+- README: przykład konfiguracji Proxmoxa na encjach wbudowanej integracji Proxmox VE (zamiast dawnej z HACS)
+
 ## [1.27.1] - 2026-10-05
 
 ### Fixed

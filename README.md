@@ -19,7 +19,7 @@ Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna kart
 | 📶 **TP-Link** | Sekcja **Status** — binary_sensory z kolorowym wskaźnikiem on/off i paskiem historii; sekcja **SpeedTest** — aktualne wartości pobierania/wysyłania/pingu + wykres 24h (Chart.js, dual Y-axis); porty PoE (klikalne — włącz/wyłącz), odkurzacz Zosia, aktualizacje firmware, drukarka HP |
 | 📹 **Kamery** | Grid kamer, focus view live stream (`ha-camera-stream`), miniatury odświeżane co 3 s; sekcja stanu rejestratora (kanały, retencja, status, wersja, zajętość magazynu) czytana **z encji**, więc działa z dowolnym źródłem — NVR, Frigate, cokolwiek wystawia sensory; opcja `thumbnails: right` — sidebar z podglądem po lewej i listą kamer po prawej (responsywny: na mobile układ kolumnowy) |
 | 🚗 **Auta** | Paliwo + litry, zasięg, przebieg, bateria 12V, blokada (klikalna lock/unlock), status połączenia, lokalizacja GPS, mapa `ha-map`; kliknięcie w kafelek sensora → modal z wykresem historii |
-| 🖧 **Proxmox** | Node stats (CPU, RAM%, wolna RAM w GB, Disk), LXC kontenery z CPU/RAM, QEMU maszyny wirtualne |
+| 🖧 **Proxmox** | Node stats (CPU, RAM%, wolna RAM, Disk), LXC kontenery i QEMU maszyny wirtualne z CPU/RAM i opcjonalnym paskiem dysku |
 | 🔔 **Alerty** | Reguły definiowane w YAML, badge z licznikiem na zakładce |
 | 💡 **Przełączniki** | Grupy kafelków `switch`/`light`/`fan` z live statusem; klik przełącza stan; opcjonalny timer czasu włączenia per grupa (`show_timer: true`); opcjonalne grupowanie po pokojach (`room:` w YAML); pole wyszukiwania filtrujące po nazwie przełącznika lub pokoju |
 | 🌡️ **Klimat** | Karty pomieszczeń z sensorami (temp, wilgotność, ciśnienie, nasłonecznienie, CO₂, AQI, PM2.5, PM10, VOC); kolory wartości wg norm; sterowanie humidifier; przyciski toggle: wentylator (`fan`), światło (`light`), osuszacz (`humidifier_switch`); poziom baterii czujnika; kliknięcie w sensor → modal z liniowym wykresem historii (7/14/30/60/90 dni) |
@@ -276,26 +276,29 @@ vehicles:
     last_update: sensor.captur_last_update
 
 proxmox:
-  node_cpu: sensor.node_pve3_cpu_used
-  node_ram_pct: sensor.node_pve3_memory_used_percentage
-  node_ram_free: sensor.node_pve3_memory_free
-  node_disk_pct: sensor.node_pve3_disk_used_percentage
-  node_lxc_running: sensor.node_pve3_containers_running
-  node_vm_running: sensor.node_pve3_virtual_machines_running
+  node_cpu: sensor.pve3_cpu_usage
+  node_ram_pct: sensor.pve3_memory_usage_percentage
+  node_ram_free: sensor.pve3_wolna_pamiec          # jednostka z encji (GiB/GB)
+  node_disk_pct: sensor.pve3_zajetosc_dysku
+  node_lxc_running: sensor.pve3_dzialajace_lxc
+  node_vm_running: sensor.pve3_dzialajace_vm
   lxc:
     - id: 100
       name: mir-pbs
       info: Proxmox Backup
-      cpu: sensor.lxc_mir_pbs_100_cpu_used
-      ram: sensor.lxc_mir_pbs_100_memory_used_percentage
-      status: binary_sensor.lxc_mir_pbs_100_status
+      cpu: sensor.mir_pbs_cpu_usage
+      ram: sensor.mir_pbs_memory_usage_percentage
+      status: binary_sensor.mir_pbs_status
+      disk: sensor.mir_pbs_disk_usage             # opcjonalnie: zajęte…
+      disk_max: sensor.mir_pbs_max_disk_usage     # …i rozmiar → pasek „Dysk” z procentem
   vms:
     - id: 200
       name: mirhome
       info: Home Assistant OS
-      cpu: sensor.qemu_mirhome_200_cpu_used
-      ram: sensor.qemu_mirhome_200_memory_used_percentage
-      status: binary_sensor.qemu_mirhome_200_status
+      cpu: sensor.mir_ha_cpu_usage
+      ram: sensor.mir_ha_memory_usage_percentage
+      status: binary_sensor.mir_ha_status
+      disk_pct: sensor.mir_ha_dysk_procent        # opcjonalnie: gotowy procent zamiast disk/disk_max
 
 waste:
   sensors:

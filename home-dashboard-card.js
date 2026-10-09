@@ -1290,12 +1290,32 @@ function renderAuta(hass, cfg) {
   return `<div class="hdc-ga">${cards}</div>`;
 }
 
+// Pasek dysku na kafelku VM/LXC (opcjonalny). `disk_pct` — gotowy procent, albo `disk` (zajęte) z `disk_max`
+// (rozmiar) — procent liczony tutaj. Bez danych (encja niedostępna, VM bez agenta QEMU) kreska zamiast 0%:
+// Proxmox dla VM podaje zajętość 0, więc samo `disk` bez rozsądnego źródła wprowadzałoby w błąd.
+function pxDisk(hass, item) {
+  if (!item.disk_pct && !item.disk) return '';
+  const num = (e) => { const v = parseFloat(sv(hass, e, '')); return isNaN(v) ? null : v; };
+  const used = item.disk ? num(item.disk) : null;
+  const max = item.disk_max ? num(item.disk_max) : null;
+  const pct = item.disk_pct ? num(item.disk_pct) : (used !== null && max ? used / max * 100 : null);
+  const unit = (item.disk && sa(hass, item.disk, 'unit_of_measurement')) || 'GiB';
+  const opis = pct === null ? '—'
+    : (used !== null && max ? `${used.toFixed(1)}/${max.toFixed(0)} ${unit} · ` : '') + `${Math.round(pct)}%`;
+  const kolor = pct > 90 ? '#f87171' : pct > 80 ? '#fbbf24' : '#4ade80';
+  return `<div style="font-size:9px;color:#475569;display:flex;justify-content:space-between;margin:4px 0 2px"><span>Dysk</span><span>${opis}</span></div>
+      <div class="hdc-pxbar-bg"><div class="hdc-pxbar-fill" style="width:${pct === null ? 0 : Math.min(pct, 100)}%;background:${kolor}"></div></div>`;
+}
+
 function renderProxmox(hass, cfg) {
   const p = cfg.proxmox || {};
   const cpu     = sn(hass, p.node_cpu, 0);
   const ramPct  = sn(hass, p.node_ram_pct, 0);
   const ramFreeRaw = sv(hass, p.node_ram_free, '');
-  const ramFree = ramFreeRaw !== '' ? (parseFloat(ramFreeRaw).toFixed(2) + ' GB') : '—';
+  // Jednostka z encji (wbudowana integracja i pomocnik podają GiB, dawna z HACS — GB).
+  const ramFreeUnit = sa(hass, p.node_ram_free, 'unit_of_measurement') || 'GB';
+  const ramFree = ramFreeRaw !== '' && !isNaN(parseFloat(ramFreeRaw))
+    ? (parseFloat(ramFreeRaw).toFixed(2) + ' ' + ramFreeUnit) : '—';
   const diskPct = sn(hass, p.node_disk_pct, 0);
   const lxcRun  = sv(hass, p.node_lxc_running, '—');
   const vmRun   = sv(hass, p.node_vm_running, '—');
@@ -1328,6 +1348,7 @@ function renderProxmox(hass, cfg) {
       <div class="hdc-pxbar-bg"><div class="hdc-pxbar-fill" style="width:${c}%;background:${cpuBarColor}"></div></div>
       <div style="font-size:9px;color:#475569;display:flex;justify-content:space-between;margin:4px 0 2px"><span>RAM</span><span>${r}%</span></div>
       <div class="hdc-pxbar-bg"><div class="hdc-pxbar-fill" style="width:${r}%;background:#a78bfa"></div></div>
+      ${pxDisk(hass, item)}
     </div>`;
   };
 
