@@ -97,8 +97,8 @@ energy:
     pozaszczytowa_monthly: sensor.zuzycie_miesieczne_g13s_pozaszczytowa
     nocna_monthly: sensor.zuzycie_miesieczne_g13s_nocna
   consumers:
-    - name: Osuszacz Sypialnia
-      entity: sensor.osuszacz_sypialnia_power
+    - name: Osuszacz Łazienka
+      entity: sensor.osuszacz_lazienka_power
       max_w: 500
     - name: TV Salon
       entity: sensor.miresphome11_watt
@@ -451,7 +451,7 @@ comfort:
       humidity: sensor.czujnik_sypialnia_humidity
       pressure: sensor.salon_pressure
       battery: sensor.czujnik_sypialnia_battery
-      humidifier: humidifier.osuszacz_sypialnia
+      humidifier: humidifier.osuszacz_lazienka
     - name: Pokój dzieci
       icon: "🧒"
       temperature: sensor.czujnik_pokoj_dzieci_temperature
