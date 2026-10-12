@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+- **Skrzynka pocztowa: „🔋 NaN%”** — gdy encja baterii ma stan `unknown`/`unavailable` (np. bramka tuż po wgraniu
+  firmware, przed pierwszą ramką), wiersz baterii jest ukryty zamiast pokazywać „NaN%”
+
 ## [1.29.0] - 2026-10-09
 
 ### Added

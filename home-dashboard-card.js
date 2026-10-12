@@ -480,7 +480,8 @@ function renderOsoby(hass, cfg) {
     const mbSt = hass.states[mbCfg.entity];
     const hasMail = mbSt?.state === 'on';
     const battSt = mbCfg.battery ? hass.states[mbCfg.battery] : null;
-    const battVal = battSt ? Math.round(parseFloat(battSt.state)) : null;
+    const battNum = battSt ? parseFloat(battSt.state) : NaN;
+    const battVal = Number.isFinite(battNum) ? Math.round(battNum) : null;  // unknown/unavailable -> bez paska, nie "NaN%"
     const battColor = battVal !== null ? (battVal > 50 ? '#4ade80' : battVal > 20 ? '#fbbf24' : '#f87171') : '#475569';
     mailboxHtml = `<div id="hdc-mailbox" class="hdc-mailbox${hasMail ? ' mail' : ''}">
       <div class="hdc-mailbox-ico">${hasMail ? '📬' : '📭'}</div>
