@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.30.0] - 2026-10-13
+
 ### Added
 - **Termostat: dodatkowe profile temperatury** — opcjonalna lista `thermostat.profiles` (każdy wpis: `label`, `icon`,
   `temp` = input_number, `active` = binary_sensor, `from`/`to` = input_datetime z godzinami do podpisu). Każdy profil
