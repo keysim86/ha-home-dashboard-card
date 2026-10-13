@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Added
+- **Termostat: dodatkowe profile temperatury** — opcjonalna lista `thermostat.profiles` (każdy wpis: `label`, `icon`,
+  `temp` = input_number, `active` = binary_sensor, `from`/`to` = input_datetime z godzinami do podpisu). Każdy profil
+  to własny wiersz z −/+ (zmienia suwak, jak „W domu” / „Noc”); gdy jego `active` jest `on`, to on jest podświetlony
+  zamiast „W domu” / „Noc / poza domem”. Np. wieczór w łazience: „🛁 Wieczór 16:00–22:30 · 24°”. Bez `profiles`
+  wygląd jak dotąd
+
 ### Fixed
 - **Skrzynka pocztowa: „🔋 NaN%”** — gdy encja baterii ma stan `unknown`/`unavailable` (np. bramka tuż po wgraniu
   firmware, przed pierwszą ramką), wiersz baterii jest ukryty zamiast pokazywać „NaN%”

@@ -465,6 +465,22 @@ comfort:
       battery: sensor.czujnik_lazienka_battery
       fan: switch.wentylator_lazienka_gora
       light: light.swiatlo_lazienka_gora
+      thermostat:
+        climate: climate.termostat_lazienka
+        window: binary_sensor.ogrzewanie_okna_otwarte
+        automation: input_boolean.ogrzewanie_lazienka_automatyka
+        comfort: input_number.ogrzewanie_lazienka_komfort
+        eco: input_number.ogrzewanie_lazienka_eko
+        presence: binary_sensor.ogrzewanie_lazienka_komfort
+        # Dodatkowe profile (opcjonalnie): własny wiersz z −/+ na suwaku temp; gdy "active" = on,
+        # ten wiersz jest podświetlony zamiast "W domu" / "Noc". from/to -- godziny w podpisie.
+        profiles:
+          - label: Wieczór
+            icon: "🛁"
+            temp: input_number.ogrzewanie_lazienka_wieczor
+            active: binary_sensor.ogrzewanie_lazienka_wieczor
+            from: input_datetime.ogrzewanie_lazienka_wieczor_od
+            to: input_datetime.ogrzewanie_lazienka_wieczor_do
     - name: Suszarnia
       icon: "🧺"
       temperature: sensor.czujnik_suszarnia_temperature

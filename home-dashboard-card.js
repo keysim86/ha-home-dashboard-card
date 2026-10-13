@@ -1601,6 +1601,10 @@ function _comfortControlsHtml(hass, room) {
 //   automation  -- input_boolean automatyki ogrzewania (przycisk Auto)
 //   comfort/eco -- input_number temperatur "w domu" / "poza domem"
 //   presence    -- binary_sensor obecności; wybiera, który profil jest aktywny
+//   profiles    -- (opcjonalnie) dodatkowe profile, np. wieczór w łazience:
+//                  [{ label, icon, temp: input_number, active: binary_sensor,
+//                     from/to: input_datetime (godziny w podpisie) }]
+//                  aktywny profil przejmuje podświetlenie od "W domu" / "Noc"
 // Z suwakami comfort/eco przyciski −/+ zmieniają SUWAK profilu -- na głowicę
 // przenosi go automatyzacja w HA, więc karta nie walczy z nią o temperaturę.
 // Bez nich −/+ ustawia temperaturę głowicy wprost.
@@ -1658,7 +1662,20 @@ function _comfortThermoInner(hass, room, pending) {
   let rows;
   if (t.comfort && t.eco) {
     const prowadzi = autoOn !== false && !windowOpen;
-    rows = setRow('🏠 W domu', t.comfort, prowadzi && home) + setRow('🌙 Noc / poza domem', t.eco, prowadzi && !home);
+    const godz = e => {
+      const v = e ? hass.states[e]?.state : '';
+      return v && /^\d{2}:\d{2}/.test(v) ? v.slice(0, 5) : '';
+    };
+    const extras = (Array.isArray(t.profiles) ? t.profiles : []).filter(x => x && x.temp);
+    const extraOn = extras.map(x => !!x.active && hass.states[x.active]?.state === 'on');
+    const anyExtra = extraOn.some(Boolean);
+    rows = setRow('🏠 W domu', t.comfort, prowadzi && home && !anyExtra)
+      + setRow('🌙 Noc / poza domem', t.eco, prowadzi && !home && !anyExtra)
+      + extras.map((x, i) => {
+          const od = godz(x.from), doo = godz(x.to);
+          const lbl = `${x.icon || '⭐'} ${x.label || 'Profil'}${od && doo ? ` ${od}–${doo}` : ''}`;
+          return setRow(lbl, x.temp, prowadzi && extraOn[i]);
+        }).join('');
   } else {
     const stp = parseFloat(st?.attributes?.target_temp_step) || 0.5;
     const dispId = `hdc-thermo-set-${t.climate.replace(/\./g, '-')}`;
