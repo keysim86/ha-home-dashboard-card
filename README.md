@@ -3,6 +3,20 @@
 [![Release](https://img.shields.io/github/v/release/keysim86/ha-home-dashboard-card?style=flat-square)](https://github.com/keysim86/ha-home-dashboard-card/releases/latest)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://github.com/keysim86/ha-home-dashboard-card)
 [![HA](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue?style=flat-square)](https://www.home-assistant.io/)
+[![Status](https://img.shields.io/badge/status-nierozwijany-lightgrey?style=flat-square)](#projekt-zakończony)
+
+## Projekt zakończony
+
+> [!WARNING]
+> **Brak wsparcia i dalszego rozwoju.** Karta nie jest już rozwijana ani utrzymywana: nie będzie nowych wersji,
+> poprawek błędów ani odpowiedzi na zgłoszenia. Ostatnia wersja to **v1.30.0** — działa „tak jak jest”,
+> ale z kolejnymi wersjami Home Assistant może przestać działać.
+>
+> Następca: **[Hearth](https://github.com/keysim86/ha-hearth)** — panel Home Assistant, który buduje się sam
+> z obszarów i panelu Energia, bez list encji w YAML-u.
+>
+> *This card is no longer maintained or supported — no new releases, fixes or issue replies. Successor:
+> [Hearth](https://github.com/keysim86/ha-hearth).*
 
 Kompletny, ciemny dashboard dla Home Assistant w stylu glassmorphism. Jedna karta z zakładkami — wszystko w jednym miejscu.
 

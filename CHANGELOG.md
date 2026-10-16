@@ -1,5 +1,8 @@
 # Changelog
 
+> **Projekt zakończony (2026-10-16)** — brak wsparcia i dalszego rozwoju; v1.30.0 jest ostatnią wersją.
+> Następca: [Hearth](https://github.com/keysim86/ha-hearth).
+
 ## [Unreleased]
 
 ## [1.30.0] - 2026-10-13
